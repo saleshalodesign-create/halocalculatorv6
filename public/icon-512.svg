@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <circle cx="256" cy="256" r="245" fill="#0C0D11" />
+  <mask id="halo-cutout-512">
+    <rect width="512" height="512" fill="white" />
+    <path d="M214 294 L400 108 L348 56 L162 242 Z" fill="black" />
+  </mask>
+  <path d="M 256 70 A 186 186 0 1 1 255.9 70 Z M 256 154 A 102 102 0 1 0 256.1 154 Z" fill="#C4EE00" fillRule="evenodd" mask="url(#halo-cutout-512)" />
+  <circle cx="256" cy="256" r="102" fill="#0C0D11" />
+  <polygon points="221,271 262,312 379,195 338,154" fill="#FFFFFF" />
+  <circle cx="54" cy="294" r="28" fill="#FFFFFF" />
+</svg>

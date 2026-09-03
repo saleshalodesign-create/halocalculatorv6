@@ -1,0 +1,6 @@
+{
+  "name": "Halo Design Hub",
+  "description": "macOS styled signage and lighting pricing calculator for Halo Design Hub with quotation generator and document exports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
