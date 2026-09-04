@@ -14,7 +14,8 @@ import { MobileAppModal } from './components/MobileAppModal';
 import { MobileInstallBanner } from './components/MobileInstallBanner';
 import { MathCalculatorModal } from './components/MathCalculatorModal';
 import { HaloLogo } from './components/HaloLogo';
-import { RotateCcw } from 'lucide-react';
+import { LightboxShapeModal } from './components/LightboxShapeModal';
+import { RotateCcw, RectangleHorizontal, RectangleVertical, Square } from 'lucide-react';
 
 export default function App() {
   const [theme, setTheme] = useState<ThemeType>(Theme.DARK);
@@ -61,6 +62,7 @@ export default function App() {
   const [quoteListOpen, setQuoteListOpen] = useState(false);
   const [mobileModalOpen, setMobileModalOpen] = useState(false);
   const [mathCalcOpen, setMathCalcOpen] = useState(false);
+  const [shapeModalOpen, setShapeModalOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
@@ -154,6 +156,26 @@ export default function App() {
 
   const { prices, dimensions } = calculations;
 
+  const shapeInfo = useMemo(() => {
+    const wVal = parseFloat(width) || 0;
+    const hVal = parseFloat(height) || 0;
+    if (wVal <= 0 || hVal <= 0) {
+      return { type: 'invalid' as const, label: 'Custom', ratioText: '—' };
+    }
+    const w_in = dimensions.w_in;
+    const h_in = dimensions.h_in;
+    const diffPct = Math.abs(w_in - h_in) / Math.max(w_in, h_in);
+    if (diffPct < 0.015) {
+      return { type: 'square' as const, label: 'Square', ratioText: '1:1' };
+    }
+    if (w_in > h_in) {
+      const r = (w_in / h_in).toFixed(2);
+      return { type: 'horizontal' as const, label: 'Horizontal', ratioText: `${r}:1` };
+    }
+    const r = (h_in / w_in).toFixed(2);
+    return { type: 'vertical' as const, label: 'Vertical', ratioText: `1:${r}` };
+  }, [width, height, dimensions]);
+
   const handleCardClick = (title: string, priceKey: keyof typeof prices) => {
     const wVal = parseFloat(width) || 0;
     const hVal = parseFloat(height) || 0;
@@ -231,6 +253,9 @@ export default function App() {
         onOpenAuth={() => auth.setAuthModalOpen(true)}
         onOpenMobileApp={() => setMobileModalOpen(true)}
         onOpenMathCalc={() => setMathCalcOpen(true)}
+        onOpenShapeModal={() => setShapeModalOpen(true)}
+        shapeType={shapeInfo.type}
+        shapeLabel={shapeInfo.label}
       />
 
       {/* Top Mobile Quick Install Strip */}
@@ -292,9 +317,9 @@ export default function App() {
             </div>
 
             {/* macOS Window Title */}
-            <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-none">
-              <HaloLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 shadow-sm" />
-              <span className="text-[11px] sm:text-xs md:text-sm font-bold text-slate-800 dark:text-neutral-100 tracking-tight">
+            <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-none min-w-0 truncate">
+              <HaloLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 shadow-sm shrink-0" />
+              <span className="text-[11px] sm:text-xs md:text-sm font-bold text-slate-800 dark:text-neutral-100 tracking-tight truncate">
                 Halo Design Hub
               </span>
             </div>
@@ -303,6 +328,21 @@ export default function App() {
               <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                 Calculator
               </span>
+
+              {/* Lightbox Shape Icon beside Calculator */}
+              <button
+                onClick={() => setShapeModalOpen(true)}
+                className="w-6 h-6 rounded-full flex items-center justify-center bg-slate-200/80 hover:bg-blue-500/15 dark:bg-white/10 dark:hover:bg-blue-500/20 text-slate-800 hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400 border border-slate-300/80 dark:border-white/15 hover:border-blue-500/30 transition-all active:scale-95 shadow-xs"
+                title={`Lightbox Shape: ${shapeInfo.label} (${shapeInfo.ratioText}) - Click to inspect`}
+              >
+                {shapeInfo.type === 'horizontal' ? (
+                  <RectangleHorizontal className="w-3.5 h-3.5 text-blue-500" />
+                ) : shapeInfo.type === 'vertical' ? (
+                  <RectangleVertical className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <Square className="w-3.5 h-3.5 text-amber-500" />
+                )}
+              </button>
             </div>
           </div>
 
@@ -566,6 +606,9 @@ export default function App() {
         onOpenAuth={() => auth.setAuthModalOpen(true)}
         onOpenMobileApp={() => setMobileModalOpen(true)}
         onOpenMathCalc={() => setMathCalcOpen(true)}
+        onOpenShapeModal={() => setShapeModalOpen(true)}
+        shapeType={shapeInfo.type}
+        shapeLabel={shapeInfo.label}
       />
 
       {/* Sheets / Modals */}
@@ -621,6 +664,18 @@ export default function App() {
         onApplyHeight={(val) => setHeight(val)}
         currentWidth={width}
         currentHeight={height}
+      />
+
+      {/* Lightbox Shape Visualizer Modal */}
+      <LightboxShapeModal
+        isOpen={shapeModalOpen}
+        onClose={() => setShapeModalOpen(false)}
+        width={width}
+        height={height}
+        unit={unit}
+        onUpdateWidth={(w) => setWidth(w)}
+        onUpdateHeight={(h) => setHeight(h)}
+        onUpdateUnit={(u) => setUnit(u)}
       />
     </div>
   );

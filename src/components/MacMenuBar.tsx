@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Theme, ThemeType } from '../types';
 import { GoogleIcon } from './GoogleIcon';
 import { HaloLogo } from './HaloLogo';
-import { Moon, Sun, Smartphone, Calculator } from 'lucide-react';
+import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square } from 'lucide-react';
 
 interface MacMenuBarProps {
   quoteCount: number;
@@ -13,6 +13,9 @@ interface MacMenuBarProps {
   onOpenAuth: () => void;
   onOpenMobileApp: () => void;
   onOpenMathCalc?: () => void;
+  onOpenShapeModal?: () => void;
+  shapeType?: 'horizontal' | 'vertical' | 'square' | 'invalid';
+  shapeLabel?: string;
 }
 
 export const MacMenuBar: React.FC<MacMenuBarProps> = ({
@@ -24,6 +27,9 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
   onOpenAuth,
   onOpenMobileApp,
   onOpenMathCalc,
+  onOpenShapeModal,
+  shapeType = 'horizontal',
+  shapeLabel = 'Horizontal',
 }) => {
   const [timeString, setTimeString] = useState('');
 
@@ -83,6 +89,22 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
               >
                 <Calculator className="w-3.5 h-3.5 text-amber-500" />
                 Calculator
+              </button>
+            )}
+            {onOpenShapeModal && (
+              <button
+                onClick={onOpenShapeModal}
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1 font-medium"
+                title="Lightbox Shape Inspector"
+              >
+                {shapeType === 'horizontal' ? (
+                  <RectangleHorizontal className="w-3.5 h-3.5 text-blue-500" />
+                ) : shapeType === 'vertical' ? (
+                  <RectangleVertical className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <Square className="w-3.5 h-3.5 text-amber-500" />
+                )}
+                <span>Shape ({shapeLabel})</span>
               </button>
             )}
           </div>

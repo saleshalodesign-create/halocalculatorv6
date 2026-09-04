@@ -7,6 +7,9 @@ import {
   Sun,
   Moon,
   Calculator,
+  RectangleHorizontal,
+  RectangleVertical,
+  Square,
 } from 'lucide-react';
 
 interface MacDockProps {
@@ -20,6 +23,9 @@ interface MacDockProps {
   onOpenAuth: () => void;
   onOpenMobileApp?: () => void;
   onOpenMathCalc: () => void;
+  onOpenShapeModal?: () => void;
+  shapeType?: 'horizontal' | 'vertical' | 'square' | 'invalid';
+  shapeLabel?: string;
 }
 
 export const MacDock: React.FC<MacDockProps> = ({
@@ -33,6 +39,9 @@ export const MacDock: React.FC<MacDockProps> = ({
   onOpenAuth,
   onOpenMobileApp,
   onOpenMathCalc,
+  onOpenShapeModal,
+  shapeType = 'horizontal',
+  shapeLabel = 'Horizontal',
 }) => {
   const wallpapersList = ['sequoia', 'sonoma', 'dark', 'silver'];
 
@@ -128,6 +137,32 @@ export const MacDock: React.FC<MacDockProps> = ({
             Calc
           </span>
         </button>
+
+        {/* Lightbox Shape Visualizer Button - RIGHT BESIDE CALCULATOR */}
+        {onOpenShapeModal && (
+          <button
+            onClick={onOpenShapeModal}
+            className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
+            title={`Lightbox Shape: ${shapeLabel} (Click to inspect proportion)`}
+          >
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/30 border border-white/30 relative overflow-hidden">
+              {shapeType === 'horizontal' ? (
+                <RectangleHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
+              ) : shapeType === 'vertical' ? (
+                <RectangleVertical className="w-4 h-4 sm:w-5 sm:h-5" />
+              ) : (
+                <Square className="w-4 h-4 sm:w-5 sm:h-5" />
+              )}
+              {/* Orientation indicator badge */}
+              <span className="absolute bottom-0.5 text-[7px] font-bold uppercase tracking-tighter opacity-80 hidden sm:block">
+                {shapeType === 'horizontal' ? 'HORIZ' : shapeType === 'vertical' ? 'VERT' : 'SQR'}
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
+              Shape
+            </span>
+          </button>
+        )}
 
         {/* Wallpaper Switcher */}
         <button
