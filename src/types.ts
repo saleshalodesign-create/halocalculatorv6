@@ -15,13 +15,6 @@ export const Theme = {
 
 export type ThemeType = typeof Theme[keyof typeof Theme];
 
-export const Language = {
-  EN: 'en',
-  ZH: 'zh',
-} as const;
-
-export type LanguageType = typeof Language[keyof typeof Language];
-
 export interface RatesConfig {
   LIGHTBOX: number;
   LIGHTBOX_W_BACKLIT: number;

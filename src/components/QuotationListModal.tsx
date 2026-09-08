@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { QuoteItem, QuoteRecord, Unit, UnitType, LanguageType } from '../types';
-import { getTranslation } from '../data/translations';
+import { QuoteItem, QuoteRecord, Unit, UnitType } from '../types';
 import { AuthContextType } from '../hooks/useFirebaseAuth';
+import { useLanguage } from '../context/LanguageContext';
 import { GoogleIcon } from './GoogleIcon';
 import { copyToClipboard, formatQuotationText } from '../utils/clipboard';
 import {
@@ -42,22 +42,22 @@ import {
   FileCheck,
 } from 'lucide-react';
 
-export const PRESET_ITEMS: Array<{ name: string; nameZh: string; price: number }> = [
-  { name: 'Laminated A4', nameZh: 'A4 塑封', price: 25 },
-  { name: 'Laminated A3', nameZh: 'A3 塑封', price: 35 },
-  { name: 'Standard Banner', nameZh: '标准横幅', price: 90 },
-  { name: 'A1 Poster', nameZh: 'A1 海报', price: 180 },
-  { name: 'A1 Poster with Stand', nameZh: 'A1 海报带展架', price: 230 },
-  { name: 'EasyRoll', nameZh: '易拉宝', price: 280 },
-  { name: 'Menu Book', nameZh: '菜单本', price: 85 },
-  { name: 'Pricing Sticker', nameZh: '标价贴纸', price: 50 },
-  { name: 'On-Site Transformer Replacement', nameZh: '上门更换变压器', price: 180 },
-  { name: 'On-Site Pricing Sticker Replacement', nameZh: '上门更换标价贴纸', price: 80 },
-  { name: 'On-Site Photoshoot Services', nameZh: '上门摄影服务', price: 200 },
-  { name: 'Photoshoot Services', nameZh: '摄影服务', price: 40 },
-  { name: 'T5 LED', nameZh: 'T5 LED 灯管', price: 25 },
-  { name: 'T8 LED', nameZh: 'T8 LED 灯管', price: 30 },
-  { name: 'Labour Charges', nameZh: '人工安装费', price: 180 },
+export const PRESET_ITEMS: Array<{ name: string; price: number }> = [
+  { name: 'Laminated A4', price: 25 },
+  { name: 'Laminated A3', price: 35 },
+  { name: 'Standard Banner', price: 90 },
+  { name: 'A1 Poster', price: 180 },
+  { name: 'A1 Poster with Stand', price: 230 },
+  { name: 'EasyRoll', price: 280 },
+  { name: 'Menu Book', price: 85 },
+  { name: 'Pricing Sticker', price: 50 },
+  { name: 'On-Site Transformer Replacement', price: 180 },
+  { name: 'On-Site Pricing Sticker Replacement', price: 80 },
+  { name: 'On-Site Photoshoot Services', price: 200 },
+  { name: 'Photoshoot Services', price: 40 },
+  { name: 'T5 LED', price: 25 },
+  { name: 'T8 LED', price: 30 },
+  { name: 'Labour Charges', price: 180 },
 ];
 
 interface QuotationListModalProps {
@@ -71,7 +71,6 @@ interface QuotationListModalProps {
   onUpdateItem: (id: string, updates: Partial<QuoteItem>) => void;
   auth: AuthContextType;
   onLoadQuoteRecord: (record: QuoteRecord) => void;
-  language?: LanguageType;
 }
 
 export const QuotationListModal: React.FC<QuotationListModalProps> = ({
@@ -80,14 +79,12 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
   items,
   onRemoveItem,
   onUpdateQuantity,
-  onClearAll,
   onAddCustomItem,
   onUpdateItem,
   auth,
   onLoadQuoteRecord,
-  language = 'en',
 }) => {
-  const t = getTranslation(language);
+  const { language, t } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<'active' | 'cloudRecords'>('active');
   const [formMode, setFormMode] = useState<'quote' | 'invoice' | 'receipt' | 'textPreview' | null>(null);
   const [showCustomForm, setShowCustomForm] = useState(true);
@@ -672,7 +669,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>{t.activeTab} ({items.length})</span>
+              <span>{language === 'zh' ? '当前清单' : 'Active'} ({items.length})</span>
             </button>
             <button
               onClick={() => {
@@ -686,7 +683,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               }`}
             >
               <GoogleIcon className="w-3.5 h-3.5" />
-              <span>{t.cloudTab} ({cloudQuotes?.length || 0})</span>
+              <span>{language === 'zh' ? '云端存档' : 'Cloud'} ({cloudQuotes?.length || 0})</span>
             </button>
           </div>
 
@@ -697,10 +694,14 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   onClick={handleSaveToCloud}
                   disabled={isSavingCloud || items.length === 0}
                   className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-semibold bg-white dark:bg-neutral-800 hover:bg-slate-50 text-slate-800 dark:text-neutral-200 border border-slate-200 dark:border-white/10 flex items-center gap-1 transition-all shadow-sm active:scale-95 disabled:opacity-40"
-                  title="Save current quote to Google Account"
+                  title={language === 'zh' ? '保存当前报价单至云端' : 'Save current quote to Google Account'}
                 >
                   <Cloud className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="hidden sm:inline">{isSavingCloud ? t.cloudSaving : t.save}</span>
+                  <span className="hidden sm:inline">
+                    {isSavingCloud
+                      ? (language === 'zh' ? '保存中...' : 'Saving...')
+                      : (language === 'zh' ? '存云端' : 'Save')}
+                  </span>
                 </button>
                 <button
                   onClick={() => setShowCustomForm(!showCustomForm)}
@@ -709,10 +710,14 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'bg-slate-200/80 dark:bg-white/10 text-slate-700 dark:text-neutral-200 hover:bg-slate-300'
                   }`}
-                  title="Toggle Custom Item drawer"
+                  title={language === 'zh' ? '切换自定义项目添加抽屉' : 'Toggle Custom Item drawer'}
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>{showCustomForm ? t.hideForm : t.addCustom}</span>
+                  <span>
+                    {showCustomForm
+                      ? (language === 'zh' ? '收起表单' : 'Hide Form')
+                      : (language === 'zh' ? '+ 自定义项' : '+ Custom')}
+                  </span>
                 </button>
               </>
             )}
@@ -729,7 +734,11 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <div className="flex items-center gap-1.5">
                     <input
                       type="text"
-                      placeholder={t.customItemDescPlaceholder}
+                      placeholder={
+                        language === 'zh'
+                          ? '项目描述 (例如: 3D 亚克力发光字、现场安装费、吊车费)'
+                          : 'Item description (e.g. 3D Acrylic Lettering, Installation Fee)'
+                      }
                       value={customName}
                       onChange={e => setCustomName(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
@@ -742,26 +751,34 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       onChange={e => {
                         const selected = PRESET_ITEMS.find(p => p.name === e.target.value);
                         if (selected) {
-                          setCustomName(language === 'zh' && selected.nameZh ? selected.nameZh : selected.name);
+                          const localizedName = language === 'zh' && (t.quotationList.presets as any)?.[selected.name]
+                            ? (t.quotationList.presets as any)[selected.name]
+                            : selected.name;
+                          setCustomName(localizedName);
                           setCustomPrice(selected.price.toString());
-                          showToast(`${t.quickPresets}: ${selected.name} ($${selected.price})`);
+                          showToast(`${language === 'zh' ? '已选择' : 'Selected'}: ${localizedName} ($${selected.price})`);
                         }
                       }}
                       className="w-32 sm:w-44 px-2 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 outline-none hover:border-blue-500 transition-colors cursor-pointer shrink-0 truncate"
-                      title={t.quickPresets}
+                      title={language === 'zh' ? '快捷预设项目' : 'Preset Items'}
                     >
                       <option value="" disabled>
-                        ⚡ {t.quickPresets} ({PRESET_ITEMS.length})
+                        ⚡ {language === 'zh' ? '快捷预设' : 'Presets'} ({PRESET_ITEMS.length})
                       </option>
-                      {PRESET_ITEMS.map(item => (
-                        <option
-                          key={item.name}
-                          value={item.name}
-                          className="bg-white dark:bg-[#1e1e24] text-neutral-900 dark:text-neutral-100 font-normal"
-                        >
-                          {language === 'zh' && item.nameZh ? `${item.nameZh} (${item.name})` : item.name} — ${item.price}
-                        </option>
-                      ))}
+                      {PRESET_ITEMS.map(item => {
+                        const displayName = language === 'zh' && (t.quotationList.presets as any)?.[item.name]
+                          ? (t.quotationList.presets as any)[item.name]
+                          : item.name;
+                        return (
+                          <option
+                            key={item.name}
+                            value={item.name}
+                            className="bg-white dark:bg-[#1e1e24] text-neutral-900 dark:text-neutral-100 font-normal"
+                          >
+                            {displayName} — ${item.price}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -769,22 +786,22 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
-                        placeholder="W"
+                        placeholder={language === 'zh' ? '宽' : 'W'}
                         value={customWidth}
                         onChange={e => setCustomWidth(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                         className="w-11 sm:w-16 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
-                        title={t.widthLabel}
+                        title={language === 'zh' ? '宽度' : 'Width'}
                       />
                       <span className="text-[10px] text-neutral-400">×</span>
                       <input
                         type="number"
-                        placeholder="H"
+                        placeholder={language === 'zh' ? '高' : 'H'}
                         value={customHeight}
                         onChange={e => setCustomHeight(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                         className="w-11 sm:w-16 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
-                        title={t.heightLabel}
+                        title={language === 'zh' ? '高度' : 'Height'}
                       />
                       <select
                         value={customUnit}
@@ -801,24 +818,24 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
 
                     <input
                       type="number"
-                      placeholder="Qty"
+                      placeholder={language === 'zh' ? '数量' : 'Qty'}
                       value={customQuantity}
                       onChange={e => setCustomQuantity(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                       className="w-10 sm:w-14 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
-                      title={t.quantityLabel}
+                      title={language === 'zh' ? '数量' : 'Quantity'}
                     />
 
                     <div className="flex items-center bg-neutral-100 dark:bg-[#18181c] px-1.5 py-1 rounded-md border border-black/10 dark:border-white/10">
                       <span className="text-[11px] text-neutral-500 mr-0.5">$</span>
                       <input
                         type="number"
-                        placeholder="Price"
+                        placeholder={language === 'zh' ? '金额' : 'Price'}
                         value={customPrice}
                         onChange={e => setCustomPrice(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                         className="w-14 sm:w-20 bg-transparent text-xs font-mono outline-none text-neutral-900 dark:text-white font-bold"
-                        title={t.priceLabel}
+                        title={language === 'zh' ? '单价金额' : 'Price'}
                       />
                     </div>
 
@@ -826,7 +843,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       onClick={handleAddCustom}
                       className="px-3 py-1 rounded-md bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 ml-auto transition-transform active:scale-95 shadow-sm shrink-0"
                     >
-                      {t.addItem}
+                      {language === 'zh' ? '添加项目' : 'Add Item'}
                     </button>
                   </div>
                 </div>
@@ -840,10 +857,12 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <p className="text-xs sm:text-base font-bold text-slate-800 dark:text-neutral-100">
-                      {t.emptyQuoteTitle}
+                      {language === 'zh' ? '当前报价单为空' : 'Your quotation list is empty.'}
                     </p>
                     <p className="text-[11px] sm:text-xs text-slate-500 dark:text-neutral-400 max-w-sm mt-1 leading-relaxed">
-                      {t.emptyQuoteDesc}
+                      {language === 'zh'
+                        ? '添加项目方法：在主界面计算任何招牌并点击"+ 加入报价单"，或在上方选择常用预设项 / 输入自定义项目后点击"添加项目"。'
+                        : 'To add items: calculate any signage on the main screen & click "+ Add to Quote", or choose a preset item / enter custom details above and click "Add Item".'}
                     </p>
                   </div>
                 ) : (
@@ -958,7 +977,9 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               <div className="p-2 sm:p-4 bg-white dark:bg-[#1e1e24] border-t border-slate-200/90 dark:border-white/10 flex flex-col gap-1.5 sm:gap-3 shrink-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                    <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-neutral-400">{t.discount}:</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-neutral-400">
+                      {language === 'zh' ? '折扣:' : 'Disc:'}
+                    </span>
                     <button
                       onClick={() => {
                         setDiscountType('percent');
@@ -1011,12 +1032,14 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       title={showSizes ? 'Dimensions included on PDF' : 'Dimensions hidden on PDF'}
                     >
                       <Ruler className="w-3 h-3" />
-                      <span>{showSizes ? (language === 'zh' ? '含尺寸' : 'Sizes') : (language === 'zh' ? '无尺寸' : 'No Size')}</span>
+                      <span>{language === 'zh' ? (showSizes ? '尺寸:开' : '无尺寸') : (showSizes ? 'Sizes' : 'No Size')}</span>
                     </button>
                   </div>
 
                   <div className="flex items-baseline gap-1 shrink-0">
-                    <span className="text-[10px] sm:text-xs text-slate-500 dark:text-neutral-400 uppercase font-bold tracking-wider">{t.grandTotal}:</span>
+                    <span className="text-[10px] sm:text-xs text-slate-500 dark:text-neutral-400 uppercase font-bold tracking-wider">
+                      {language === 'zh' ? '总计:' : 'Total:'}
+                    </span>
                     <div className="text-base sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
                       ${finalTotal.toFixed(2)}
                     </div>
@@ -1031,7 +1054,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-800 dark:text-neutral-200 font-bold text-[10px] sm:text-xs disabled:opacity-40 transition-all flex items-center justify-center gap-1 border border-slate-200 dark:border-white/10 active:scale-95 shadow-sm"
                   >
                     <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span className="truncate">{t.textPreview}</span>
+                    <span className="truncate">{language === 'zh' ? '文本预览' : 'Preview'}</span>
                   </button>
                   <button
                     disabled={items.length === 0}
@@ -1039,7 +1062,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-blue-600 text-white font-bold text-[10px] sm:text-xs hover:bg-blue-500 disabled:opacity-40 transition-all flex items-center justify-center gap-1 shadow-md shadow-blue-500/20 active:scale-95"
                   >
                     <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span className="truncate">{t.quotePDF}</span>
+                    <span className="truncate">{language === 'zh' ? '报价单 PDF' : 'Quote PDF'}</span>
                   </button>
                   <button
                     disabled={items.length === 0}
@@ -1047,7 +1070,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-purple-600 text-white font-bold text-[10px] sm:text-xs hover:bg-purple-500 disabled:opacity-40 transition-all flex items-center justify-center gap-1 shadow-md shadow-purple-500/20 active:scale-95"
                   >
                     <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span className="truncate">{t.invoicePDF}</span>
+                    <span className="truncate">{language === 'zh' ? '发票 PDF' : 'Invoice PDF'}</span>
                   </button>
                 </div>
               </div>
@@ -1060,7 +1083,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   onClick={() => setFormMode(null)}
                   className="text-sm text-blue-500 font-semibold flex items-center gap-1 hover:underline"
                 >
-                  ← Back to List
+                  {language === 'zh' ? '← 返回清单' : '← Back to List'}
                 </button>
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Doc Type Selector */}
@@ -1074,7 +1097,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                           : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                       }`}
                     >
-                      Quotation
+                      {language === 'zh' ? '报价单' : 'Quotation'}
                     </button>
                     <button
                       type="button"
@@ -1085,7 +1108,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                           : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                       }`}
                     >
-                      Invoice
+                      {language === 'zh' ? '发票' : 'Invoice'}
                     </button>
                   </div>
 
@@ -1101,7 +1124,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     title={showSizes ? 'Item dimensions included' : 'Item dimensions excluded'}
                   >
                     <Ruler className="w-3.5 h-3.5" />
-                    <span>{showSizes ? 'Sizes: ON' : 'Sizes: OFF'}</span>
+                    <span>{language === 'zh' ? (showSizes ? '尺寸: 显示' : '尺寸: 隐藏') : (showSizes ? 'Sizes: ON' : 'Sizes: OFF')}</span>
                   </button>
 
                   <div className="flex p-0.5 rounded-lg bg-neutral-100 dark:bg-white/10 text-xs font-semibold">
@@ -1113,7 +1136,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                           : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                       }`}
                     >
-                      WhatsApp Style
+                      WhatsApp
                     </button>
                     <button
                       onClick={() => setTextFormat('standard')}
@@ -1123,7 +1146,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                           : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                       }`}
                     >
-                      Standard Plain
+                      {language === 'zh' ? '纯文本' : 'Standard Plain'}
                     </button>
                   </div>
                 </div>
@@ -1132,9 +1155,13 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               <div className="flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between pb-2">
                   <span className="text-xs font-bold uppercase text-neutral-400">
-                    {textPreviewDocType === 'invoice' ? 'Tax Invoice Text Output' : 'Quotation Text Output'}:
+                    {textPreviewDocType === 'invoice'
+                      ? (language === 'zh' ? '发票文本内容' : 'Tax Invoice Text Output')
+                      : (language === 'zh' ? '报价单文本内容' : 'Quotation Text Output')}:
                   </span>
-                  <span className="text-[11px] text-neutral-400 font-mono">Ready to send directly or paste</span>
+                  <span className="text-[11px] text-neutral-400 font-mono">
+                    {language === 'zh' ? '可直接复制或一键发送' : 'Ready to send directly or paste'}
+                  </span>
                 </div>
                 <textarea
                   readOnly
@@ -1151,7 +1178,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     type="tel"
                     value={customerPhone}
                     onChange={e => setCustomerPhone(e.target.value)}
-                    placeholder="Recipient WhatsApp (+65 9123 4567)"
+                    placeholder={language === 'zh' ? '接收人 WhatsApp (如: +65 9123 4567)' : 'Recipient WhatsApp (+65 9123 4567)'}
                     className="w-full text-xs bg-transparent outline-none placeholder:text-neutral-400 text-neutral-800 dark:text-neutral-200"
                   />
                 </div>
@@ -1161,7 +1188,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     type="email"
                     value={customerEmail}
                     onChange={e => setCustomerEmail(e.target.value)}
-                    placeholder="Recipient Email (client@company.com)"
+                    placeholder={language === 'zh' ? '接收人邮箱 (client@company.com)' : 'Recipient Email (client@company.com)'}
                     className="w-full text-xs bg-transparent outline-none placeholder:text-neutral-400 text-neutral-800 dark:text-neutral-200"
                   />
                 </div>
@@ -1175,7 +1202,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   className="py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20 active:scale-95"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Send as WhatsApp</span>
+                  <span>{language === 'zh' ? '发送至 WhatsApp' : 'Send as WhatsApp'}</span>
                 </button>
                 <button
                   type="button"
@@ -1183,7 +1210,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   className="py-3 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-600/20 active:scale-95"
                 >
                   <Mail className="w-4 h-4" />
-                  <span>Send as Email</span>
+                  <span>{language === 'zh' ? '发送邮件' : 'Send as Email'}</span>
                 </button>
                 <button
                   type="button"
@@ -1191,7 +1218,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   className="py-3 px-3 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border border-black/5 dark:border-white/10 active:scale-95"
                 >
                   {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                  <span>{copied ? 'Copied!' : 'Copy Formatted Text'}</span>
+                  <span>{copied ? (language === 'zh' ? '已复制！' : 'Copied!') : (language === 'zh' ? '复制格式化文本' : 'Copy Formatted Text')}</span>
                 </button>
               </div>
             </div>
@@ -1203,24 +1230,32 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   onClick={() => setFormMode(null)}
                   className="text-sm text-blue-500 font-semibold flex items-center gap-1 hover:underline"
                 >
-                  ← Back to List
+                  {language === 'zh' ? '← 返回清单' : '← Back to List'}
                 </button>
-                <span className="text-xs uppercase font-bold text-neutral-400">Generate {formMode}</span>
+                <span className="text-xs uppercase font-bold text-neutral-400">
+                  {language === 'zh'
+                    ? `生成${formMode === 'invoice' ? '发票' : formMode === 'receipt' ? '收据' : '报价单'}`
+                    : `Generate ${formMode}`}
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold uppercase text-neutral-500">Customer / Company Name</label>
+                  <label className="text-xs font-bold uppercase text-neutral-500">
+                    {language === 'zh' ? '客户 / 公司名称' : 'Customer / Company Name'}
+                  </label>
                   <input
                     type="text"
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
-                    placeholder="Client name"
+                    placeholder={language === 'zh' ? '输入客户姓名或公司名称' : 'Client name'}
                     className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase text-neutral-500">Document No</label>
+                  <label className="text-xs font-bold uppercase text-neutral-500">
+                    {language === 'zh' ? '单据编号' : 'Document No'}
+                  </label>
                   <input
                     type="text"
                     value={docNo}
@@ -1232,29 +1267,37 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold uppercase text-neutral-500">Address / Location</label>
+                <label className="text-xs font-bold uppercase text-neutral-500">
+                  {language === 'zh' ? '地址 / 安装施工地点' : 'Address / Location'}
+                </label>
                 <textarea
                   value={customerAddress}
                   onChange={e => setCustomerAddress(e.target.value)}
-                  placeholder="Site or delivery location"
+                  placeholder={language === 'zh' ? '施工现场或收货送货地址' : 'Site or delivery location'}
                   className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 h-20 text-neutral-900 dark:text-white"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold uppercase text-neutral-500">Attention / Contact</label>
+                  <label className="text-xs font-bold uppercase text-neutral-500">
+                    {language === 'zh' ? '联系人 / 经手人' : 'Attention / Contact'}
+                  </label>
                   <input
                     type="text"
                     value={contact}
                     onChange={e => setContact(e.target.value)}
-                    placeholder="Contact person"
+                    placeholder={language === 'zh' ? '联系人姓名' : 'Contact person'}
                     className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white"
                   />
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase text-neutral-500">
-                    {formMode === 'receipt' ? 'Amount Received ($)' : formMode === 'invoice' ? 'Deposit / Paid ($)' : 'Deposit Amount ($)'}
+                    {formMode === 'receipt'
+                      ? (language === 'zh' ? '实收金额 ($)' : 'Amount Received ($)')
+                      : formMode === 'invoice'
+                      ? (language === 'zh' ? '已收定金 ($)' : 'Deposit / Paid ($)')
+                      : (language === 'zh' ? '预收定金 ($)' : 'Deposit Amount ($)')}
                   </label>
                   <input
                     type="number"
@@ -1271,7 +1314,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                 <div>
                   <label className="text-xs font-bold uppercase text-neutral-500 flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>WhatsApp Mobile No. (e.g. +65 9123 4567)</span>
+                    <span>{language === 'zh' ? 'WhatsApp 手机号 (例如: +65 9123 4567)' : 'WhatsApp Mobile No. (e.g. +65 9123 4567)'}</span>
                   </label>
                   <input
                     type="tel"
@@ -1284,7 +1327,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                 <div>
                   <label className="text-xs font-bold uppercase text-neutral-500 flex items-center gap-1.5">
                     <AtSign className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Client Email Address</span>
+                    <span>{language === 'zh' ? '客户电子邮箱' : 'Client Email Address'}</span>
                   </label>
                   <input
                     type="email"
@@ -1299,26 +1342,30 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               {/* Payment Method & Terms */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold uppercase text-neutral-500">Payment Method / Mode</label>
+                  <label className="text-xs font-bold uppercase text-neutral-500">
+                    {language === 'zh' ? '付款方式 / 渠道' : 'Payment Method / Mode'}
+                  </label>
                   <select
                     value={paymentMethod}
                     onChange={e => setPaymentMethod(e.target.value)}
                     className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white font-medium"
                   >
                     <option value="PAYNOW">PayNow (UEN: 201826136D)</option>
-                    <option value="BANK TRANSFER">Bank Transfer (OCBC)</option>
-                    <option value="CHEQUE">Cheque (Halo Design Hub)</option>
-                    <option value="CASH">Cash on Delivery</option>
-                    <option value="CREDIT CARD">Credit Card / Online</option>
+                    <option value="BANK TRANSFER">{language === 'zh' ? '银行转账 (OCBC 华侨银行)' : 'Bank Transfer (OCBC)'}</option>
+                    <option value="CHEQUE">{language === 'zh' ? '支票 (Halo Design Hub)' : 'Cheque (Halo Design Hub)'}</option>
+                    <option value="CASH">{language === 'zh' ? '现金 (货到付款)' : 'Cash on Delivery'}</option>
+                    <option value="CREDIT CARD">{language === 'zh' ? '信用卡 / 在线支付' : 'Credit Card / Online'}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase text-neutral-500">Payment Terms</label>
+                  <label className="text-xs font-bold uppercase text-neutral-500">
+                    {language === 'zh' ? '付款条款' : 'Payment Terms'}
+                  </label>
                   <input
                     type="text"
                     value={paymentTerms}
                     onChange={e => setPaymentTerms(e.target.value)}
-                    placeholder="e.g. Due within 7 days"
+                    placeholder={language === 'zh' ? '例如: 7天内付清 / 交付时结清' : 'e.g. Due within 7 days'}
                     className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white"
                   />
                 </div>
@@ -1332,19 +1379,21 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   </div>
                   <div>
                     <div className="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                      <span>Item Dimensions & Sizes</span>
+                      <span>{language === 'zh' ? '项目规格与尺寸标注' : 'Item Dimensions & Sizes'}</span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         showSizes 
                           ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
                           : 'bg-neutral-500/15 text-neutral-500 dark:text-neutral-400 border border-neutral-500/20'
                       }`}>
-                        {showSizes ? 'Showing Sizes' : 'Sizes Hidden'}
+                        {showSizes
+                          ? (language === 'zh' ? '显示尺寸' : 'Showing Sizes')
+                          : (language === 'zh' ? '尺寸已隐藏' : 'Sizes Hidden')}
                       </span>
                     </div>
                     <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                       {showSizes 
-                        ? 'Dimensions (e.g. [120X36 IN]) are printed next to item names in the document.' 
-                        : 'Dimensions are omitted (prints item names only without size specifications).'}
+                        ? (language === 'zh' ? '在文档的项目名称旁附带打印尺寸 (例如 [120X36 IN])。' : 'Dimensions (e.g. [120X36 IN]) are printed next to item names in the document.')
+                        : (language === 'zh' ? '隐藏具体尺寸 (仅打印项目名称，不显示尺寸规格)。' : 'Dimensions are omitted (prints item names only without size specifications).')}
                     </p>
                   </div>
                 </div>
@@ -1359,7 +1408,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                     }`}
                   >
-                    Show Sizes
+                    {language === 'zh' ? '显示尺寸' : 'Show Sizes'}
                   </button>
                   <button
                     type="button"
@@ -1370,7 +1419,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                     }`}
                   >
-                    Hide Sizes
+                    {language === 'zh' ? '隐藏尺寸' : 'Hide Sizes'}
                   </button>
                 </div>
               </div>
@@ -1378,24 +1427,34 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               {/* Payment Breakdown Card Preview */}
               <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-800/40 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div>
-                  <div className="font-bold text-neutral-700 dark:text-neutral-300">Payment Summary on PDF:</div>
+                  <div className="font-bold text-neutral-700 dark:text-neutral-300">
+                    {language === 'zh' ? 'PDF 付款摘要:' : 'Payment Summary on PDF:'}
+                  </div>
                   <div className="text-neutral-500 dark:text-neutral-400 mt-0.5">
-                    Mode: <span className="font-semibold text-neutral-800 dark:text-neutral-200">{paymentMethod}</span> | Terms: <span className="font-semibold text-neutral-800 dark:text-neutral-200">{paymentTerms || 'Standard'}</span>
+                    {language === 'zh' ? '方式: ' : 'Mode: '}
+                    <span className="font-semibold text-neutral-800 dark:text-neutral-200">{paymentMethod}</span> | {language === 'zh' ? '条款: ' : 'Terms: '}
+                    <span className="font-semibold text-neutral-800 dark:text-neutral-200">{paymentTerms || (language === 'zh' ? '标准条款' : 'Standard')}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-right">
                   <div>
-                    <div className="text-neutral-500 text-[10px] uppercase font-bold">Total</div>
+                    <div className="text-neutral-500 text-[10px] uppercase font-bold">
+                      {language === 'zh' ? '总金额' : 'Total'}
+                    </div>
                     <div className="font-bold text-sm text-neutral-900 dark:text-white font-mono">${finalTotal.toFixed(2)}</div>
                   </div>
                   <div>
-                    <div className="text-neutral-500 text-[10px] uppercase font-bold">Paid / Deposit</div>
+                    <div className="text-neutral-500 text-[10px] uppercase font-bold">
+                      {language === 'zh' ? '已付 / 定金' : 'Paid / Deposit'}
+                    </div>
                     <div className="font-bold text-sm text-emerald-600 dark:text-emerald-400 font-mono">
                       ${(parseFloat(deposit) || 0).toFixed(2)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-neutral-500 text-[10px] uppercase font-bold">Balance Due</div>
+                    <div className="text-neutral-500 text-[10px] uppercase font-bold">
+                      {language === 'zh' ? '应付尾款' : 'Balance Due'}
+                    </div>
                     <div className="font-bold text-sm text-red-600 dark:text-red-400 font-mono">
                       ${Math.max(0, finalTotal - (parseFloat(deposit) || 0)).toFixed(2)}
                     </div>
@@ -1411,12 +1470,14 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   </div>
                   <div>
                     <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                      Send Format: {sendFormat === 'pdf' ? 'Official PDF Document' : 'Formatted Text Summary'}
+                      {language === 'zh'
+                        ? `发送格式: ${sendFormat === 'pdf' ? '正式 PDF 单据' : '格式化文本清单'}`
+                        : `Send Format: ${sendFormat === 'pdf' ? 'Official PDF Document' : 'Formatted Text Summary'}`}
                     </div>
                     <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
                       {sendFormat === 'pdf'
-                        ? 'Prepares high-resolution PDF document with branding and PayNow instructions'
-                        : 'Sends clean, copyable text breakdown directly into chat or email'}
+                        ? (language === 'zh' ? '生成带公司标识、抬头及 PayNow 付款二维码的正式高品质 PDF' : 'Prepares high-resolution PDF document with branding and PayNow instructions')
+                        : (language === 'zh' ? '生成清晰整齐的文本报价明细，直接粘贴或发送至对话窗口' : 'Sends clean, copyable text breakdown directly into chat or email')}
                     </div>
                   </div>
                 </div>
@@ -1432,7 +1493,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    <span>Send as Text</span>
+                    <span>{language === 'zh' ? '纯文本' : 'Send as Text'}</span>
                   </button>
                   <button
                     type="button"
@@ -1444,7 +1505,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     }`}
                   >
                     <FileCheck className="w-3.5 h-3.5" />
-                    <span>Send as PDF</span>
+                    <span>{language === 'zh' ? 'PDF 单据' : 'Send as PDF'}</span>
                   </button>
                 </div>
               </div>
@@ -1458,7 +1519,11 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     title={sendFormat === 'pdf' ? 'Prepare & send PDF via WhatsApp' : 'Send WhatsApp text summary'}
                   >
                     <MessageSquare className="w-4 h-4" />
-                    <span>{sendFormat === 'pdf' ? 'Send WhatsApp (PDF)' : 'Send WhatsApp (Text)'}</span>
+                    <span>
+                      {language === 'zh'
+                        ? (sendFormat === 'pdf' ? 'WhatsApp 发送 (PDF)' : 'WhatsApp 发送 (文本)')
+                        : (sendFormat === 'pdf' ? 'Send WhatsApp (PDF)' : 'Send WhatsApp (Text)')}
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -1467,7 +1532,11 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     title={sendFormat === 'pdf' ? 'Prepare & attach PDF in email' : 'Send email body text'}
                   >
                     <Mail className="w-4 h-4" />
-                    <span>{sendFormat === 'pdf' ? 'Send Email (PDF)' : 'Send Email (Text)'}</span>
+                    <span>
+                      {language === 'zh'
+                        ? (sendFormat === 'pdf' ? '邮件发送 (PDF)' : '邮件发送 (文本)')
+                        : (sendFormat === 'pdf' ? 'Send Email (PDF)' : 'Send Email (Text)')}
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -1475,7 +1544,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     className="py-3 px-3 rounded-xl bg-neutral-800 dark:bg-white/15 hover:bg-neutral-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
                   >
                     <Share2 className="w-4 h-4 text-blue-400" />
-                    <span>Send & Share Hub</span>
+                    <span>{language === 'zh' ? '发送与分享中心' : 'Send & Share Hub'}</span>
                   </button>
                 </div>
 
@@ -1486,21 +1555,21 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     className="py-3 px-4 rounded-xl bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border border-black/5 dark:border-white/10 active:scale-95"
                   >
                     {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                    <span>{copied ? 'Copied!' : 'Copy Text'}</span>
+                    <span>{copied ? (language === 'zh' ? '已复制！' : 'Copied!') : (language === 'zh' ? '复制文本' : 'Copy Text')}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleExport('view')}
                     className="flex-1 py-3 rounded-xl bg-neutral-100 dark:bg-white/10 font-bold text-xs sm:text-sm hover:bg-neutral-200 dark:hover:bg-white/20 flex items-center justify-center gap-2 transition-all text-neutral-800 dark:text-neutral-200"
                   >
-                    Preview PDF
+                    {language === 'zh' ? '预览 PDF' : 'Preview PDF'}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleExport('save')}
                     className="flex-1 py-3 rounded-xl bg-blue-500 text-white font-bold text-xs sm:text-sm hover:bg-blue-600 flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition-all active:scale-95"
                   >
-                    <Download className="w-4 h-4" /> Download PDF
+                    <Download className="w-4 h-4" /> {language === 'zh' ? '下载 PDF' : 'Download PDF'}
                   </button>
                 </div>
               </div>
@@ -1518,7 +1587,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                     <input
                       type="text"
-                      placeholder="Search saved quotes by Doc #, customer name, items..."
+                      placeholder={language === 'zh' ? '搜索已存报价 (按单号、客户姓名、项目内容)...' : 'Search saved quotes by Doc #, customer name, items...'}
                       value={recordSearch}
                       onChange={e => setRecordSearch(e.target.value)}
                       className="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl bg-white dark:bg-[#24242a] border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-blue-500 outline-none text-neutral-900 dark:text-white"
@@ -1527,7 +1596,9 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <div className="flex items-center gap-2 text-xs text-neutral-500 shrink-0">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span className="font-mono">
-                      {cloudQuotes?.length || 0} Records on {user.email}
+                      {language === 'zh'
+                        ? `${cloudQuotes?.length || 0} 条存档 (${user.email})`
+                        : `${cloudQuotes?.length || 0} Records on ${user.email}`}
                     </span>
                   </div>
                 </div>
@@ -1539,12 +1610,13 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       <Cloud className="w-12 h-12 opacity-20 mb-2" />
                       <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
                         {recordSearch
-                          ? 'No matching quotations found'
-                          : 'No saved records in your Google Account yet'}
+                          ? (language === 'zh' ? '未找到匹配的报价记录' : 'No matching quotations found')
+                          : (language === 'zh' ? '您的 Google 账号中暂无云端存档' : 'No saved records in your Google Account yet')}
                       </p>
                       <p className="text-xs text-neutral-500 mt-1 max-w-sm">
-                        Switch to the "Active Quote" tab and click "Save to Cloud" to backup your quotes
-                        permanently.
+                        {language === 'zh'
+                          ? '切换至"当前清单"并点击"存云端"即可将报价永久备份至云端。'
+                          : 'Switch to the "Active Quote" tab and click "Save to Cloud" to backup your quotes permanently.'}
                       </p>
                     </div>
                   ) : (
@@ -1559,7 +1631,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                               {record.docNo || 'NO-DOC-ID'}
                             </span>
                             <h4 className="text-sm font-bold text-neutral-900 dark:text-white truncate">
-                              {record.customerName || 'Valued Client'}
+                              {record.customerName || (language === 'zh' ? '贵客' : 'Valued Client')}
                             </h4>
                             <span className="text-[11px] text-neutral-400 font-mono">
                               {record.dateFormatted ||
@@ -1570,9 +1642,9 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                             {(record.items || []).map(i => `${i.quantity}x ${i.title}`).join(', ')}
                           </p>
                           <div className="flex items-center gap-3 text-[11px] text-neutral-400 font-mono mt-1.5">
-                            <span>{record.items?.length || 0} Items</span>
+                            <span>{record.items?.length || 0} {language === 'zh' ? '项内容' : 'Items'}</span>
                             {record.deposit !== undefined && record.deposit > 0 && (
-                              <span>Deposit: ${Number(record.deposit).toFixed(2)}</span>
+                              <span>{language === 'zh' ? '定金' : 'Deposit'}: ${Number(record.deposit).toFixed(2)}</span>
                             )}
                           </div>
                         </div>
@@ -1581,7 +1653,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                           <div className="text-left sm:text-right">
                             <span className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider block">
-                              Total
+                              {language === 'zh' ? '总额' : 'Total'}
                             </span>
                             <span className="text-lg font-black font-mono text-neutral-900 dark:text-white">
                               ${Number(record.finalTotal || record.grandTotal || 0).toFixed(2)}
@@ -1593,10 +1665,10 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                             <button
                               onClick={() => handleLoadRecord(record)}
                               className="px-3 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
-                              title="Open and load this quote back into the calculator"
+                              title={language === 'zh' ? '打开并将此报价载入计算器' : 'Open and load this quote back into the calculator'}
                             >
                               <FolderOpen className="w-3.5 h-3.5" />
-                              <span>Open Record</span>
+                              <span>{language === 'zh' ? '载入报价' : 'Open Record'}</span>
                             </button>
 
                             {/* Copy Text */}
@@ -1611,10 +1683,10 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                                   'whatsapp'
                                 );
                                 await copyToClipboard(txt);
-                                showToast(`Copied #${record.docNo} text!`);
+                                showToast(`${language === 'zh' ? '已复制单据文本' : 'Copied quote text'}: #${record.docNo}`);
                               }}
                               className="p-2 rounded-xl bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 text-neutral-700 dark:text-neutral-300 transition-all"
-                              title="Copy quote text"
+                              title={language === 'zh' ? '复制报价文本' : 'Copy quote text'}
                             >
                               <Copy className="w-3.5 h-3.5" />
                             </button>
@@ -1624,15 +1696,17 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                               onClick={() => {
                                 if (
                                   confirm(
-                                    `Delete quote #${record.docNo || 'this record'} from your Google account?`
+                                    language === 'zh'
+                                      ? `确定从您的 Google 云端账号中删除单据 #${record.docNo || '此记录'} 吗？`
+                                      : `Delete quote #${record.docNo || 'this record'} from your Google account?`
                                   )
                                 ) {
                                   deleteQuoteFromCloud(record.id);
-                                  showToast('Deleted from Google Cloud');
+                                  showToast(language === 'zh' ? '已从云端删除' : 'Deleted from Google Cloud');
                                 }
                               }}
                               className="p-2 rounded-xl text-neutral-400 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                              title="Delete record"
+                              title={language === 'zh' ? '删除记录' : 'Delete record'}
                             >
                               <Trash className="w-3.5 h-3.5" />
                             </button>
@@ -1651,11 +1725,12 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-neutral-900 dark:text-white">
-                    Sign In to View Cloud Records
+                    {language === 'zh' ? '登录以查看云端存档' : 'Sign In to View Cloud Records'}
                   </h3>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
-                    Log in with your Google account to keep all customer quotations, invoice numbers, custom
-                    sizing, and pricing records synced across all your devices.
+                    {language === 'zh'
+                      ? '使用 Google 账号登录，可将所有客户报价单、发票单号、定制尺寸与价格明细在您的所有设备间实时同步。'
+                      : 'Log in with your Google account to keep all customer quotations, invoice numbers, custom sizing, and pricing records synced across all your devices.'}
                   </p>
                 </div>
                 <button
@@ -1663,7 +1738,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   className="px-6 py-3 rounded-xl bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 shadow-md shadow-blue-500/20 flex items-center gap-2 transition-all active:scale-95"
                 >
                   <GoogleIcon className="w-4 h-4" />
-                  <span>Sign In with Google</span>
+                  <span>{language === 'zh' ? '使用 Google 账号登录' : 'Sign In with Google'}</span>
                 </button>
               </div>
             )}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { QuoteItem, RatesConfig, LanguageType } from '../types';
+import { QuoteItem, RatesConfig } from '../types';
 import { copyToClipboard } from '../utils/clipboard';
+import { useLanguage } from '../context/LanguageContext';
 import { Check, Plus, Copy } from 'lucide-react';
-import { getTranslation } from '../data/translations';
 
 interface QuotationModalProps {
   isOpen: boolean;
@@ -10,7 +10,6 @@ interface QuotationModalProps {
   onClose: () => void;
   onAddToQuote: (item?: QuoteItem) => void;
   rates?: RatesConfig;
-  language?: LanguageType;
 }
 
 const itemColorMap: Record<string, { badge: string; border: string }> = {
@@ -30,15 +29,14 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
   onClose,
   onAddToQuote,
   rates,
-  language = 'en',
 }) => {
+  const { language, t } = useLanguage();
   const [isAdded, setIsAdded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedFormula, setCopiedFormula] = useState(false);
   const [showFormula, setShowFormula] = useState(false);
   const [editedPrice, setEditedPrice] = useState<string>('');
   const [editedTitle, setEditedTitle] = useState<string>('');
-  const t = getTranslation(language);
 
   useEffect(() => {
     if (data) {
@@ -150,7 +148,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-neutral-300">
-              {t.modalSpecTitle}
+              {t.quotationModal.title}
             </span>
             {itemColor && (
               <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wide border ${itemColor.badge}`}>
@@ -169,7 +167,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               className="p-2.5 sm:p-3 flex items-center justify-between cursor-pointer hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-colors select-none group"
             >
               <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-neutral-200">
-                {t.modalSignageSpec}
+                {t.quotationModal.spec}
               </span>
             </div>
 
@@ -190,7 +188,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                     <span className="font-bold text-[11px] text-slate-800 dark:text-neutral-200">
-                      {t.modalMathFormula}
+                      {t.quotationModal.mathFormula}
                     </span>
                   </div>
                   <button
@@ -201,12 +199,12 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                     {copiedFormula ? (
                       <>
                         <Check className="w-3 h-3 text-emerald-500" />
-                        <span className="text-emerald-500 font-bold">{t.modalCopied}</span>
+                        <span className="text-emerald-500 font-bold">{t.quotationModal.formulaCopied}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3 h-3" />
-                        <span>{t.modalCopyFormula}</span>
+                        <span>{t.quotationModal.copyFormula}</span>
                       </>
                     )}
                   </button>
@@ -216,11 +214,11 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-900 dark:text-blue-300 font-mono text-[11px] leading-relaxed">
                   {isLedStrip ? (
                     <div>
-                      <span className="font-bold">{language === 'zh' ? 'LED灯带计算公式:' : 'LED Strip Rule:'}</span> (Width in ÷ 39) × (Height in ÷ 5) × Rate ($/ft)
+                      <span className="font-bold">LED Strip Rule:</span> (Width in ÷ 39) × (Height in ÷ 5) × Rate ($/ft)
                     </div>
                   ) : (
                     <div>
-                      <span className="font-bold">{language === 'zh' ? '标准面积计算公式:' : 'Standard Area Rule:'}</span> Width (ft) × Height (ft) × Rate ($/sq ft)
+                      <span className="font-bold">Standard Area Rule:</span> Width (ft) × Height (ft) × Rate ($/sq ft)
                     </div>
                   )}
                 </div>
@@ -230,10 +228,10 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                   {/* Step 1 */}
                   <div className="p-2 rounded-lg bg-white dark:bg-neutral-900/80 border border-slate-200/80 dark:border-white/5">
                     <div className="text-[9px] font-bold uppercase text-slate-500 dark:text-neutral-400 mb-0.5">
-                      {t.modalStep1Conversion}
+                      1. Size &amp; Unit Conversion
                     </div>
                     <div className="text-slate-800 dark:text-neutral-200">
-                      {t.modalStep1Input}: <span className="font-bold">{data.originalWidth} × {data.originalHeight} {data.unit.toUpperCase()}</span>
+                      Input: <span className="font-bold">{data.originalWidth} × {data.originalHeight} {data.unit.toUpperCase()}</span>
                     </div>
                     <div className="text-slate-600 dark:text-neutral-400 text-[10px] mt-0.5">
                       = {widthInches.toFixed(1)}" × {heightInches.toFixed(1)}" in ({widthFeet.toFixed(2)}' × {heightFeet.toFixed(2)}' ft)
@@ -243,7 +241,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                   {/* Step 2 */}
                   <div className="p-2 rounded-lg bg-white dark:bg-neutral-900/80 border border-slate-200/80 dark:border-white/5">
                     <div className="text-[9px] font-bold uppercase text-slate-500 dark:text-neutral-400 mb-0.5">
-                      {isLedStrip ? t.modalStep2Multiplier : t.modalStep2Area}
+                      {isLedStrip ? '2. Module Multiplier' : '2. Calculated Area'}
                     </div>
                     {isLedStrip ? (
                       <div>
@@ -271,10 +269,10 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 <div className="p-2.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-950/30 border border-emerald-500/25 text-emerald-900 dark:text-emerald-300 font-mono text-[11px]">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                      {t.modalFinalEquation}
+                      Final Equation
                     </span>
                     <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                      {t.modalRateLabel}: ${resolvedRate} {rateUnit}
+                      Rate: ${resolvedRate} {rateUnit}
                     </span>
                   </div>
                   <div className="mt-1 text-xs sm:text-sm font-black text-emerald-800 dark:text-emerald-200">
@@ -303,7 +301,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           <div className="p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div>
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
-                {t.modalDimensions}
+                {t.quotationModal.dim}
               </span>
               <p className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-neutral-200 mt-0.5">
                 {data.originalWidth} × {data.originalHeight} {data.unit.toUpperCase()}
@@ -311,7 +309,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             </div>
             <div className="text-right">
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
-                {t.modalCalculatedArea}
+                {t.quotationModal.area}
               </span>
               <p className="text-xs sm:text-sm font-mono text-slate-600 dark:text-neutral-400 font-semibold">
                 {((data.widthInches * data.heightInches) / 144).toFixed(2)} sq ft
@@ -322,8 +320,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           {/* Unit Price Input */}
           <div className="p-2.5 sm:p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 flex items-center justify-between">
             <div>
-              <span className="text-xs font-bold text-slate-800 dark:text-neutral-300">{t.modalUnitPrice}</span>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-neutral-400">{t.modalEditableHint}</p>
+              <span className="text-xs font-bold text-slate-800 dark:text-neutral-300">{t.quotationModal.unitPrice}</span>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-neutral-400">{t.quotationModal.editable}</p>
             </div>
             <div className="flex items-center gap-1 bg-white dark:bg-[#18181c] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-blue-300/80 dark:border-white/10 shadow-sm">
               <span className="text-base sm:text-lg font-bold font-mono text-blue-600 dark:text-blue-500">$</span>
@@ -349,11 +347,11 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             >
               {isAdded ? (
                 <>
-                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t.modalAdded}
+                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t.quotationModal.added}
                 </>
               ) : (
                 <>
-                  <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t.modalAddToQuote}
+                  <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t.quotationModal.addToQuote}
                 </>
               )}
             </button>
@@ -363,11 +361,11 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" /> {t.modalCopiedText}
+                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" /> {t.quotationModal.copied}
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t.modalCopyText}
+                  <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t.quotationModal.copyText}
                 </>
               )}
             </button>

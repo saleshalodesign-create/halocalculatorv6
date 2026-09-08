@@ -21,6 +21,7 @@ interface MacPricingCardProps {
   isSelected?: boolean;
   onClick: () => void;
   onRateChange?: (newRate: number) => void;
+  editTooltip?: string;
 }
 
 const cardThemes: Record<MacPricingCardProps['iconType'], {
@@ -189,6 +190,7 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
   isSelected = false,
   onClick,
   onRateChange,
+  editTooltip = "Click to edit rate",
 }) => {
   const [localRate, setLocalRate] = useState<string>(rate !== undefined ? rate.toString() : '');
   const [isClicked, setIsClicked] = useState<boolean>(false);
@@ -219,15 +221,15 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
 
   const getIcon = () => {
     switch (iconType) {
-      case 'lightbox': return <Box className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
-      case 'lightboxBacklit': return <Box className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
-      case 'backlit': return <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
-      case 'trans': return <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
-      case 'printed3d': return <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
-      case 'vinylSticker': return <Scissors className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
-      case 'ledStrip': return <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
-      case 'acrylic': return <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
-      default: return <Box className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5.5 lg:h-5.5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7" />;
+      case 'lightbox': return <Box className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
+      case 'lightboxBacklit': return <Box className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
+      case 'backlit': return <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
+      case 'trans': return <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
+      case 'printed3d': return <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
+      case 'vinylSticker': return <Scissors className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
+      case 'ledStrip': return <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
+      case 'acrylic': return <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
+      default: return <Box className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />;
     }
   };
 
@@ -236,16 +238,16 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
   return (
     <div
       onClick={handleClick}
-      className={`group relative rounded-xl sm:rounded-2xl lg:rounded-2xl xl:rounded-3xl p-2 sm:p-3 lg:p-4.5 xl:p-5.5 2xl:p-6 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden min-h-[76px] sm:min-h-[96px] lg:min-h-[148px] xl:min-h-[172px] 2xl:min-h-[192px] gpu-layer active:scale-[0.98] ${
+      className={`group relative rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden min-h-[76px] sm:min-h-[96px] lg:min-h-[118px] gpu-layer active:scale-[0.98] ${
         isLit
           ? `${theme.selectedLightBg} ${theme.selectedDarkBg} border-2 ${theme.selectedLightBorder} ${theme.selectedDarkBorder} ${theme.selectedDarkShadow} ring-2 ring-current/20 shadow-md`
           : `${theme.lightBg} ${theme.hoverBgLight} dark:bg-[#181920]/95 ${theme.hoverBgDark} backdrop-blur-md border ${theme.lightBorder} dark:border-white/10 ${theme.hoverBorder} shadow-sm hover:shadow-md hover:-translate-y-0.5`
       }`}
     >
       {/* Top Row: Icon + Title */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 lg:gap-3.5 2xl:gap-4 min-w-0">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
         <div
-          className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-11 lg:h-11 xl:w-12 xl:h-12 2xl:w-13.5 2xl:h-13.5 rounded-lg lg:rounded-xl xl:rounded-2xl ${iconBg} text-white flex items-center justify-center shadow-sm shrink-0 transition-transform ${
+          className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-lg ${iconBg} text-white flex items-center justify-center shadow-sm shrink-0 transition-transform ${
             isLit ? 'scale-105 shadow-md' : 'group-hover:scale-105'
           }`}
         >
@@ -253,7 +255,7 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
         </div>
         <div className="min-w-0 flex-1">
           <h4
-            className={`font-extrabold text-[11px] sm:text-xs lg:text-[14px] xl:text-base 2xl:text-lg tracking-tight leading-snug truncate transition-colors ${
+            className={`font-extrabold text-[11px] sm:text-xs lg:text-sm tracking-tight leading-snug truncate transition-colors ${
               isLit
                 ? `${theme.selectedTitleText}`
                 : `text-black dark:text-white ${theme.hoverTitleText}`
@@ -262,7 +264,7 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
             {title}
           </h4>
           {subtitle && (
-            <span className="text-[8.5px] sm:text-[9.5px] lg:text-xs xl:text-[13px] 2xl:text-sm font-semibold text-slate-500 dark:text-neutral-400 block truncate leading-none mt-0.5 sm:mt-1">
+            <span className="block text-[8px] sm:text-[9px] font-bold tracking-wider text-slate-500 dark:text-neutral-400 uppercase truncate">
               {subtitle}
             </span>
           )}
@@ -270,15 +272,15 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
       </div>
 
       {/* Bottom Row: Rate Badge & Total Price */}
-      <div className="mt-1.5 sm:mt-2 lg:mt-3 xl:mt-4 pt-1 sm:pt-1.5 lg:pt-2.5 xl:pt-3 flex items-center justify-between gap-1 flex-nowrap border-t border-black/5 dark:border-white/[0.04]">
+      <div className="mt-1.5 sm:mt-2 pt-1 sm:pt-1.5 flex items-center justify-between gap-1 flex-nowrap border-t border-black/5 dark:border-white/[0.04]">
         {/* Editable Rate Pill ($ 35 /SQ FT) */}
         {rate !== undefined ? (
           <div
             onClick={e => e.stopPropagation()}
-            className={`inline-flex items-center gap-0.5 sm:gap-1 lg:gap-1.5 xl:gap-2 px-1.5 sm:px-2 lg:px-2.5 xl:px-3 2xl:px-3.5 py-0.5 lg:py-1 xl:py-1.5 rounded-md lg:rounded-lg xl:rounded-xl ${theme.lightRateBadge} dark:bg-[#0c0d0f] border dark:border-white/15 hover:border-blue-400/60 focus-within:border-blue-500 shadow-sm shrink-0 transition-colors group/rate cursor-text`}
-            title="Click to edit rate"
+            className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-md ${theme.lightRateBadge} dark:bg-[#0c0d0f] border dark:border-white/15 hover:border-blue-400/60 focus-within:border-blue-500 shadow-sm shrink-0 transition-colors group/rate cursor-text`}
+            title={editTooltip}
           >
-            <span className="text-[8px] sm:text-[10px] lg:text-xs xl:text-sm font-bold text-slate-800 dark:text-neutral-400 select-none">$</span>
+            <span className="text-[8px] sm:text-[10px] font-bold text-slate-800 dark:text-neutral-400 select-none">$</span>
             {onRateChange ? (
               <input
                 type="number"
@@ -298,14 +300,14 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
                   width: `${Math.max(2, (localRate || '').length) + 0.5}ch`,
                   minWidth: '18px',
                 }}
-                className="text-center text-[9px] sm:text-[11px] lg:text-xs xl:text-sm 2xl:text-base font-black text-black dark:text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500 hover:border-slate-400 dark:hover:border-white/30 transition-colors font-mono p-0"
-                title="Edit rate"
+                className="text-center text-[9px] sm:text-[11px] font-black text-black dark:text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500 hover:border-slate-400 dark:hover:border-white/30 transition-colors font-mono p-0"
+                title={editTooltip}
               />
             ) : (
-              <span className="text-[9px] sm:text-[11px] lg:text-xs xl:text-sm 2xl:text-base font-black text-black dark:text-white font-mono">{rate}</span>
+              <span className="text-[9px] sm:text-[11px] font-black text-black dark:text-white font-mono">{rate}</span>
             )}
-            <span className="text-[7.5px] sm:text-[9px] lg:text-[10.5px] xl:text-xs 2xl:text-sm font-bold text-slate-700 dark:text-neutral-400 tracking-tight uppercase select-none">{rateUnit}</span>
-            <Edit2 className="w-2 h-2 lg:w-2.5 lg:h-2.5 xl:w-3 xl:h-3 text-slate-500 dark:text-neutral-500 group-hover/rate:text-blue-600 dark:group-hover/rate:text-blue-400 opacity-75 group-hover/rate:opacity-100 transition-opacity hidden sm:inline shrink-0" />
+            <span className="text-[7.5px] sm:text-[9px] font-bold text-slate-700 dark:text-neutral-400 tracking-tight uppercase select-none">{rateUnit}</span>
+            <Edit2 className="w-2 h-2 text-slate-500 dark:text-neutral-500 group-hover/rate:text-blue-600 dark:group-hover/rate:text-blue-400 opacity-75 group-hover/rate:opacity-100 transition-opacity hidden sm:inline shrink-0" />
           </div>
         ) : (
           <div />
@@ -319,10 +321,10 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
               : `text-black dark:text-white ${theme.hoverPriceText}`
           } ${
             formattedPrice.length > 7
-              ? 'text-xs sm:text-sm lg:text-lg xl:text-xl 2xl:text-2xl'
+              ? 'text-xs sm:text-sm lg:text-base'
               : formattedPrice.length > 5
-              ? 'text-xs sm:text-base lg:text-xl xl:text-2xl 2xl:text-3xl'
-              : 'text-xs sm:text-lg lg:text-2xl xl:text-3xl 2xl:text-4xl'
+              ? 'text-xs sm:text-base lg:text-lg'
+              : 'text-xs sm:text-lg lg:text-xl'
           }`}
         >
           ${formattedPrice}

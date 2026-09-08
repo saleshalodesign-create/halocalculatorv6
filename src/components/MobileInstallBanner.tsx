@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Smartphone, X, Apple, Share2 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MobileInstallBannerProps {
   onInstall: () => void;
@@ -14,6 +15,7 @@ export const MobileInstallBanner: React.FC<MobileInstallBannerProps> = ({
   isStandalone,
   deferredPrompt,
 }) => {
+  const { language } = useLanguage();
   const [dismissed, setDismissed] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
 
@@ -34,10 +36,14 @@ export const MobileInstallBanner: React.FC<MobileInstallBannerProps> = ({
         </div>
         <div className="min-w-0">
           <p className="text-[11px] sm:text-xs font-bold leading-tight truncate">
-            {isIOS ? 'Install on iPhone / iPad' : 'Install Halo Design App'}
+            {language === 'zh'
+              ? (isIOS ? '安装到 iPhone / iPad' : '安装 Halo Design 移动版')
+              : (isIOS ? 'Install on iPhone / iPad' : 'Install Halo Design App')}
           </p>
           <p className="text-[9px] sm:text-[10px] text-blue-100 leading-tight truncate">
-            {isIOS ? 'Tap Share → "Add to Home Screen"' : 'Fast full-screen & offline quote tool'}
+            {language === 'zh'
+              ? (isIOS ? '点击分享按钮 → "添加至主屏幕"' : '极速全屏与离线报价神器')
+              : (isIOS ? 'Tap Share → "Add to Home Screen"' : 'Fast full-screen & offline quote tool')}
           </p>
         </div>
       </div>
@@ -48,12 +54,16 @@ export const MobileInstallBanner: React.FC<MobileInstallBannerProps> = ({
           className="px-2.5 sm:px-3 py-1 rounded-lg bg-white text-slate-900 font-bold text-[10px] sm:text-xs flex items-center gap-1 shadow-sm hover:bg-slate-50 active:scale-95 transition-all"
         >
           {isIOS ? <Share2 className="w-3 h-3 text-blue-600" /> : <Download className="w-3 h-3 text-emerald-600" />}
-          <span>{isIOS ? 'Install Guide' : (deferredPrompt ? '1-Tap Install' : 'Add to Phone')}</span>
+          <span>
+            {language === 'zh'
+              ? (isIOS ? '安装指南' : (deferredPrompt ? '一键安装' : '添加到桌面'))
+              : (isIOS ? 'Install Guide' : (deferredPrompt ? '1-Tap Install' : 'Add to Phone'))}
+          </span>
         </button>
         <button
           onClick={() => setDismissed(true)}
           className="p-1 rounded-md text-blue-200 hover:text-white hover:bg-white/10 transition-colors"
-          title="Dismiss"
+          title={language === 'zh' ? '关闭' : 'Dismiss'}
         >
           <X className="w-3.5 h-3.5" />
         </button>

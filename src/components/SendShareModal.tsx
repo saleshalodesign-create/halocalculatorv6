@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QuoteItem, QuoteRecord } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 import {
   DocumentType,
   formatDocumentMessage,
@@ -61,6 +62,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
   docType: docTypeProp,
   initialSendFormat = 'text',
 }) => {
+  const { language } = useLanguage();
   const recordData: Partial<QuoteRecord> = rawRecordData || {};
   const effectiveInitialType: DocumentType = docTypeProp || initialDocType || (recordData.docType as DocumentType) || 'quote';
   const [docType, setDocType] = useState<DocumentType>(effectiveInitialType);
@@ -92,14 +94,14 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
 
       setEmail(recordData.customerEmail || '');
       setShowSizes(recordData.showSizes !== false);
-      setEmailSubject(getDocumentSubject(recordData, startType));
+      setEmailSubject(getDocumentSubject(recordData, startType, language));
     }
-  }, [isOpen, initialDocType, docTypeProp, initialSendFormat, recordData]);
+  }, [isOpen, initialDocType, docTypeProp, initialSendFormat, recordData, language]);
 
-  // Update email subject when docType changes
+  // Update email subject when docType or language changes
   useEffect(() => {
-    setEmailSubject(getDocumentSubject(recordData, docType));
-  }, [docType, recordData]);
+    setEmailSubject(getDocumentSubject(recordData, docType, language));
+  }, [docType, recordData, language]);
 
   if (!isOpen) return null;
 
@@ -124,6 +126,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
     finalTotal,
     docType,
     format: 'whatsapp',
+    language,
   });
 
   const emailBody = formatDocumentMessage({
@@ -134,6 +137,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
     finalTotal,
     docType,
     format: 'email',
+    language,
   });
 
   const pdfCoverWhatsApp = formatPDFCoverMessage({
@@ -142,6 +146,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
     docType,
     filename: pdfFilename,
     format: 'whatsapp',
+    language,
   });
 
   const pdfCoverEmail = formatPDFCoverMessage({
@@ -150,6 +155,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
     docType,
     filename: pdfFilename,
     format: 'email',
+    language,
   });
 
   // --- SEND HANDLERS FOR TEXT ---
@@ -158,14 +164,14 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
       phone,
       text: whatsappMessage,
     });
-    showToast('Opening WhatsApp with text summary...');
+    showToast(language === 'zh' ? '正在打开 WhatsApp...' : 'Opening WhatsApp with text summary...');
   };
 
   const handleCopyWhatsApp = async (textToCopy = whatsappMessage) => {
     const success = await copyToClipboard(textToCopy);
     if (success) {
       setCopied(true);
-      showToast('Copied text to clipboard!');
+      showToast(language === 'zh' ? '已复制文本到剪贴板！' : 'Copied text to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -173,28 +179,28 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
   const handleSendEmailAppText = () => {
     openEmail({
       email,
-      subject: emailSubject || getDocumentSubject(currentData, docType),
+      subject: emailSubject || getDocumentSubject(currentData, docType, language),
       body: emailBody,
       useGmailWeb: false,
     });
-    showToast('Launching default email client...');
+    showToast(language === 'zh' ? '正在启动默认邮件应用...' : 'Launching default email client...');
   };
 
   const handleSendGmailWebText = () => {
     openEmail({
       email,
-      subject: emailSubject || getDocumentSubject(currentData, docType),
+      subject: emailSubject || getDocumentSubject(currentData, docType, language),
       body: emailBody,
       useGmailWeb: true,
     });
-    showToast('Opening Gmail Web composer...');
+    showToast(language === 'zh' ? '正在打开网页版 Gmail...' : 'Opening Gmail Web composer...');
   };
 
   const handleCopyEmail = async (textToCopy = `Subject: ${emailSubject}\n\n${emailBody}`) => {
     const success = await copyToClipboard(textToCopy);
     if (success) {
       setCopied(true);
-      showToast('Email content copied to clipboard!');
+      showToast(language === 'zh' ? '邮件内容已复制到剪贴板！' : 'Email content copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -202,18 +208,18 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
   // --- SEND HANDLERS FOR PDF ---
   const handleSendWhatsAppPDF = async () => {
     try {
-      showToast('Generating official PDF document...');
+      showToast(language === 'zh' ? '正在生成正式 PDF 文档...' : 'Generating official PDF document...');
       const pdfOutput = createDocumentPDFFile(docType, items, currentData, grandTotal, discountAmount, finalTotal);
 
       // Check if native mobile file share works (iOS/Android)
       if (canShareNative() && navigator.canShare && navigator.canShare({ files: [pdfOutput.file] })) {
         const shared = await shareNative({
-          title: getDocumentSubject(currentData, docType),
+          title: getDocumentSubject(currentData, docType, language),
           text: pdfCoverWhatsApp,
           files: [pdfOutput.file],
         });
         if (shared) {
-          showToast('Shared PDF directly to WhatsApp!');
+          showToast(language === 'zh' ? '已直接分享 PDF 到 WhatsApp！' : 'Shared PDF directly to WhatsApp!');
           return;
         }
       }
@@ -224,26 +230,26 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
         phone,
         text: pdfCoverWhatsApp,
       });
-      showToast(`PDF downloaded! Attach ${pdfOutput.filename} in WhatsApp.`);
+      showToast(language === 'zh' ? `PDF 已下载！请在 WhatsApp 中附加 ${pdfOutput.filename} 发送。` : `PDF downloaded! Attach ${pdfOutput.filename} in WhatsApp.`);
     } catch (err) {
       console.error('WhatsApp PDF error:', err);
-      showToast('Failed to prepare PDF for WhatsApp');
+      showToast(language === 'zh' ? '生成 WhatsApp PDF 失败' : 'Failed to prepare PDF for WhatsApp');
     }
   };
 
   const handleSendEmailPDFApp = async () => {
     try {
-      showToast('Generating official PDF document...');
+      showToast(language === 'zh' ? '正在生成正式 PDF 文档...' : 'Generating official PDF document...');
       const pdfOutput = createDocumentPDFFile(docType, items, currentData, grandTotal, discountAmount, finalTotal);
 
       if (canShareNative() && navigator.canShare && navigator.canShare({ files: [pdfOutput.file] })) {
         const shared = await shareNative({
-          title: emailSubject || getDocumentSubject(currentData, docType),
+          title: emailSubject || getDocumentSubject(currentData, docType, language),
           text: pdfCoverEmail,
           files: [pdfOutput.file],
         });
         if (shared) {
-          showToast('Shared PDF to mail client!');
+          showToast(language === 'zh' ? '已直接分享 PDF 到邮件！' : 'Shared PDF to mail client!');
           return;
         }
       }
@@ -251,32 +257,32 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
       downloadBlobOrFile(pdfOutput.file, pdfOutput.filename);
       openEmail({
         email,
-        subject: emailSubject || getDocumentSubject(currentData, docType),
+        subject: emailSubject || getDocumentSubject(currentData, docType, language),
         body: pdfCoverEmail,
         useGmailWeb: false,
       });
-      showToast(`PDF downloaded! Attach ${pdfOutput.filename} in your email draft.`);
+      showToast(language === 'zh' ? `PDF 已下载！请在草稿中附加 ${pdfOutput.filename}。` : `PDF downloaded! Attach ${pdfOutput.filename} in your email draft.`);
     } catch (err) {
       console.error('Email PDF error:', err);
-      showToast('Failed to prepare PDF for Email');
+      showToast(language === 'zh' ? '生成邮件 PDF 失败' : 'Failed to prepare PDF for Email');
     }
   };
 
   const handleSendEmailPDFGmail = async () => {
     try {
-      showToast('Generating official PDF document...');
+      showToast(language === 'zh' ? '正在生成正式 PDF 文档...' : 'Generating official PDF document...');
       const pdfOutput = createDocumentPDFFile(docType, items, currentData, grandTotal, discountAmount, finalTotal);
       downloadBlobOrFile(pdfOutput.file, pdfOutput.filename);
       openEmail({
         email,
-        subject: emailSubject || getDocumentSubject(currentData, docType),
+        subject: emailSubject || getDocumentSubject(currentData, docType, language),
         body: pdfCoverEmail,
         useGmailWeb: true,
       });
-      showToast(`PDF downloaded! Attach ${pdfOutput.filename} in Gmail.`);
+      showToast(language === 'zh' ? `PDF 已下载！请在 Gmail 中附加 ${pdfOutput.filename}。` : `PDF downloaded! Attach ${pdfOutput.filename} in Gmail.`);
     } catch (err) {
       console.error('Gmail PDF error:', err);
-      showToast('Failed to prepare PDF for Gmail');
+      showToast(language === 'zh' ? '生成 Gmail PDF 失败' : 'Failed to prepare PDF for Gmail');
     }
   };
 
@@ -289,16 +295,16 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
       } else {
         generateQuotationPDF(items, currentData, grandTotal, discountAmount, finalTotal, 'save');
       }
-      showToast(`Downloaded ${docType.toUpperCase()} PDF!`);
+      showToast(language === 'zh' ? `已下载 ${docType === 'invoice' ? '发票' : '报价单'} PDF！` : `Downloaded ${docType.toUpperCase()} PDF!`);
     } catch (err) {
       console.error('PDF error:', err);
-      showToast('Failed to generate PDF');
+      showToast(language === 'zh' ? '生成 PDF 失败' : 'Failed to generate PDF');
     }
   };
 
   const handleNativeShare = async () => {
     try {
-      const title = getDocumentSubject(currentData, docType);
+      const title = getDocumentSubject(currentData, docType, language);
       if (sendFormat === 'pdf') {
         const pdfOutput = createDocumentPDFFile(docType, items, currentData, grandTotal, discountAmount, finalTotal);
         if (canShareNative() && navigator.canShare && navigator.canShare({ files: [pdfOutput.file] })) {
@@ -308,7 +314,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
             files: [pdfOutput.file],
           });
           if (success) {
-            showToast('PDF shared successfully!');
+            showToast(language === 'zh' ? 'PDF 分享成功！' : 'PDF shared successfully!');
             return;
           }
         }
@@ -316,7 +322,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
       const text = docType === 'invoice' ? emailBody : whatsappMessage;
       const success = await shareNative({ title, text });
       if (success) {
-        showToast('Shared successfully!');
+        showToast(language === 'zh' ? '分享成功！' : 'Shared successfully!');
       }
     } catch (err) {
       console.warn('Native share failed', err);
@@ -356,7 +362,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
           <div className="flex items-center gap-2">
             <Send className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-bold text-slate-800 dark:text-neutral-200">
-              Send & Share Document
+              {language === 'zh' ? '发送与分享单据' : 'Send & Share Document'}
             </span>
           </div>
 
@@ -367,7 +373,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
         <div className="p-3 sm:p-4 bg-slate-50/80 dark:bg-[#151518] border-b border-slate-200/80 dark:border-white/5 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
-              Document:
+              {language === 'zh' ? '单据类型:' : 'Document:'}
             </span>
             <div className="flex p-0.5 rounded-lg bg-slate-200/70 dark:bg-white/10 text-xs font-bold">
               <button
@@ -380,7 +386,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Quotation</span>
+                <span>{language === 'zh' ? '报价单' : 'Quotation'}</span>
               </button>
               <button
                 type="button"
@@ -392,7 +398,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Tax Invoice</span>
+                <span>{language === 'zh' ? '正式发票' : 'Tax Invoice'}</span>
               </button>
             </div>
           </div>
@@ -407,10 +413,14 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                   ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30'
                   : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-neutral-500 border-slate-200 dark:border-white/10'
               }`}
-              title="Toggle size specification in sent text"
+              title={language === 'zh' ? '切换发送文本中的尺寸规格' : 'Toggle size specification in sent text'}
             >
               <Ruler className="w-3.5 h-3.5" />
-              <span>{showSizes ? 'Sizes: Show' : 'Sizes: Hide'}</span>
+              <span>
+                {language === 'zh'
+                  ? (showSizes ? '尺寸: 显示' : '尺寸: 隐藏')
+                  : (showSizes ? 'Sizes: Show' : 'Sizes: Hide')}
+              </span>
             </button>
             <span className="text-xs font-mono font-bold text-slate-700 dark:text-neutral-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/5">
               ${finalTotal.toFixed(2)}
@@ -444,7 +454,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
           >
             <div className="w-2 h-2 rounded-full bg-blue-500" />
             <Mail className="w-3.5 h-3.5" />
-            <span>Email</span>
+            <span>{language === 'zh' ? '电子邮件' : 'Email'}</span>
           </button>
           <button
             type="button"
@@ -456,7 +466,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>Preview & Raw Text</span>
+            <span>{language === 'zh' ? '预览与文本' : 'Preview & Raw Text'}</span>
           </button>
         </div>
 
@@ -467,7 +477,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
             <div className="p-2.5 rounded-xl bg-slate-100/90 dark:bg-white/5 border border-slate-200/90 dark:border-white/5 flex items-center justify-between gap-3">
               <span className="text-xs font-bold text-slate-800 dark:text-neutral-300 flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5 text-blue-600 dark:text-blue-500" />
-                Select Output Format:
+                {language === 'zh' ? '选择发送格式:' : 'Select Output Format:'}
               </span>
               <div className="flex p-0.5 rounded-lg bg-slate-200/80 dark:bg-white/10 text-xs font-bold">
                 <button
@@ -480,7 +490,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>Send as Text</span>
+                  <span>{language === 'zh' ? '以文本发送' : 'Send as Text'}</span>
                 </button>
                 <button
                   type="button"
@@ -492,7 +502,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                   }`}
                 >
                   <FileCheck className="w-3.5 h-3.5" />
-                  <span>Send as PDF</span>
+                  <span>{language === 'zh' ? '以 PDF 发送' : 'Send as PDF'}</span>
                 </button>
               </div>
             </div>
@@ -505,22 +515,30 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                     <MessageSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    Send {docType === 'invoice' ? 'Tax Invoice' : 'Quotation'} via WhatsApp ({sendFormat === 'pdf' ? 'PDF Document' : 'Text Summary'})
+                    {language === 'zh'
+                      ? `通过 WhatsApp 发送${docType === 'invoice' ? '正式发票' : '报价单'} (${sendFormat === 'pdf' ? 'PDF 单据' : '文本明细'})`
+                      : `Send ${docType === 'invoice' ? 'Tax Invoice' : 'Quotation'} via WhatsApp (${sendFormat === 'pdf' ? 'PDF Document' : 'Text Summary'})`}
                   </span>
                   <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 font-bold">
-                    {sendFormat === 'pdf' ? 'PDF Mode' : 'Text Mode'}
+                    {language === 'zh'
+                      ? (sendFormat === 'pdf' ? 'PDF 模式' : '文本模式')
+                      : (sendFormat === 'pdf' ? 'PDF Mode' : 'Text Mode')}
                   </span>
                 </div>
 
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 block mb-1">
-                    Recipient WhatsApp Phone Number
+                    {language === 'zh' ? '接收人 WhatsApp 手机号码' : 'Recipient WhatsApp Phone Number'}
                   </label>
                   <div className="relative">
                     <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-neutral-500" />
                     <input
                       type="tel"
-                      placeholder="e.g. 91234567 or +65 9123 4567 (or leave blank to pick chat)"
+                      placeholder={
+                        language === 'zh'
+                          ? '例如: 91234567 或 +65 9123 4567 (留空则在应用中自选联系人)'
+                          : 'e.g. 91234567 or +65 9123 4567 (or leave blank to pick chat)'
+                      }
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
                       className="w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm font-mono rounded-xl bg-white dark:bg-[#141418] border border-slate-300 dark:border-white/10 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-900 dark:text-white shadow-sm"
@@ -528,11 +546,13 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                   </div>
                   {phone.trim() ? (
                     <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-1 font-mono font-semibold">
-                      Direct WhatsApp target: +{cleanPhonePreview}
+                      {language === 'zh' ? '直接发送目标:' : 'Direct WhatsApp target:'} +{cleanPhonePreview}
                     </p>
                   ) : (
                     <p className="text-[11px] text-slate-500 dark:text-neutral-400 mt-1">
-                      Tip: Leave blank to select any chat or group directly in WhatsApp.
+                      {language === 'zh'
+                        ? '提示: 留空可直接在 WhatsApp 应用中选择任意聊天或群组。'
+                        : 'Tip: Leave blank to select any chat or group directly in WhatsApp.'}
                     </p>
                   )}
                 </div>
@@ -549,7 +569,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                           {pdfFilename}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-neutral-400 flex items-center gap-2">
-                          <span>{items.length} items</span>
+                          <span>{items.length} {language === 'zh' ? '项项目' : 'items'}</span>
                           <span>•</span>
                           <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
                             ${finalTotal.toFixed(2)}
@@ -561,10 +581,10 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                       type="button"
                       onClick={handleDownloadPDF}
                       className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-neutral-200 text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 border border-slate-200 dark:border-white/10"
-                      title="Download PDF to computer"
+                      title={language === 'zh' ? '下载 PDF 到电脑' : 'Download PDF to computer'}
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download</span>
+                      <span>{language === 'zh' ? '下载' : 'Download'}</span>
                     </button>
                   </div>
                 )}
@@ -579,7 +599,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95 transition-all"
                       >
                         <MessageSquare className="w-4 h-4" />
-                        <span>Send PDF via WhatsApp</span>
+                        <span>{language === 'zh' ? '通过 WhatsApp 发送 PDF' : 'Send PDF via WhatsApp'}</span>
                         <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                       </button>
                       <button
@@ -588,7 +608,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         className="py-3 px-4 rounded-xl bg-white dark:bg-white/10 hover:bg-neutral-100 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-black/10 dark:border-white/10 active:scale-95 transition-all"
                       >
                         {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                        <span>Copy Message</span>
+                        <span>{language === 'zh' ? (copied ? '已复制！' : '复制附言') : (copied ? 'Copied!' : 'Copy Message')}</span>
                       </button>
                     </>
                   ) : (
@@ -599,7 +619,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95 transition-all"
                       >
                         <Send className="w-4 h-4" />
-                        <span>Open WhatsApp (Text)</span>
+                        <span>{language === 'zh' ? '打开 WhatsApp (文本)' : 'Open WhatsApp (Text)'}</span>
                         <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                       </button>
                       <button
@@ -608,7 +628,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         className="py-3 px-4 rounded-xl bg-white dark:bg-white/10 hover:bg-neutral-100 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-black/10 dark:border-white/10 active:scale-95 transition-all"
                       >
                         {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                        <span>Copy Text</span>
+                        <span>{language === 'zh' ? (copied ? '已复制！' : '复制文本') : (copied ? 'Copied!' : 'Copy Text')}</span>
                       </button>
                     </>
                   )}
@@ -618,9 +638,15 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
               {/* Message Preview snippet */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-neutral-400 font-bold uppercase tracking-wider">
-                  <span>{sendFormat === 'pdf' ? 'WhatsApp Accompanying Notice:' : 'WhatsApp Message Content:'}</span>
+                  <span>
+                    {language === 'zh'
+                      ? (sendFormat === 'pdf' ? 'WhatsApp 随附留言:' : 'WhatsApp 消息正文:')
+                      : (sendFormat === 'pdf' ? 'WhatsApp Accompanying Notice:' : 'WhatsApp Message Content:')}
+                  </span>
                   <span className="font-mono text-[11px] lowercase">
-                    {sendFormat === 'pdf' ? 'Official PDF Notice' : `${items.length} line items included`}
+                    {language === 'zh'
+                      ? (sendFormat === 'pdf' ? '正式 PDF 说明通知' : `包含 ${items.length} 项明细`)
+                      : (sendFormat === 'pdf' ? 'Official PDF Notice' : `${items.length} line items included`)}
                   </span>
                 </div>
                 <div className="p-3.5 rounded-xl bg-neutral-100 dark:bg-[#141418] border border-black/5 dark:border-white/5 font-mono text-xs text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap max-h-44 overflow-y-auto mac-scrollbar select-all leading-relaxed">
@@ -637,17 +663,21 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
                     <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    Email {docType === 'invoice' ? 'Tax Invoice' : 'Quotation'} ({sendFormat === 'pdf' ? 'PDF Attachment' : 'Text Summary'})
+                    {language === 'zh'
+                      ? `通过邮件发送${docType === 'invoice' ? '正式发票' : '报价单'} (${sendFormat === 'pdf' ? 'PDF 附件' : '正文文本'})`
+                      : `Email ${docType === 'invoice' ? 'Tax Invoice' : 'Quotation'} (${sendFormat === 'pdf' ? 'PDF Attachment' : 'Text Summary'})`}
                   </span>
                   <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-600/10 text-blue-700 dark:text-blue-300 font-bold">
-                    {sendFormat === 'pdf' ? 'PDF Attachment' : 'Text Body'}
+                    {language === 'zh'
+                      ? (sendFormat === 'pdf' ? 'PDF 附件' : '正文文本')
+                      : (sendFormat === 'pdf' ? 'PDF Attachment' : 'Text Body')}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 block mb-1">
-                      Recipient Client Email
+                      {language === 'zh' ? '客户电子邮箱地址' : 'Recipient Client Email'}
                     </label>
                     <div className="relative">
                       <AtSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-neutral-500" />
@@ -663,7 +693,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
 
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 block mb-1">
-                      Email Subject
+                      {language === 'zh' ? '邮件主题' : 'Email Subject'}
                     </label>
                     <input
                       type="text"
@@ -686,7 +716,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                           {pdfFilename}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-neutral-400 flex items-center gap-2">
-                          <span>Official Document</span>
+                          <span>{language === 'zh' ? '官方正本单据' : 'Official Document'}</span>
                           <span>•</span>
                           <span className="font-mono font-bold text-blue-700 dark:text-blue-400">
                             ${finalTotal.toFixed(2)}
@@ -700,7 +730,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                       className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-neutral-200 text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 border border-slate-200 dark:border-white/10"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download</span>
+                      <span>{language === 'zh' ? '下载' : 'Download'}</span>
                     </button>
                   </div>
                 )}
@@ -713,20 +743,20 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         type="button"
                         onClick={handleSendEmailPDFApp}
                         className="py-3 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-blue-600/25 active:scale-95 transition-all"
-                        title="Downloads PDF & launches default mail client"
+                        title={language === 'zh' ? '下载 PDF 并打开系统默认邮件客户端' : 'Downloads PDF & launches default mail client'}
                       >
                         <Mail className="w-4 h-4" />
-                        <span>Send PDF via Mail</span>
+                        <span>{language === 'zh' ? '通过邮件客户端发送 PDF' : 'Send PDF via Mail'}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={handleSendEmailPDFGmail}
                         className="py-3 px-3 rounded-xl bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-100 text-white dark:text-neutral-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"
-                        title="Downloads PDF & opens Gmail Web composer"
+                        title={language === 'zh' ? '下载 PDF 并打开网页版 Gmail' : 'Downloads PDF & opens Gmail Web composer'}
                       >
                         <ExternalLink className="w-4 h-4 text-red-500" />
-                        <span>Send PDF via Gmail</span>
+                        <span>{language === 'zh' ? '通过 Gmail 发送 PDF' : 'Send PDF via Gmail'}</span>
                       </button>
 
                       <button
@@ -735,7 +765,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         className="py-3 px-3 rounded-xl bg-white dark:bg-white/10 hover:bg-neutral-100 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-black/10 dark:border-white/10 active:scale-95 transition-all"
                       >
                         {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                        <span>Copy Email</span>
+                        <span>{language === 'zh' ? (copied ? '已复制！' : '复制邮件内容') : (copied ? 'Copied!' : 'Copy Email')}</span>
                       </button>
                     </>
                   ) : (
@@ -746,7 +776,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         className="py-3 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-blue-600/25 active:scale-95 transition-all"
                       >
                         <Mail className="w-4 h-4" />
-                        <span>Mail App (Text)</span>
+                        <span>{language === 'zh' ? '邮件客户端 (文本)' : 'Mail App (Text)'}</span>
                       </button>
 
                       <button
@@ -755,7 +785,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         className="py-3 px-3 rounded-xl bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-100 text-white dark:text-neutral-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"
                       >
                         <ExternalLink className="w-4 h-4 text-red-500" />
-                        <span>Gmail Web (Text)</span>
+                        <span>{language === 'zh' ? '网页版 Gmail (文本)' : 'Gmail Web (Text)'}</span>
                       </button>
 
                       <button
@@ -764,7 +794,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                         className="py-3 px-3 rounded-xl bg-white dark:bg-white/10 hover:bg-neutral-100 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-black/10 dark:border-white/10 active:scale-95 transition-all"
                       >
                         {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                        <span>Copy Email</span>
+                        <span>{language === 'zh' ? (copied ? '已复制！' : '复制邮件') : (copied ? 'Copied!' : 'Copy Email')}</span>
                       </button>
                     </>
                   )}
@@ -774,9 +804,15 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
               {/* Email Body Preview snippet */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-neutral-400 font-bold uppercase tracking-wider">
-                  <span>{sendFormat === 'pdf' ? 'Email Accompanying Note:' : 'Formatted Email Body:'}</span>
+                  <span>
+                    {language === 'zh'
+                      ? (sendFormat === 'pdf' ? '邮件随附说明:' : '格式化邮件正文:')
+                      : (sendFormat === 'pdf' ? 'Email Accompanying Note:' : 'Formatted Email Body:')}
+                  </span>
                   <span className="font-mono text-[11px] lowercase">
-                    {sendFormat === 'pdf' ? 'PDF attachment message' : 'Text layout with payment details'}
+                    {language === 'zh'
+                      ? (sendFormat === 'pdf' ? 'PDF 附件配套留言' : '含项目与付款详情文本')
+                      : (sendFormat === 'pdf' ? 'PDF attachment message' : 'Text layout with payment details')}
                   </span>
                 </div>
                 <div className="p-3.5 rounded-xl bg-neutral-100 dark:bg-[#141418] border border-black/5 dark:border-white/5 font-mono text-xs text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap max-h-44 overflow-y-auto mac-scrollbar select-all leading-relaxed">
@@ -791,7 +827,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
             <div className="space-y-3 animate-fade-in">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
-                  Full Document Text Output:
+                  {language === 'zh' ? '单据完整文本输出:' : 'Full Document Text Output:'}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -800,7 +836,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                     className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
-                    <span>Send as WhatsApp</span>
+                    <span>{language === 'zh' ? '发送至 WhatsApp' : 'Send as WhatsApp'}</span>
                   </button>
                   <button
                     type="button"
@@ -808,7 +844,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                     className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm"
                   >
                     <Mail className="w-3.5 h-3.5" />
-                    <span>Send as Email</span>
+                    <span>{language === 'zh' ? '发送邮件' : 'Send as Email'}</span>
                   </button>
                   <button
                     type="button"
@@ -816,7 +852,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                     className="px-2.5 py-1.5 rounded-lg bg-neutral-200 dark:bg-white/10 hover:bg-neutral-300 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 text-xs font-bold flex items-center gap-1.5 active:scale-95"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Copy Text</span>
+                    <span>{language === 'zh' ? '复制文本' : 'Copy Text'}</span>
                   </button>
                 </div>
               </div>
@@ -831,14 +867,18 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
           {/* Additional Quick Utility Actions (PDF & Device Share) */}
           <div className="pt-2 border-t border-black/5 dark:border-white/5 flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-              <span>Quick PDF download:</span>
+              <span>{language === 'zh' ? '快捷 PDF 下载:' : 'Quick PDF download:'}</span>
               <button
                 type="button"
                 onClick={handleDownloadPDF}
                 className="px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 font-bold text-xs text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 transition-all active:scale-95"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Download {docType === 'invoice' ? 'Invoice' : 'Quotation'} PDF</span>
+                <span>
+                  {language === 'zh'
+                    ? `下载${docType === 'invoice' ? '发票' : '报价单'} PDF`
+                    : `Download ${docType === 'invoice' ? 'Invoice' : 'Quotation'} PDF`}
+                </span>
               </button>
             </div>
 
@@ -847,10 +887,10 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
                 type="button"
                 onClick={handleNativeShare}
                 className="px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 font-bold text-xs text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 transition-all active:scale-95"
-                title="Use phone or system share sheet"
+                title={language === 'zh' ? '使用手机或系统分享面板' : 'Use phone or system share sheet'}
               >
                 <Share2 className="w-3.5 h-3.5 text-blue-500" />
-                <span>System Share Sheet</span>
+                <span>{language === 'zh' ? '系统分享面板' : 'System Share Sheet'}</span>
               </button>
             )}
           </div>
