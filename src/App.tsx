@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Unit, UnitType, Theme, ThemeType, QuoteItem, QuoteRecord, RatesConfig } from './types';
+import { Unit, UnitType, Theme, ThemeType, QuoteItem, QuoteRecord, RatesConfig, LanguageType } from './types';
 import { DEFAULT_RATES } from './data/presets';
 import { calculatePrices } from './utils/calculator';
+import { getTranslation } from './data/translations';
 import { useFirebaseAuth } from './hooks/useFirebaseAuth';
 import { MacMenuBar } from './components/MacMenuBar';
 import { MacDock } from './components/MacDock';
@@ -20,6 +21,22 @@ import { RotateCcw, RectangleHorizontal, RectangleVertical, Square } from 'lucid
 export default function App() {
   const [theme, setTheme] = useState<ThemeType>(Theme.DARK);
   const [wallpaper, setWallpaper] = useState('sequoia');
+  const [language, setLanguage] = useState<LanguageType>(() => {
+    const saved = localStorage.getItem('halo_lang') as LanguageType;
+    return saved === 'zh' || saved === 'en' ? saved : 'en';
+  });
+
+  const isZh = language === 'zh';
+  const t = useMemo(() => getTranslation(language), [language]);
+
+  const handleSetLanguage = (lang: LanguageType) => {
+    setLanguage(lang);
+    try {
+      localStorage.setItem('halo_lang', lang);
+    } catch (e) {
+      console.warn('Failed to save language to localStorage', e);
+    }
+  };
 
   // Firebase Auth & Cloud Sync
   const auth = useFirebaseAuth();
@@ -249,13 +266,23 @@ export default function App() {
         onOpenQuoteList={() => setQuoteListOpen(true)}
         theme={theme}
         setTheme={handleSetTheme}
+        language={language}
+        setLanguage={handleSetLanguage}
         user={auth.user}
         onOpenAuth={() => auth.setAuthModalOpen(true)}
         onOpenMobileApp={() => setMobileModalOpen(true)}
         onOpenMathCalc={() => setMathCalcOpen(true)}
         onOpenShapeModal={() => setShapeModalOpen(true)}
         shapeType={shapeInfo.type}
-        shapeLabel={shapeInfo.label}
+        shapeLabel={
+          shapeInfo.type === 'square'
+            ? isZh ? '正方形' : 'Square'
+            : shapeInfo.type === 'horizontal'
+            ? isZh ? '横向' : 'Horizontal'
+            : shapeInfo.type === 'vertical'
+            ? isZh ? '竖向' : 'Vertical'
+            : shapeInfo.label
+        }
       />
 
       {/* Top Mobile Quick Install Strip */}
@@ -279,85 +306,85 @@ export default function App() {
       </div>
 
       {/* Main Workspace Frame */}
-      <main className="flex-1 pt-3 sm:pt-6 pb-28 sm:pb-32 px-2 sm:px-4 md:px-6 flex items-center justify-center w-full relative gpu-layer">
+      <main className="flex-1 pt-3 sm:pt-5 lg:pt-8 xl:pt-10 pb-28 sm:pb-32 lg:pb-36 xl:pb-40 px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-14 flex items-center justify-center w-full relative gpu-layer">
         {/* MacBook Main Application Window Frame */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="mac-main-window w-full max-w-5xl xl:max-w-6xl rounded-xl sm:rounded-2xl overflow-hidden backdrop-blur-lg border border-slate-200/90 dark:border-white/10 shadow-xl z-10 my-auto"
+          className="mac-main-window w-full max-w-5xl lg:max-w-[1240px] xl:max-w-[1480px] 2xl:max-w-[1680px] rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden backdrop-blur-lg border border-slate-200/90 dark:border-white/10 shadow-2xl z-10 my-auto transition-all duration-300"
         >
           {/* Window Titlebar with Traffic Lights */}
-          <div className="h-8 sm:h-10 px-2.5 sm:px-4 bg-slate-100/95 dark:bg-[#16171c]/95 border-b border-slate-200/90 dark:border-white/10 flex items-center justify-between select-none">
-            <div className="flex items-center gap-1.5 sm:gap-2 traffic-group">
+          <div className="h-8 sm:h-10 lg:h-12 xl:h-14 px-2.5 sm:px-4 lg:px-6 xl:px-8 bg-slate-100/95 dark:bg-[#16171c]/95 border-b border-slate-200/90 dark:border-white/10 flex items-center justify-between select-none">
+            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5 traffic-group">
               <button
-                className="traffic-btn w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#FF5F56] border border-black/10 flex items-center justify-center"
+                className="traffic-btn w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 rounded-full bg-[#FF5F56] border border-black/10 flex items-center justify-center"
                 title="Close"
               >
-                <span className="traffic-glyph text-[8px] opacity-0 text-black/60 font-bold leading-none">
+                <span className="traffic-glyph text-[8px] lg:text-[9px] opacity-0 text-black/60 font-bold leading-none">
                   ×
                 </span>
               </button>
               <button
-                className="traffic-btn w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#FFBD2E] border border-black/10 flex items-center justify-center"
+                className="traffic-btn w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 rounded-full bg-[#FFBD2E] border border-black/10 flex items-center justify-center"
                 title="Minimize"
               >
-                <span className="traffic-glyph text-[8px] opacity-0 text-black/60 font-bold leading-none">
+                <span className="traffic-glyph text-[8px] lg:text-[9px] opacity-0 text-black/60 font-bold leading-none">
                   -
                 </span>
               </button>
               <button
-                className="traffic-btn w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#27C93F] border border-black/10 flex items-center justify-center"
+                className="traffic-btn w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 rounded-full bg-[#27C93F] border border-black/10 flex items-center justify-center"
                 title="Maximize"
               >
-                <span className="traffic-glyph text-[8px] opacity-0 text-black/60 font-bold leading-none">
+                <span className="traffic-glyph text-[8px] lg:text-[9px] opacity-0 text-black/60 font-bold leading-none">
                   +
                 </span>
               </button>
             </div>
 
             {/* macOS Window Title */}
-            <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-none min-w-0 truncate">
-              <HaloLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 shadow-sm shrink-0" />
-              <span className="text-[11px] sm:text-xs md:text-sm font-bold text-slate-800 dark:text-neutral-100 tracking-tight truncate">
-                Halo Design Hub
+            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5 xl:gap-3 pointer-events-none min-w-0 truncate">
+              <HaloLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 shadow-sm shrink-0" />
+              <span className="text-[11px] sm:text-xs md:text-sm lg:text-base xl:text-lg font-bold text-slate-800 dark:text-neutral-100 tracking-tight truncate">
+                {t.appName}
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                Calculator
+            <div className="flex items-center gap-2 lg:gap-2.5 xl:gap-3">
+              <span className="text-[9px] sm:text-[10px] lg:text-xs xl:text-sm uppercase font-bold tracking-wider px-2 lg:px-3 xl:px-4 py-0.5 lg:py-1 xl:py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                {t.calculator}
               </span>
 
               {/* Lightbox Shape Icon beside Calculator */}
               <button
                 onClick={() => setShapeModalOpen(true)}
-                className="w-6 h-6 rounded-full flex items-center justify-center bg-slate-200/80 hover:bg-blue-500/15 dark:bg-white/10 dark:hover:bg-blue-500/20 text-slate-800 hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400 border border-slate-300/80 dark:border-white/15 hover:border-blue-500/30 transition-all active:scale-95 shadow-xs"
-                title={`Lightbox Shape: ${shapeInfo.label} (${shapeInfo.ratioText}) - Click to inspect`}
+                className="w-6 h-6 lg:w-7 lg:h-7 xl:w-9 xl:h-9 rounded-full flex items-center justify-center bg-slate-200/80 hover:bg-blue-500/15 dark:bg-white/10 dark:hover:bg-blue-500/20 text-slate-800 hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400 border border-slate-300/80 dark:border-white/15 hover:border-blue-500/30 transition-all active:scale-95 shadow-xs"
+                title={`${isZh ? '灯箱形状' : 'Lightbox Shape'}: ${shapeInfo.type === 'square' ? (isZh ? '正方形' : 'Square') : shapeInfo.type === 'horizontal' ? (isZh ? '横向' : 'Horizontal') : shapeInfo.type === 'vertical' ? (isZh ? '竖向' : 'Vertical') : shapeInfo.label} (${shapeInfo.ratioText})`}
               >
                 {shapeInfo.type === 'horizontal' ? (
-                  <RectangleHorizontal className="w-3.5 h-3.5 text-blue-500" />
+                  <RectangleHorizontal className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-5 xl:h-5 text-blue-500" />
                 ) : shapeInfo.type === 'vertical' ? (
-                  <RectangleVertical className="w-3.5 h-3.5 text-emerald-500" />
+                  <RectangleVertical className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-5 xl:h-5 text-emerald-500" />
                 ) : (
-                  <Square className="w-3.5 h-3.5 text-amber-500" />
+                  <Square className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-5 xl:h-5 text-amber-500" />
                 )}
               </button>
             </div>
           </div>
 
           {/* Window Content */}
-          <div className="p-2 sm:p-4 md:p-6 space-y-2.5 sm:space-y-4 md:space-y-5">
+          <div className="p-2 sm:p-4 md:p-6 lg:p-7 xl:p-8 2xl:p-9 space-y-2.5 sm:space-y-4 md:space-y-5 lg:space-y-6 xl:space-y-7">
             {/* Dimensions Input Panel (Native macOS Toolbar Style) */}
-            <div className="p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl bg-white/80 dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/5 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-2.5 sm:gap-4">
+            <div className="p-2 sm:p-3 md:p-4 lg:p-5 xl:p-6 rounded-xl sm:rounded-2xl lg:rounded-3xl bg-white/80 dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/5 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-2.5 sm:gap-4 lg:gap-6">
               {/* Center/Main Dimension & Unit Controls */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 w-full lg:w-auto">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 lg:gap-4 xl:gap-5 w-full lg:w-auto">
                 {/* Long Centered Dimension Input */}
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2 w-full sm:w-auto">
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 select-none shrink-0">
-                    Dim:
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 lg:gap-3 w-full sm:w-auto">
+                  <span className="text-[10px] sm:text-xs lg:text-sm xl:text-base font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 select-none shrink-0">
+                    {t.dimensions}:
                   </span>
-                  <div className="flex items-center justify-center gap-1 sm:gap-2 bg-slate-100 dark:bg-[#121316] px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-xl border border-slate-200/90 dark:border-white/10 shadow-inner focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all w-full sm:w-auto">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4 bg-slate-100 dark:bg-[#121316] px-2.5 sm:px-4 lg:px-5 xl:px-6 py-1 sm:py-1.5 lg:py-2.5 xl:py-3 rounded-xl lg:rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-inner focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all w-full sm:w-auto">
                     <input
                       type="number"
                       step="any"
@@ -366,11 +393,11 @@ export default function App() {
                       value={width}
                       onChange={e => setWidth(e.target.value)}
                       onFocus={e => e.target.select()}
-                      placeholder="Width"
-                      className="w-full sm:w-24 md:w-32 text-center font-mono font-bold text-xs sm:text-sm md:text-base bg-transparent focus:bg-transparent outline-none text-slate-700 dark:text-neutral-400 placeholder:text-slate-400 dark:placeholder:text-neutral-500 min-w-[60px]"
-                      title="Width"
+                      placeholder={t.width}
+                      className="w-full sm:w-24 md:w-32 lg:w-40 xl:w-52 2xl:w-60 text-center font-mono font-bold text-xs sm:text-sm md:text-base lg:text-xl xl:text-2xl bg-transparent focus:bg-transparent outline-none text-slate-700 dark:text-neutral-300 placeholder:text-slate-400 dark:placeholder:text-neutral-500 min-w-[60px]"
+                      title={t.width}
                     />
-                    <span className="text-slate-500 dark:text-neutral-400 font-light text-sm sm:text-base px-0.5 select-none">×</span>
+                    <span className="text-slate-500 dark:text-neutral-400 font-light text-sm sm:text-base lg:text-xl xl:text-2xl px-0.5 lg:px-1 xl:px-1.5 select-none">×</span>
                     <input
                       type="number"
                       step="any"
@@ -379,16 +406,16 @@ export default function App() {
                       value={height}
                       onChange={e => setHeight(e.target.value)}
                       onFocus={e => e.target.select()}
-                      placeholder="Height"
-                      className="w-full sm:w-24 md:w-32 text-center font-mono font-bold text-xs sm:text-sm md:text-base bg-transparent focus:bg-transparent outline-none text-slate-700 dark:text-neutral-400 placeholder:text-slate-400 dark:placeholder:text-neutral-500 min-w-[60px]"
-                      title="Height"
+                      placeholder={t.height}
+                      className="w-full sm:w-24 md:w-32 lg:w-40 xl:w-52 2xl:w-60 text-center font-mono font-bold text-xs sm:text-sm md:text-base lg:text-xl xl:text-2xl bg-transparent focus:bg-transparent outline-none text-slate-700 dark:text-neutral-300 placeholder:text-slate-400 dark:placeholder:text-neutral-500 min-w-[60px]"
+                      title={t.height}
                     />
                   </div>
                 </div>
 
                 {/* Centered Unit Switcher & Reset Rates */}
-                <div className="flex items-center justify-center gap-1.5 shrink-0 flex-wrap">
-                  <div className="flex p-0.5 rounded-xl bg-slate-100 dark:bg-[#121316] border border-slate-200/90 dark:border-white/10 shadow-sm">
+                <div className="flex items-center justify-center gap-1.5 lg:gap-2 xl:gap-2.5 shrink-0 flex-wrap">
+                  <div className="flex p-0.5 lg:p-1 xl:p-1.5 rounded-xl lg:rounded-2xl bg-slate-100 dark:bg-[#121316] border border-slate-200/90 dark:border-white/10 shadow-sm">
                     {[
                       { key: Unit.IN, label: 'IN' },
                       { key: Unit.FT, label: 'FT' },
@@ -399,7 +426,7 @@ export default function App() {
                       <button
                         key={u.key}
                         onClick={() => setUnit(u.key)}
-                        className={`px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase transition-all ${
+                        className={`px-2 sm:px-3 lg:px-4 xl:px-5 py-1 lg:py-1.5 xl:py-2 rounded-lg lg:rounded-xl text-[10px] sm:text-xs lg:text-sm xl:text-base font-bold uppercase transition-all ${
                           unit === u.key
                             ? 'bg-blue-600 text-white shadow-sm'
                             : 'text-slate-800 hover:text-black hover:bg-slate-200/70 dark:text-neutral-400 dark:hover:text-white'
@@ -414,19 +441,19 @@ export default function App() {
                   {isCustomRatesActive && (
                     <button
                       onClick={handleResetRates}
-                      className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[10px] sm:text-xs font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap"
-                      title="Reset all rates to defaults"
+                      className="flex items-center gap-1 lg:gap-1.5 xl:gap-2 px-2 sm:px-2.5 lg:px-3.5 xl:px-4 py-1 lg:py-1.5 xl:py-2 rounded-xl lg:rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[10px] sm:text-xs lg:text-sm xl:text-base font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap"
+                      title={t.resetRates}
                     >
-                      <RotateCcw className="w-3 h-3" />
-                      <span>Reset Rates</span>
+                      <RotateCcw className="w-3 h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4" />
+                      <span>{t.resetRates}</span>
                     </button>
                   )}
                 </div>
               </div>
 
               {/* Dimension Conversion Badges (Auto-scrolling Right-to-Left Ticker) */}
-              <div className="overflow-hidden w-full lg:w-auto lg:max-w-xs xl:max-w-md relative [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)] py-0.5 flex justify-center">
-                <div className="animate-marquee-left flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs font-mono">
+              <div className="overflow-hidden w-full lg:w-auto lg:max-w-md xl:max-w-lg 2xl:max-w-xl relative [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)] py-0.5 lg:py-1 flex justify-center">
+                <div className="animate-marquee-left flex items-center gap-1.5 sm:gap-2 lg:gap-2.5 text-[9px] sm:text-xs lg:text-sm font-mono">
                   {/* First copy */}
                   {unit !== Unit.IN && (
                     <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/25 font-bold whitespace-nowrap shrink-0">
@@ -485,108 +512,116 @@ export default function App() {
             </div>
 
             {/* Pricing Grid - 8 Items (2 cols on mobile, 3 on tablet, 4 on desktop) */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6">
               {/* 1. LIGHTBOX */}
               <MacPricingCard
-                title="LIGHTBOX"
+                title={isZh ? '普通灯箱' : 'LIGHTBOX'}
+                subtitle={isZh ? 'LIGHTBOX' : undefined}
                 price={prices.lightbox}
                 rate={rates.LIGHTBOX}
                 rateUnit="/SQ FT"
                 iconType="lightbox"
                 iconBg="bg-gradient-to-tr from-amber-600 to-yellow-500"
                 isSelected={modalOpen && modalData?.priceKey === 'lightbox'}
-                onClick={() => handleCardClick('LIGHTBOX', 'lightbox')}
+                onClick={() => handleCardClick(isZh ? '普通灯箱 (LIGHTBOX)' : 'LIGHTBOX', 'lightbox')}
                 onRateChange={(val) => handleRateChange('LIGHTBOX', val)}
               />
 
               {/* 2. LIGHTBOX W BACKLIT */}
               <MacPricingCard
-                title="LIGHTBOX W BACKLIT"
+                title={isZh ? '带背光灯箱' : 'LIGHTBOX W BACKLIT'}
+                subtitle={isZh ? 'LIGHTBOX W BACKLIT' : undefined}
                 price={prices.lightboxBacklit}
                 rate={rates.LIGHTBOX_W_BACKLIT}
                 rateUnit="/SQ FT"
                 iconType="lightboxBacklit"
                 iconBg="bg-gradient-to-tr from-rose-600 to-pink-500"
                 isSelected={modalOpen && modalData?.priceKey === 'lightboxBacklit'}
-                onClick={() => handleCardClick('LIGHTBOX W BACKLIT', 'lightboxBacklit')}
+                onClick={() => handleCardClick(isZh ? '带背光灯箱 (LIGHTBOX W BACKLIT)' : 'LIGHTBOX W BACKLIT', 'lightboxBacklit')}
                 onRateChange={(val) => handleRateChange('LIGHTBOX_W_BACKLIT', val)}
               />
 
               {/* 3. BACKLIT */}
               <MacPricingCard
-                title="BACKLIT"
+                title={isZh ? '背发光字' : 'BACKLIT'}
+                subtitle={isZh ? 'BACKLIT' : undefined}
                 price={prices.backlit}
                 rate={rates.BACKLIT}
                 rateUnit="/SQ FT"
                 iconType="backlit"
                 iconBg="bg-gradient-to-tr from-blue-600 to-cyan-500"
                 isSelected={modalOpen && modalData?.priceKey === 'backlit'}
-                onClick={() => handleCardClick('BACKLIT', 'backlit')}
+                onClick={() => handleCardClick(isZh ? '背发光字 (BACKLIT)' : 'BACKLIT', 'backlit')}
                 onRateChange={(val) => handleRateChange('BACKLIT', val)}
               />
 
               {/* 4. TRANS */}
               <MacPricingCard
-                title="TRANS"
+                title={isZh ? '透光灯箱' : 'TRANS'}
+                subtitle={isZh ? 'TRANS' : undefined}
                 price={prices.trans}
                 rate={rates.TRANS}
                 rateUnit="/SQ FT"
                 iconType="trans"
                 iconBg="bg-gradient-to-tr from-indigo-600 to-violet-500"
                 isSelected={modalOpen && modalData?.priceKey === 'trans'}
-                onClick={() => handleCardClick('TRANS', 'trans')}
+                onClick={() => handleCardClick(isZh ? '透光灯箱 (TRANS)' : 'TRANS', 'trans')}
                 onRateChange={(val) => handleRateChange('TRANS', val)}
               />
 
               {/* 5. 3D PRINTED */}
               <MacPricingCard
-                title="3D PRINTED"
+                title={isZh ? '3D打印发光字' : '3D PRINTED'}
+                subtitle={isZh ? '3D PRINTED' : undefined}
                 price={prices.printed3d}
                 rate={rates.PRINTED_3D}
                 rateUnit="/SQ FT"
                 iconType="printed3d"
                 iconBg="bg-gradient-to-tr from-orange-600 to-amber-500"
                 isSelected={modalOpen && modalData?.priceKey === 'printed3d'}
-                onClick={() => handleCardClick('3D PRINTED', 'printed3d')}
+                onClick={() => handleCardClick(isZh ? '3D打印发光字 (3D PRINTED)' : '3D PRINTED', 'printed3d')}
                 onRateChange={(val) => handleRateChange('PRINTED_3D', val)}
               />
 
               {/* 6. VINYL STICKER */}
               <MacPricingCard
-                title="VINYL STICKER"
+                title={isZh ? '乙烯基贴纸' : 'VINYL STICKER'}
+                subtitle={isZh ? 'VINYL STICKER' : undefined}
                 price={prices.vinylSticker}
                 rate={rates.VINYL_STICKER}
                 rateUnit="/SQ FT"
                 iconType="vinylSticker"
                 iconBg="bg-gradient-to-tr from-purple-600 to-fuchsia-500"
                 isSelected={modalOpen && modalData?.priceKey === 'vinylSticker'}
-                onClick={() => handleCardClick('VINYL STICKER', 'vinylSticker')}
+                onClick={() => handleCardClick(isZh ? '乙烯基贴纸 (VINYL STICKER)' : 'VINYL STICKER', 'vinylSticker')}
                 onRateChange={(val) => handleRateChange('VINYL_STICKER', val)}
               />
 
               {/* 7. LED STRIP */}
               <MacPricingCard
-                title="LED STRIP"
+                title={isZh ? 'LED软灯条' : 'LED STRIP'}
+                subtitle={isZh ? 'LED STRIP' : undefined}
                 price={prices.ledStrip}
                 rate={rates.LED_STRIP}
                 rateUnit="/FT"
                 iconType="ledStrip"
                 iconBg="bg-gradient-to-tr from-emerald-600 to-teal-500"
                 isSelected={modalOpen && modalData?.priceKey === 'ledStrip'}
-                onClick={() => handleCardClick('LED STRIP', 'ledStrip')}
+                onClick={() => handleCardClick(isZh ? 'LED软灯条 (LED STRIP)' : 'LED STRIP', 'ledStrip')}
                 onRateChange={(val) => handleRateChange('LED_STRIP', val)}
               />
 
               {/* 8. ACRYLIC */}
               <MacPricingCard
-                title="ACRYLIC"
+                title={isZh ? '亚克力字/板' : 'ACRYLIC'}
+                subtitle={isZh ? 'ACRYLIC' : undefined}
                 price={prices.acrylic}
                 rate={rates.ACRYLIC}
                 rateUnit="/SQ FT"
                 iconType="acrylic"
                 iconBg="bg-gradient-to-tr from-teal-600 to-cyan-500"
                 isSelected={modalOpen && modalData?.priceKey === 'acrylic'}
-                onClick={() => handleCardClick('ACRYLIC', 'acrylic')}
+                onClick={() => handleCardClick(isZh ? '亚克力字/板 (ACRYLIC)' : 'ACRYLIC', 'acrylic')}
                 onRateChange={(val) => handleRateChange('ACRYLIC', val)}
               />
             </div>
@@ -600,6 +635,8 @@ export default function App() {
         onOpenQuoteList={() => setQuoteListOpen(true)}
         theme={theme}
         setTheme={handleSetTheme}
+        language={language}
+        setLanguage={handleSetLanguage}
         wallpaper={wallpaper}
         setWallpaper={setWallpaper}
         user={auth.user}
@@ -608,7 +645,15 @@ export default function App() {
         onOpenMathCalc={() => setMathCalcOpen(true)}
         onOpenShapeModal={() => setShapeModalOpen(true)}
         shapeType={shapeInfo.type}
-        shapeLabel={shapeInfo.label}
+        shapeLabel={
+          shapeInfo.type === 'square'
+            ? isZh ? '正方形' : 'Square'
+            : shapeInfo.type === 'horizontal'
+            ? isZh ? '横向' : 'Horizontal'
+            : shapeInfo.type === 'vertical'
+            ? isZh ? '竖向' : 'Vertical'
+            : shapeInfo.label
+        }
       />
 
       {/* Sheets / Modals */}
@@ -618,6 +663,7 @@ export default function App() {
         onClose={() => setModalOpen(false)}
         onAddToQuote={handleAddToQuote}
         rates={rates}
+        language={language}
       />
 
       <QuotationListModal
@@ -639,6 +685,7 @@ export default function App() {
         }
         auth={auth}
         onLoadQuoteRecord={handleLoadQuoteRecord}
+        language={language}
       />
 
       {/* Google Account Modal */}
@@ -664,6 +711,7 @@ export default function App() {
         onApplyHeight={(val) => setHeight(val)}
         currentWidth={width}
         currentHeight={height}
+        language={language}
       />
 
       {/* Lightbox Shape Visualizer Modal */}
@@ -676,6 +724,7 @@ export default function App() {
         onUpdateWidth={(w) => setWidth(w)}
         onUpdateHeight={(h) => setHeight(h)}
         onUpdateUnit={(u) => setUnit(u)}
+        language={language}
       />
     </div>
   );

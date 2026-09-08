@@ -8,6 +8,7 @@ import {
   ArrowRightToLine,
 } from 'lucide-react';
 import { copyToClipboard } from '../utils/clipboard';
+import { LanguageType } from '../types';
 
 interface MathCalculatorModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface MathCalculatorModalProps {
   onApplyHeight?: (val: string) => void;
   currentWidth?: string;
   currentHeight?: string;
+  language?: LanguageType;
 }
 
 interface HistoryEntry {
@@ -30,7 +32,9 @@ export const MathCalculatorModal: React.FC<MathCalculatorModalProps> = ({
   onClose,
   onApplyWidth,
   onApplyHeight,
+  language = 'en',
 }) => {
+  const isZh = language === 'zh';
   // Core iOS Calculator States
   const [display, setDisplay] = useState<string>('0');
   const [firstOperand, setFirstOperand] = useState<number | null>(null);
@@ -448,12 +452,12 @@ export const MathCalculatorModal: React.FC<MathCalculatorModalProps> = ({
             {copied ? (
               <>
                 <Check className="w-3 h-3 text-emerald-400" />
-                <span className="text-emerald-400">Copied</span>
+                <span className="text-emerald-400">{isZh ? '已复制' : 'Copied'}</span>
               </>
             ) : (
               <>
                 <Copy className="w-3 h-3" />
-                <span>Copy</span>
+                <span>{isZh ? '复制' : 'Copy'}</span>
               </>
             )}
           </button>
@@ -471,14 +475,14 @@ export const MathCalculatorModal: React.FC<MathCalculatorModalProps> = ({
                   }
                 }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#242426] hover:bg-[#323235] text-neutral-300 transition active:scale-95 border border-white/5"
-                title="Apply to Width"
+                title={isZh ? '填入宽度' : 'Apply to Width'}
               >
                 {appliedWidth ? (
                   <Check className="w-3 h-3 text-amber-400" />
                 ) : (
                   <ArrowRightToLine className="w-3 h-3 text-amber-400" />
                 )}
-                <span>Width</span>
+                <span>{isZh ? '宽度' : 'Width'}</span>
               </button>
             )}
 
@@ -494,14 +498,14 @@ export const MathCalculatorModal: React.FC<MathCalculatorModalProps> = ({
                   }
                 }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#242426] hover:bg-[#323235] text-neutral-300 transition active:scale-95 border border-white/5"
-                title="Apply to Height"
+                title={isZh ? '填入高度' : 'Apply to Height'}
               >
                 {appliedHeight ? (
                   <Check className="w-3 h-3 text-orange-400" />
                 ) : (
                   <ArrowRightToLine className="w-3 h-3 text-orange-400" />
                 )}
-                <span>Height</span>
+                <span>{isZh ? '高度' : 'Height'}</span>
               </button>
             )}
           </div>
@@ -511,7 +515,7 @@ export const MathCalculatorModal: React.FC<MathCalculatorModalProps> = ({
         {showHistory && (
           <div className="bg-[#1c1c1e] rounded-2xl border border-neutral-800 p-3 mb-3 max-h-44 overflow-y-auto mac-scrollbar">
             <div className="flex items-center justify-between pb-1 mb-2 border-b border-neutral-800 text-[11px] font-semibold text-neutral-400">
-              <span>Calculation History</span>
+              <span>{isZh ? '计算历史记录' : 'Calculation History'}</span>
               {historyList.length > 0 && (
                 <button
                   type="button"

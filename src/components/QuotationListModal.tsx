@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { QuoteItem, QuoteRecord, Unit, UnitType } from '../types';
+import { QuoteItem, QuoteRecord, Unit, UnitType, LanguageType } from '../types';
+import { getTranslation } from '../data/translations';
 import { AuthContextType } from '../hooks/useFirebaseAuth';
 import { GoogleIcon } from './GoogleIcon';
 import { copyToClipboard, formatQuotationText } from '../utils/clipboard';
@@ -41,22 +42,22 @@ import {
   FileCheck,
 } from 'lucide-react';
 
-export const PRESET_ITEMS: Array<{ name: string; price: number }> = [
-  { name: 'Laminated A4', price: 25 },
-  { name: 'Laminated A3', price: 35 },
-  { name: 'Standard Banner', price: 90 },
-  { name: 'A1 Poster', price: 180 },
-  { name: 'A1 Poster with Stand', price: 230 },
-  { name: 'EasyRoll', price: 280 },
-  { name: 'Menu Book', price: 85 },
-  { name: 'Pricing Sticker', price: 50 },
-  { name: 'On-Site Transformer Replacement', price: 180 },
-  { name: 'On-Site Pricing Sticker Replacement', price: 80 },
-  { name: 'On-Site Photoshoot Services', price: 200 },
-  { name: 'Photoshoot Services', price: 40 },
-  { name: 'T5 LED', price: 25 },
-  { name: 'T8 LED', price: 30 },
-  { name: 'Labour Charges', price: 180 },
+export const PRESET_ITEMS: Array<{ name: string; nameZh: string; price: number }> = [
+  { name: 'Laminated A4', nameZh: 'A4 塑封', price: 25 },
+  { name: 'Laminated A3', nameZh: 'A3 塑封', price: 35 },
+  { name: 'Standard Banner', nameZh: '标准横幅', price: 90 },
+  { name: 'A1 Poster', nameZh: 'A1 海报', price: 180 },
+  { name: 'A1 Poster with Stand', nameZh: 'A1 海报带展架', price: 230 },
+  { name: 'EasyRoll', nameZh: '易拉宝', price: 280 },
+  { name: 'Menu Book', nameZh: '菜单本', price: 85 },
+  { name: 'Pricing Sticker', nameZh: '标价贴纸', price: 50 },
+  { name: 'On-Site Transformer Replacement', nameZh: '上门更换变压器', price: 180 },
+  { name: 'On-Site Pricing Sticker Replacement', nameZh: '上门更换标价贴纸', price: 80 },
+  { name: 'On-Site Photoshoot Services', nameZh: '上门摄影服务', price: 200 },
+  { name: 'Photoshoot Services', nameZh: '摄影服务', price: 40 },
+  { name: 'T5 LED', nameZh: 'T5 LED 灯管', price: 25 },
+  { name: 'T8 LED', nameZh: 'T8 LED 灯管', price: 30 },
+  { name: 'Labour Charges', nameZh: '人工安装费', price: 180 },
 ];
 
 interface QuotationListModalProps {
@@ -70,6 +71,7 @@ interface QuotationListModalProps {
   onUpdateItem: (id: string, updates: Partial<QuoteItem>) => void;
   auth: AuthContextType;
   onLoadQuoteRecord: (record: QuoteRecord) => void;
+  language?: LanguageType;
 }
 
 export const QuotationListModal: React.FC<QuotationListModalProps> = ({
@@ -78,11 +80,14 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
   items,
   onRemoveItem,
   onUpdateQuantity,
+  onClearAll,
   onAddCustomItem,
   onUpdateItem,
   auth,
   onLoadQuoteRecord,
+  language = 'en',
 }) => {
+  const t = getTranslation(language);
   const [activeSubTab, setActiveSubTab] = useState<'active' | 'cloudRecords'>('active');
   const [formMode, setFormMode] = useState<'quote' | 'invoice' | 'receipt' | 'textPreview' | null>(null);
   const [showCustomForm, setShowCustomForm] = useState(true);
@@ -667,7 +672,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>Active ({items.length})</span>
+              <span>{t.activeTab} ({items.length})</span>
             </button>
             <button
               onClick={() => {
@@ -681,7 +686,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               }`}
             >
               <GoogleIcon className="w-3.5 h-3.5" />
-              <span>Cloud ({cloudQuotes?.length || 0})</span>
+              <span>{t.cloudTab} ({cloudQuotes?.length || 0})</span>
             </button>
           </div>
 
@@ -695,7 +700,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   title="Save current quote to Google Account"
                 >
                   <Cloud className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="hidden sm:inline">{isSavingCloud ? 'Saving...' : 'Save'}</span>
+                  <span className="hidden sm:inline">{isSavingCloud ? t.cloudSaving : t.save}</span>
                 </button>
                 <button
                   onClick={() => setShowCustomForm(!showCustomForm)}
@@ -707,7 +712,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   title="Toggle Custom Item drawer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>{showCustomForm ? 'Hide Form' : '+ Custom'}</span>
+                  <span>{showCustomForm ? t.hideForm : t.addCustom}</span>
                 </button>
               </>
             )}
@@ -724,7 +729,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <div className="flex items-center gap-1.5">
                     <input
                       type="text"
-                      placeholder="Item description (e.g. 3D Acrylic Lettering, Installation Fee)"
+                      placeholder={t.customItemDescPlaceholder}
                       value={customName}
                       onChange={e => setCustomName(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
@@ -737,16 +742,16 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       onChange={e => {
                         const selected = PRESET_ITEMS.find(p => p.name === e.target.value);
                         if (selected) {
-                          setCustomName(selected.name);
+                          setCustomName(language === 'zh' && selected.nameZh ? selected.nameZh : selected.name);
                           setCustomPrice(selected.price.toString());
-                          showToast(`Selected: ${selected.name} ($${selected.price})`);
+                          showToast(`${t.quickPresets}: ${selected.name} ($${selected.price})`);
                         }
                       }}
                       className="w-32 sm:w-44 px-2 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 outline-none hover:border-blue-500 transition-colors cursor-pointer shrink-0 truncate"
-                      title="Preset Items"
+                      title={t.quickPresets}
                     >
                       <option value="" disabled>
-                        ⚡ Presets ({PRESET_ITEMS.length})
+                        ⚡ {t.quickPresets} ({PRESET_ITEMS.length})
                       </option>
                       {PRESET_ITEMS.map(item => (
                         <option
@@ -754,7 +759,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                           value={item.name}
                           className="bg-white dark:bg-[#1e1e24] text-neutral-900 dark:text-neutral-100 font-normal"
                         >
-                          {item.name} — ${item.price}
+                          {language === 'zh' && item.nameZh ? `${item.nameZh} (${item.name})` : item.name} — ${item.price}
                         </option>
                       ))}
                     </select>
@@ -769,7 +774,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         onChange={e => setCustomWidth(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                         className="w-11 sm:w-16 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
-                        title="Width"
+                        title={t.widthLabel}
                       />
                       <span className="text-[10px] text-neutral-400">×</span>
                       <input
@@ -779,7 +784,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         onChange={e => setCustomHeight(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                         className="w-11 sm:w-16 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
-                        title="Height"
+                        title={t.heightLabel}
                       />
                       <select
                         value={customUnit}
@@ -801,7 +806,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       onChange={e => setCustomQuantity(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                       className="w-10 sm:w-14 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
-                      title="Quantity"
+                      title={t.quantityLabel}
                     />
 
                     <div className="flex items-center bg-neutral-100 dark:bg-[#18181c] px-1.5 py-1 rounded-md border border-black/10 dark:border-white/10">
@@ -813,7 +818,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         onChange={e => setCustomPrice(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                         className="w-14 sm:w-20 bg-transparent text-xs font-mono outline-none text-neutral-900 dark:text-white font-bold"
-                        title="Price"
+                        title={t.priceLabel}
                       />
                     </div>
 
@@ -821,7 +826,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       onClick={handleAddCustom}
                       className="px-3 py-1 rounded-md bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 ml-auto transition-transform active:scale-95 shadow-sm shrink-0"
                     >
-                      Add Item
+                      {t.addItem}
                     </button>
                   </div>
                 </div>
@@ -835,10 +840,10 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <p className="text-xs sm:text-base font-bold text-slate-800 dark:text-neutral-100">
-                      Your quotation list is empty.
+                      {t.emptyQuoteTitle}
                     </p>
                     <p className="text-[11px] sm:text-xs text-slate-500 dark:text-neutral-400 max-w-sm mt-1 leading-relaxed">
-                      To add items: calculate any signage on the main screen & click <strong>"+ Add to Quote"</strong>, or choose a preset item / enter custom details above and click <strong>"Add Item"</strong>.
+                      {t.emptyQuoteDesc}
                     </p>
                   </div>
                 ) : (
@@ -953,7 +958,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               <div className="p-2 sm:p-4 bg-white dark:bg-[#1e1e24] border-t border-slate-200/90 dark:border-white/10 flex flex-col gap-1.5 sm:gap-3 shrink-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                    <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-neutral-400">Disc:</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-neutral-400">{t.discount}:</span>
                     <button
                       onClick={() => {
                         setDiscountType('percent');
@@ -1006,12 +1011,12 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       title={showSizes ? 'Dimensions included on PDF' : 'Dimensions hidden on PDF'}
                     >
                       <Ruler className="w-3 h-3" />
-                      <span>{showSizes ? 'Sizes' : 'No Size'}</span>
+                      <span>{showSizes ? (language === 'zh' ? '含尺寸' : 'Sizes') : (language === 'zh' ? '无尺寸' : 'No Size')}</span>
                     </button>
                   </div>
 
                   <div className="flex items-baseline gap-1 shrink-0">
-                    <span className="text-[10px] sm:text-xs text-slate-500 dark:text-neutral-400 uppercase font-bold tracking-wider">Total:</span>
+                    <span className="text-[10px] sm:text-xs text-slate-500 dark:text-neutral-400 uppercase font-bold tracking-wider">{t.grandTotal}:</span>
                     <div className="text-base sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
                       ${finalTotal.toFixed(2)}
                     </div>
@@ -1026,7 +1031,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-800 dark:text-neutral-200 font-bold text-[10px] sm:text-xs disabled:opacity-40 transition-all flex items-center justify-center gap-1 border border-slate-200 dark:border-white/10 active:scale-95 shadow-sm"
                   >
                     <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span className="truncate">Preview</span>
+                    <span className="truncate">{t.textPreview}</span>
                   </button>
                   <button
                     disabled={items.length === 0}
@@ -1034,7 +1039,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-blue-600 text-white font-bold text-[10px] sm:text-xs hover:bg-blue-500 disabled:opacity-40 transition-all flex items-center justify-center gap-1 shadow-md shadow-blue-500/20 active:scale-95"
                   >
                     <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span className="truncate">Quote PDF</span>
+                    <span className="truncate">{t.quotePDF}</span>
                   </button>
                   <button
                     disabled={items.length === 0}
@@ -1042,7 +1047,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-purple-600 text-white font-bold text-[10px] sm:text-xs hover:bg-purple-500 disabled:opacity-40 transition-all flex items-center justify-center gap-1 shadow-md shadow-purple-500/20 active:scale-95"
                   >
                     <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span className="truncate">Invoice PDF</span>
+                    <span className="truncate">{t.invoicePDF}</span>
                   </button>
                 </div>
               </div>

@@ -9,7 +9,7 @@ import {
   User,
   Maximize2,
 } from 'lucide-react';
-import { UnitType, Unit } from '../types';
+import { UnitType, Unit, LanguageType } from '../types';
 import { convertToInches } from '../utils/calculator';
 
 interface LightboxShapeModalProps {
@@ -21,6 +21,7 @@ interface LightboxShapeModalProps {
   onUpdateWidth: (w: string) => void;
   onUpdateHeight: (h: string) => void;
   onUpdateUnit?: (u: UnitType) => void;
+  language?: LanguageType;
 }
 
 export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
@@ -32,7 +33,9 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
   onUpdateWidth,
   onUpdateHeight,
   onUpdateUnit,
+  language = 'en',
 }) => {
+  const isZh = language === 'zh';
   const [lightingMode, setLightingMode] = useState<'on' | 'off' | 'night'>('on');
   const [showHumanScale, setShowHumanScale] = useState(false);
 
@@ -215,7 +218,7 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
 
             <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-slate-800 dark:text-neutral-100 min-w-0 truncate">
               <Maximize2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span className="truncate">Lightbox Shape & Aspect Ratio Inspector</span>
+              <span className="truncate">{isZh ? '灯箱形状与比例检测器' : 'Lightbox Shape & Aspect Ratio Inspector'}</span>
             </div>
 
             <button
@@ -233,7 +236,7 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
               {/* Sizes Inputs */}
               <div className="flex items-center justify-between sm:justify-start gap-2 flex-wrap">
                 <span className="font-bold text-slate-700 dark:text-neutral-300 uppercase tracking-wider text-[11px] shrink-0">
-                  Sizes ({unit.toUpperCase()}):
+                  {isZh ? '尺寸' : 'Sizes'} ({unit.toUpperCase()}):
                 </span>
                 <div className="flex items-center gap-1.5">
                   <div className="flex items-center bg-white dark:bg-[#121316] rounded-lg px-2 py-1 border border-slate-300 dark:border-white/15 shadow-inner">
@@ -299,7 +302,7 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
               <div className="px-2.5 sm:px-3 py-2 bg-slate-950/80 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium select-none">
                 <div className="flex items-center gap-1.5 text-neutral-400 shrink-0">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span className="font-semibold text-slate-300">Visualizer</span>
+                  <span className="font-semibold text-slate-300">{isZh ? '可视化预览' : 'Visualizer'}</span>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
@@ -312,10 +315,10 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
                           ? 'bg-amber-500 text-black shadow-sm'
                           : 'text-neutral-300 hover:text-white'
                       }`}
-                      title="Illuminated LED Frontlight"
+                      title={isZh ? 'LED 前发光开启' : 'Illuminated LED Frontlight'}
                     >
                       <Lightbulb className="w-3 h-3" />
-                      <span>Lit</span>
+                      <span>{isZh ? '亮灯' : 'Lit'}</span>
                     </button>
                     <button
                       onClick={() => setLightingMode('off')}
@@ -324,10 +327,10 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
                           ? 'bg-white text-black shadow-sm'
                           : 'text-neutral-300 hover:text-white'
                       }`}
-                      title="Daylight Off State"
+                      title={isZh ? '白天未亮灯状态' : 'Daylight Off State'}
                     >
                       <Sun className="w-3 h-3" />
-                      <span>Day</span>
+                      <span>{isZh ? '白天' : 'Day'}</span>
                     </button>
                     <button
                       onClick={() => setLightingMode('night')}
@@ -336,10 +339,10 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
                           ? 'bg-indigo-600 text-white shadow-sm'
                           : 'text-neutral-300 hover:text-white'
                       }`}
-                      title="Night Ambient Backlit Glow"
+                      title={isZh ? '夜间背光光晕' : 'Night Ambient Backlit Glow'}
                     >
                       <Moon className="w-3 h-3" />
-                      <span>Night</span>
+                      <span>{isZh ? '夜间' : 'Night'}</span>
                     </button>
                   </div>
 
@@ -351,10 +354,10 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
                         ? 'bg-purple-600 border-purple-400 text-white'
                         : 'bg-white/10 border-white/10 text-neutral-300 hover:text-white'
                     }`}
-                    title="Toggle 1.75m Human Scale Reference"
+                    title={isZh ? '切换 1.75米人体高度参考' : 'Toggle 1.75m Human Scale Reference'}
                   >
                     <User className="w-3 h-3" />
-                    <span>Scale</span>
+                    <span>{isZh ? '人体比例' : 'Scale'}</span>
                   </button>
                 </div>
               </div>
@@ -489,10 +492,19 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
               {/* Bottom Canvas Footer Info */}
               <div className="px-2.5 sm:px-3 py-2 bg-slate-950/90 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-neutral-400">
                 <span>
-                  Orientation: <strong className="text-white capitalize">{shapeInfo.type}</strong>
+                  {isZh ? '方向' : 'Orientation'}:{' '}
+                  <strong className="text-white capitalize">
+                    {shapeInfo.type === 'square'
+                      ? (isZh ? '正方形' : 'Square')
+                      : shapeInfo.type === 'horizontal'
+                      ? (isZh ? '横向' : 'Horizontal')
+                      : shapeInfo.type === 'vertical'
+                      ? (isZh ? '竖向' : 'Vertical')
+                      : shapeInfo.type}
+                  </strong>
                 </span>
                 <span>
-                  Aspect Ratio: <strong className="text-cyan-400">{shapeInfo.ratioStr}</strong>
+                  {isZh ? '长宽比' : 'Aspect Ratio'}: <strong className="text-cyan-400">{shapeInfo.ratioStr}</strong>
                 </span>
               </div>
             </div>
@@ -501,13 +513,13 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
           {/* Modal Footer */}
           <div className="p-3 sm:p-4 bg-slate-50 dark:bg-[#121316] border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-3 shrink-0">
             <span className="text-xs text-slate-500 dark:text-neutral-400 hidden sm:inline">
-              Changes update calculator pricing in real time
+              {isZh ? '修改尺寸将实时更新计算器价格' : 'Changes update calculator pricing in real time'}
             </span>
             <button
               onClick={onClose}
               className="w-full sm:w-auto px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-blue-500/30 ml-auto"
             >
-              Done
+              {isZh ? '完成' : 'Done'}
             </button>
           </div>
         </motion.div>

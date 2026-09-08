@@ -1,5 +1,5 @@
 import React from 'react';
-import { Theme, ThemeType, UserProfile } from '../types';
+import { Theme, ThemeType, UserProfile, LanguageType } from '../types';
 import { GoogleIcon } from './GoogleIcon';
 import {
   FileText,
@@ -10,13 +10,17 @@ import {
   RectangleHorizontal,
   RectangleVertical,
   Square,
+  Globe,
 } from 'lucide-react';
+import { getTranslation } from '../data/translations';
 
 interface MacDockProps {
   quoteCount: number;
   onOpenQuoteList: () => void;
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
+  language: LanguageType;
+  setLanguage: (lang: LanguageType) => void;
   wallpaper: string;
   setWallpaper: (wp: string) => void;
   user: UserProfile | null;
@@ -33,6 +37,8 @@ export const MacDock: React.FC<MacDockProps> = ({
   onOpenQuoteList,
   theme,
   setTheme,
+  language,
+  setLanguage,
   wallpaper,
   setWallpaper,
   user,
@@ -44,6 +50,7 @@ export const MacDock: React.FC<MacDockProps> = ({
   shapeLabel = 'Horizontal',
 }) => {
   const wallpapersList = ['sequoia', 'sonoma', 'dark', 'silver'];
+  const t = getTranslation(language);
 
   const nextWallpaper = () => {
     const idx = wallpapersList.indexOf(wallpaper);
@@ -59,20 +66,24 @@ export const MacDock: React.FC<MacDockProps> = ({
     }
   };
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'zh' : 'en');
+  };
+
   const getThemeButtonDetails = () => {
     if (theme === Theme.LIGHT) {
       return {
         icon: <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-amber-900" />,
-        label: 'Light',
+        label: t.dockLight,
         bg: 'bg-gradient-to-tr from-amber-400 via-amber-300 to-yellow-200 shadow-amber-400/40',
-        title: 'Theme: Light (Click for Dark Mode)',
+        title: language === 'zh' ? '当前主题：浅色模式（点击切换深色）' : 'Theme: Light (Click for Dark Mode)',
       };
     }
     return {
       icon: <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-200" />,
-      label: 'Dark',
+      label: t.dockDark,
       bg: 'bg-gradient-to-tr from-indigo-950 via-indigo-900 to-purple-800 shadow-indigo-900/40',
-      title: 'Theme: Dark (Click for Light Mode)',
+      title: language === 'zh' ? '当前主题：深色模式（点击切换浅色）' : 'Theme: Dark (Click for Light Mode)',
     };
   };
 
@@ -85,7 +96,7 @@ export const MacDock: React.FC<MacDockProps> = ({
         <button
           onClick={onOpenQuoteList}
           className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
-          title="Quotation Hub"
+          title={t.quotationSheet}
         >
           <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-rose-600 via-pink-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-rose-500/30 border border-white/30 relative">
             <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -96,7 +107,7 @@ export const MacDock: React.FC<MacDockProps> = ({
             )}
           </div>
           <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
-            Quotes ({quoteCount})
+            {t.dockQuotes} ({quoteCount})
           </span>
         </button>
 
@@ -106,7 +117,7 @@ export const MacDock: React.FC<MacDockProps> = ({
         <button
           onClick={onOpenAuth}
           className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
-          title={user ? `Google Account: ${user.email}` : "Sign In with Google"}
+          title={user ? `${t.signedInAs} ${user.email}` : t.signInWithGoogle}
         >
           <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-white dark:bg-[#202028] flex items-center justify-center shadow-md shadow-black/10 border border-slate-200 dark:border-white/20 relative">
             <GoogleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -115,7 +126,7 @@ export const MacDock: React.FC<MacDockProps> = ({
             )}
           </div>
           <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
-            {user ? 'Cloud' : 'Login'}
+            {user ? t.dockCloud : t.dockLogin}
           </span>
         </button>
 
@@ -123,7 +134,7 @@ export const MacDock: React.FC<MacDockProps> = ({
         <button
           onClick={onOpenMathCalc}
           className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
-          title="iOS Calculator"
+          title={t.calculator}
         >
           <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#1c1c1e] border border-white/25 flex items-center justify-center shadow-lg shadow-black/40 relative overflow-hidden">
             <div className="grid grid-cols-2 gap-0.5 sm:gap-1 p-1 sm:p-1.5 w-full h-full">
@@ -134,7 +145,7 @@ export const MacDock: React.FC<MacDockProps> = ({
             </div>
           </div>
           <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
-            Calc
+            {t.dockCalc}
           </span>
         </button>
 
@@ -143,7 +154,7 @@ export const MacDock: React.FC<MacDockProps> = ({
           <button
             onClick={onOpenShapeModal}
             className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
-            title={`Lightbox Shape: ${shapeLabel} (Click to inspect proportion)`}
+            title={`${t.shapeInspector}: ${shapeLabel}`}
           >
             <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/30 border border-white/30 relative overflow-hidden">
               {shapeType === 'horizontal' ? (
@@ -159,22 +170,39 @@ export const MacDock: React.FC<MacDockProps> = ({
               </span>
             </div>
             <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
-              Shape
+              {t.dockShape}
             </span>
           </button>
         )}
+
+        {/* Language Switcher Button in Dock */}
+        <button
+          onClick={toggleLanguage}
+          className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
+          title={t.dockLangTitle}
+        >
+          <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-blue-500/30 border border-white/30 relative overflow-hidden">
+            <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="absolute -bottom-0.5 text-[7.5px] font-black uppercase tracking-tighter opacity-90">
+              {language === 'en' ? '中' : 'EN'}
+            </span>
+          </div>
+          <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
+            {t.dockLang}
+          </span>
+        </button>
 
         {/* Wallpaper Switcher */}
         <button
           onClick={nextWallpaper}
           className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
-          title={`Change Wallpaper (Current: ${wallpaper})`}
+          title={language === 'zh' ? `切换壁纸 (当前: ${wallpaper})` : `Change Wallpaper (Current: ${wallpaper})`}
         >
           <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-blue-500 flex items-center justify-center text-white shadow-md shadow-purple-500/30 border border-white/30">
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
-            Wallpaper
+            {t.dockWallpaper}
           </span>
         </button>
 

@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, Theme, ThemeType } from '../types';
+import { UserProfile, Theme, ThemeType, LanguageType } from '../types';
 import { GoogleIcon } from './GoogleIcon';
 import { HaloLogo } from './HaloLogo';
-import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square } from 'lucide-react';
+import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square, Globe } from 'lucide-react';
+import { getTranslation } from '../data/translations';
 
 interface MacMenuBarProps {
   quoteCount: number;
   onOpenQuoteList: () => void;
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
+  language: LanguageType;
+  setLanguage: (lang: LanguageType) => void;
   user: UserProfile | null;
   onOpenAuth: () => void;
   onOpenMobileApp: () => void;
@@ -23,6 +26,8 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
   onOpenQuoteList,
   theme,
   setTheme,
+  language,
+  setLanguage,
   user,
   onOpenAuth,
   onOpenMobileApp,
@@ -32,6 +37,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
   shapeLabel = 'Horizontal',
 }) => {
   const [timeString, setTimeString] = useState('');
+  const t = getTranslation(language);
 
   const cycleTheme = () => {
     if (theme === Theme.DARK) {
@@ -41,11 +47,15 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
     }
   };
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'zh' : 'en');
+  };
+
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
       setTimeString(
-        now.toLocaleTimeString([], {
+        now.toLocaleTimeString(language === 'zh' ? 'zh-CN' : 'en-US', {
           weekday: 'short',
           month: 'short',
           day: 'numeric',
@@ -57,7 +67,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
     updateClock();
     const timer = setInterval(updateClock, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [language]);
 
   return (
     <div className="fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top,0px)] bg-white/85 dark:bg-[#121316]/90 backdrop-blur-2xl border-b border-slate-200/90 dark:border-white/10 z-50 select-none shadow-sm">
@@ -67,20 +77,22 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
           <div className="flex items-center gap-1 cursor-pointer hover:opacity-85 transition-opacity px-0.5 py-0.5 rounded shrink-0">
             <HaloLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 shadow-sm" />
           </div>
-          <span className="font-bold text-slate-900 dark:text-white truncate text-[11px] xs:text-xs sm:text-[13px]">Halo Design Hub</span>
+          <span className="font-bold text-slate-900 dark:text-white truncate text-[11px] xs:text-xs sm:text-[13px]">
+            {t.appTitle}
+          </span>
           <div className="hidden md:flex items-center gap-3 text-slate-600 dark:text-neutral-300">
             <button
               onClick={onOpenQuoteList}
               className="hover:text-slate-900 dark:hover:text-white transition-colors"
             >
-              Quotation Sheet ({quoteCount})
+              {t.quotationSheet} ({quoteCount})
             </button>
             <button
               onClick={onOpenMobileApp}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1 font-semibold"
             >
               <Smartphone className="w-3.5 h-3.5 text-blue-500" />
-              Install App (iOS / Android)
+              {t.installApp}
             </button>
             {onOpenMathCalc && (
               <button
@@ -88,14 +100,14 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
                 className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1 font-medium"
               >
                 <Calculator className="w-3.5 h-3.5 text-amber-500" />
-                Calculator
+                {t.calculator}
               </button>
             )}
             {onOpenShapeModal && (
               <button
                 onClick={onOpenShapeModal}
                 className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1 font-medium"
-                title="Lightbox Shape Inspector"
+                title={t.shapeInspectTooltip}
               >
                 {shapeType === 'horizontal' ? (
                   <RectangleHorizontal className="w-3.5 h-3.5 text-blue-500" />
@@ -104,7 +116,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
                 ) : (
                   <Square className="w-3.5 h-3.5 text-amber-500" />
                 )}
-                <span>Shape ({shapeLabel})</span>
+                <span>{t.shapeInspector} ({shapeLabel})</span>
               </button>
             )}
           </div>
@@ -118,9 +130,19 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
             onClick={onOpenQuoteList}
             className="hidden sm:flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 text-[11px] font-bold hover:bg-blue-500/25 transition-colors border border-blue-500/20"
           >
-            <span>{quoteCount} items</span>
+            <span>{quoteCount} {t.itemsUnit}</span>
           </button>
         )}
+
+        {/* Language Switcher Pill */}
+        <button
+          onClick={toggleLanguage}
+          className="flex items-center gap-1 px-1.5 xs:px-2 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-700/50 text-blue-700 dark:text-blue-300 text-[10px] xs:text-[11px] font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+          title={t.switchToLang}
+        >
+          <Globe className="w-3 h-3 xs:w-3.5 xs:h-3.5 text-blue-600 dark:text-blue-400" />
+          <span className="font-sans">{language === 'en' ? '中文' : 'EN'}</span>
+        </button>
 
         {/* Google Sign In / Account Pill */}
         <button
@@ -130,11 +152,11 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
               ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
               : 'bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 border-slate-200 dark:border-white/10 hover:border-blue-500/50'
           }`}
-          title={user ? `Signed in as ${user.email}` : "Sign in with Google"}
+          title={user ? `${t.signedInAs} ${user.email}` : t.signInWithGoogle}
         >
           <GoogleIcon className="w-3 h-3" />
           <span className="hidden sm:inline font-bold truncate max-w-[130px]">
-            {user ? user.displayName : 'Sign in with Google'}
+            {user ? user.displayName : t.signInWithGoogle}
           </span>
           {user && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>}
         </button>
@@ -150,7 +172,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
           ) : (
             <Sun className="w-3 h-3 xs:w-3.5 xs:h-3.5 text-amber-500" />
           )}
-          <span className="capitalize hidden sm:inline">{theme} Mode</span>
+          <span className="capitalize hidden sm:inline">{theme === Theme.DARK ? t.themeDark : t.themeLight}</span>
         </button>
 
         {/* WiFi & Battery icon */}
