@@ -20,8 +20,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch {
       // ignore
     }
-    // Default to Chinese as requested by user
-    return 'zh';
+    // Default to English as requested by user
+    return 'en';
   });
 
   const setLanguage = (newLang: Language) => {
@@ -57,10 +57,10 @@ export const useLanguage = (): LanguageContextType => {
   if (!context) {
     // Fallback if not inside provider
     return {
-      language: 'zh',
+      language: 'en',
       setLanguage: () => {},
       toggleLanguage: () => {},
-      t: translations.zh,
+      t: translations.en,
     };
   }
   return context;

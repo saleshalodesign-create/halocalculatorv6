@@ -40,6 +40,8 @@ import {
   AtSign,
   Send,
   FileCheck,
+  Printer,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 export const PRESET_ITEMS: Array<{ name: string; price: number }> = [
@@ -71,6 +73,7 @@ interface QuotationListModalProps {
   onUpdateItem: (id: string, updates: Partial<QuoteItem>) => void;
   auth: AuthContextType;
   onLoadQuoteRecord: (record: QuoteRecord) => void;
+  onOpenDailySchedule?: (customerName?: string, customerAddress?: string) => void;
 }
 
 export const QuotationListModal: React.FC<QuotationListModalProps> = ({
@@ -83,6 +86,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
   onUpdateItem,
   auth,
   onLoadQuoteRecord,
+  onOpenDailySchedule,
 }) => {
   const { language, t } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<'active' | 'cloudRecords'>('active');
@@ -131,13 +135,14 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
   // Discount
   const [discountType, setDiscountType] = useState<'none' | 'percent' | 'fixed'>('none');
   const [discountValue, setDiscountValue] = useState(0);
+  const [customDiscountInput, setCustomDiscountInput] = useState('');
 
   const grandTotal = items.reduce((sum, item) => sum + item.totalPrice * item.quantity, 0);
   const discountAmount =
     discountType === 'percent'
       ? grandTotal * (discountValue / 100)
       : discountType === 'fixed'
-      ? discountValue
+      ? Math.min(grandTotal, discountValue)
       : 0;
   const finalTotal = Math.max(0, grandTotal - discountAmount);
 
@@ -216,7 +221,12 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
     if (record.customerEmail) setCustomerEmail(record.customerEmail);
     if (record.deposit !== undefined) setDeposit(record.deposit.toString());
     if (record.discountType) setDiscountType(record.discountType);
-    if (record.discountValue !== undefined) setDiscountValue(record.discountValue);
+    if (record.discountValue !== undefined) {
+      setDiscountValue(record.discountValue);
+      if (record.discountType === 'fixed') {
+        setCustomDiscountInput(record.discountValue > 0 ? record.discountValue.toString() : '');
+      }
+    }
     if (record.paymentMethod) setPaymentMethod(record.paymentMethod);
     if (record.paymentTerms) setPaymentTerms(record.paymentTerms);
     if (record.showSizes !== undefined) setShowSizes(record.showSizes);
@@ -1020,6 +1030,65 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       0%
                     </button>
 
+                    {/* Customize discount amount ($) */}
+                    <div
+                      className={`inline-flex items-center rounded transition-all border ${
+                        discountType === 'fixed'
+                          ? 'border-blue-500/70 bg-blue-50/90 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/30 shadow-sm'
+                          : 'border-transparent bg-slate-100 hover:bg-slate-200/80 dark:bg-white/5 text-slate-700 dark:text-neutral-300'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDiscountType('fixed');
+                          const val = parseFloat(customDiscountInput);
+                          setDiscountValue(!isNaN(val) && val > 0 ? val : 0);
+                        }}
+                        className={`px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded transition-all ${
+                          discountType === 'fixed'
+                            ? 'bg-blue-600 text-white'
+                            : 'hover:bg-slate-200/80 dark:hover:bg-white/10'
+                        }`}
+                        title={language === 'zh' ? '自定义扣减金额 ($)' : 'Customize discount amount ($)'}
+                      >
+                        {language === 'zh' ? '自定义$' : 'Custom $'}
+                      </button>
+                      {discountType === 'fixed' && (
+                        <div className="flex items-center px-1.5 py-0.5 animate-fade-in">
+                          <span className="text-[10px] sm:text-xs font-mono font-bold text-blue-600 dark:text-blue-400 mr-0.5">$</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={customDiscountInput}
+                            onChange={e => {
+                              const valStr = e.target.value;
+                              setCustomDiscountInput(valStr);
+                              const num = parseFloat(valStr);
+                              setDiscountValue(!isNaN(num) && num >= 0 ? num : 0);
+                            }}
+                            placeholder="0.00"
+                            autoFocus
+                            className="w-14 sm:w-16 text-[10px] sm:text-xs font-mono font-bold bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-blue-400/50"
+                          />
+                          {customDiscountInput && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCustomDiscountInput('');
+                                setDiscountValue(0);
+                              }}
+                              className="ml-1 text-slate-400 hover:text-slate-600 dark:text-neutral-400 dark:hover:text-white text-[10px]"
+                              title="Clear"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Show / Hide Sizes quick toggle */}
                     <button
                       type="button"
@@ -1036,13 +1105,20 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     </button>
                   </div>
 
-                  <div className="flex items-baseline gap-1 shrink-0">
-                    <span className="text-[10px] sm:text-xs text-slate-500 dark:text-neutral-400 uppercase font-bold tracking-wider">
-                      {language === 'zh' ? '总计:' : 'Total:'}
-                    </span>
-                    <div className="text-base sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
-                      ${finalTotal.toFixed(2)}
+                  <div className="flex flex-col items-end shrink-0">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[10px] sm:text-xs text-slate-500 dark:text-neutral-400 uppercase font-bold tracking-wider">
+                        {language === 'zh' ? '总计:' : 'Total:'}
+                      </span>
+                      <div className="text-base sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
+                        ${finalTotal.toFixed(2)}
+                      </div>
                     </div>
+                    {discountAmount > 0 && (
+                      <div className="text-[9px] sm:text-[10px] font-mono font-semibold text-amber-600 dark:text-amber-400">
+                        {language === 'zh' ? '已减' : 'Disc'}: -${discountAmount.toFixed(2)}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1552,7 +1628,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCopyAllQuotes(textFormat, formMode === 'invoice' ? 'invoice' : 'quote')}
-                    className="py-3 px-4 rounded-xl bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border border-black/5 dark:border-white/10 active:scale-95"
+                    className="py-3 px-3.5 rounded-xl bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all border border-black/5 dark:border-white/10 active:scale-95"
                   >
                     {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                     <span>{copied ? (language === 'zh' ? '已复制！' : 'Copied!') : (language === 'zh' ? '复制文本' : 'Copy Text')}</span>
@@ -1560,17 +1636,30 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleExport('view')}
-                    className="flex-1 py-3 rounded-xl bg-neutral-100 dark:bg-white/10 font-bold text-xs sm:text-sm hover:bg-neutral-200 dark:hover:bg-white/20 flex items-center justify-center gap-2 transition-all text-neutral-800 dark:text-neutral-200"
+                    className="flex-1 py-3 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95"
+                    title={language === 'zh' ? '打开打印/预览窗口' : 'Open print / PDF view window'}
                   >
-                    {language === 'zh' ? '预览 PDF' : 'Preview PDF'}
+                    <Printer className="w-4 h-4 text-emerald-400" />
+                    <span>{language === 'zh' ? '打印单据' : 'Print Form'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleExport('save')}
-                    className="flex-1 py-3 rounded-xl bg-blue-500 text-white font-bold text-xs sm:text-sm hover:bg-blue-600 flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition-all active:scale-95"
+                    className="flex-1 py-3 px-3 rounded-xl bg-blue-500 text-white font-bold text-xs sm:text-sm hover:bg-blue-600 flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20 transition-all active:scale-95"
                   >
                     <Download className="w-4 h-4" /> {language === 'zh' ? '下载 PDF' : 'Download PDF'}
                   </button>
+                  {onOpenDailySchedule && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenDailySchedule(customerName, customerAddress)}
+                      className="py-3 px-3.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-emerald-500/20 transition-all active:scale-95"
+                      title={language === 'zh' ? '打开每日外出安装排程表并自动填入此客户信息' : 'Open Daily Outside Schedule form with this client pre-filled'}
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="hidden sm:inline">{language === 'zh' ? '排程表' : 'Daily Schedule'}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

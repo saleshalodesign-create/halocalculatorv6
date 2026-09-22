@@ -10,7 +10,7 @@ export const getStoredLang = (): 'zh' | 'en' => {
   } catch {
     // ignore
   }
-  return 'zh';
+  return 'en';
 };
 
 /**

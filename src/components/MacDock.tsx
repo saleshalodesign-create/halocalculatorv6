@@ -11,6 +11,7 @@ import {
   RectangleVertical,
   Square,
   Globe,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -26,6 +27,7 @@ interface MacDockProps {
   onOpenMobileApp?: () => void;
   onOpenMathCalc: () => void;
   onOpenShapeModal?: () => void;
+  onOpenDailySchedule?: () => void;
   shapeType?: 'horizontal' | 'vertical' | 'square' | 'invalid';
   shapeLabel?: string;
 }
@@ -42,6 +44,7 @@ export const MacDock: React.FC<MacDockProps> = ({
   onOpenMobileApp,
   onOpenMathCalc,
   onOpenShapeModal,
+  onOpenDailySchedule,
   shapeType = 'horizontal',
   shapeLabel = 'Horizontal',
 }) => {
@@ -102,6 +105,22 @@ export const MacDock: React.FC<MacDockProps> = ({
             {t.dock.quotes} ({quoteCount})
           </span>
         </button>
+
+        {/* Daily Outside Schedule Tab */}
+        {onOpenDailySchedule && (
+          <button
+            onClick={onOpenDailySchedule}
+            className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
+            title={t.dailySchedule.title}
+          >
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/30 border border-white/30 relative">
+              <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
+              {t.dock.schedule}
+            </span>
+          </button>
+        )}
 
         <div className="w-px h-6 sm:h-8 bg-black/10 dark:bg-white/20 my-auto mx-0.5 sm:mx-1"></div>
 

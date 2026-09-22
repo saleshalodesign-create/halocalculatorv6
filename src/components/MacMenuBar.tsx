@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Theme, ThemeType } from '../types';
 import { GoogleIcon } from './GoogleIcon';
 import { HaloLogo } from './HaloLogo';
-import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square, Globe } from 'lucide-react';
+import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square, Globe, FileSpreadsheet } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface MacMenuBarProps {
@@ -15,6 +15,7 @@ interface MacMenuBarProps {
   onOpenMobileApp: () => void;
   onOpenMathCalc?: () => void;
   onOpenShapeModal?: () => void;
+  onOpenDailySchedule?: () => void;
   shapeType?: 'horizontal' | 'vertical' | 'square' | 'invalid';
   shapeLabel?: string;
 }
@@ -29,6 +30,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
   onOpenMobileApp,
   onOpenMathCalc,
   onOpenShapeModal,
+  onOpenDailySchedule,
   shapeType = 'horizontal',
   shapeLabel = 'Horizontal',
 }) => {
@@ -119,6 +121,16 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
                   <Square className="w-3.5 h-3.5 text-amber-500" />
                 )}
                 <span>{t.nav.shapeLabel} ({displayShapeLabel()})</span>
+              </button>
+            )}
+            {onOpenDailySchedule && (
+              <button
+                onClick={onOpenDailySchedule}
+                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 font-medium"
+                title={t.dailySchedule.title}
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
+                <span>{t.nav.schedule}</span>
               </button>
             )}
           </div>

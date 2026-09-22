@@ -219,3 +219,46 @@ html.dark .mac-main-window {
   animation-play-state: paused;
 }
 
+/* Print Rules for Official Documents */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide app screen UI during printing */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only designated printable schedule sheet */
+  #printable-daily-schedule,
+  #printable-daily-schedule * {
+    visibility: visible;
+  }
+
+  #printable-daily-schedule {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: 99999;
+  }
+}
+
+

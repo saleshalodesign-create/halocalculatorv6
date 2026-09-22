@@ -2,6 +2,110 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { QuoteItem, QuoteRecord } from '../types';
 
+/**
+ * Generate a crystal-clear, high-resolution base64 PNG data URL of the official Halo Design logo.
+ * Renders "hal" + circular halo indicator icon + "DESIGN PTE LTD" / "DESIGN HUB"
+ * at 4x Retina resolution to guarantee zero distortion, crisp vector alignment, and no clipping in PDFs.
+ */
+export const getHaloLogoBase64 = (subtitle: string = 'DESIGN PTE LTD'): string => {
+  try {
+    if (typeof document === 'undefined') return '';
+    const canvas = document.createElement('canvas');
+    const scale = 4; // 4x Retina resolution for razor-sharp PDF printing
+    const w = 220;
+    const h = 70;
+    canvas.width = w * scale;
+    canvas.height = h * scale;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+
+    ctx.scale(scale, scale);
+
+    // 1. Draw "hal" text in bold black
+    ctx.fillStyle = '#000000';
+    ctx.font = '900 36px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    ctx.textBaseline = 'alphabetic';
+    const halBaselineY = 36;
+    ctx.fillText('hal', 2, halBaselineY);
+
+    const halWidth = ctx.measureText('hal').width;
+
+    // 2. Draw 'o' circular logo immediately after 'hal'
+    const logoSize = 30; // height/width in canvas units
+    const logoLeft = 2 + halWidth + 2.5;
+    const logoTop = halBaselineY - 26;
+
+    ctx.save();
+    ctx.translate(logoLeft, logoTop);
+    const s = logoSize / 100;
+    ctx.scale(s, s);
+
+    // Outer Black Disc (from HaloLogo.tsx)
+    ctx.fillStyle = '#0C0D11';
+    ctx.beginPath();
+    ctx.arc(50, 50, 48, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Lime Green Ring Body
+    ctx.fillStyle = '#C4EE00';
+    ctx.beginPath();
+    ctx.arc(50, 50, 36, 0, Math.PI * 2, false);
+    ctx.arc(50, 50, 20, 0, Math.PI * 2, true);
+    ctx.fill();
+
+    // Cutout slot for diagonal bar (filled with dark background #0C0D11)
+    ctx.fillStyle = '#0C0D11';
+    ctx.beginPath();
+    ctx.moveTo(42, 58);
+    ctx.lineTo(78, 22);
+    ctx.lineTo(68, 12);
+    ctx.lineTo(32, 48);
+    ctx.closePath();
+    ctx.fill();
+
+    // Inner Black Core
+    ctx.beginPath();
+    ctx.arc(50, 50, 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Diagonal White Bar
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.moveTo(43, 53);
+    ctx.lineTo(51, 61);
+    ctx.lineTo(74, 38);
+    ctx.lineTo(66, 30);
+    ctx.closePath();
+    ctx.fill();
+
+    // Outer Left Accent White Dot
+    ctx.beginPath();
+    ctx.arc(10, 58, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    // 3. Subtitle: e.g. "DESIGN PTE LTD" or "DESIGN HUB"
+    ctx.fillStyle = '#000000';
+    ctx.font = '700 9.5px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    ctx.textBaseline = 'top';
+
+    const subY = halBaselineY + 6;
+    let currX = 2.5;
+    const spacing = 1.6;
+    for (let i = 0; i < subtitle.length; i++) {
+      const char = subtitle[i];
+      ctx.fillText(char, currX, subY);
+      currX += ctx.measureText(char).width + spacing;
+    }
+
+    return canvas.toDataURL('image/png');
+  } catch (err) {
+    console.error('Error generating halo logo canvas', err);
+    return '';
+  }
+};
+
 const drawHeader = (doc: jsPDF, data: Partial<QuoteRecord> & { logo?: string }, type: string) => {
   const pageWidth = doc.internal.pageSize.width;
   const margin = 14;
@@ -24,65 +128,25 @@ const drawHeader = (doc: jsPDF, data: Partial<QuoteRecord> & { logo?: string }, 
   doc.text("SINGAPORE 409838", textRightX, addrY + (lineHeight * 2), { align: 'right' });
   doc.text("Tel: 6844 4928 / 6844 4929", textRightX, addrY + (lineHeight * 3), { align: 'right' });
 
-  if (data.logo) {
+  const logoSrc = data.logo || getHaloLogoBase64('DESIGN HUB');
+  if (logoSrc) {
     try {
-      doc.addImage(data.logo, 'PNG', logoX, logoY, 44, 25, undefined, 'FAST');
+      doc.addImage(logoSrc, 'PNG', logoX, logoY, 44, 14, undefined, 'FAST');
     } catch (e) {
-      console.error("Error adding logo", e);
+      console.error("Error adding logo image", e);
     }
   } else {
-    const textX = logoX;
-    const textY = logoY + 10;
+    // Basic text fallback
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(28);
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.6);
-
-    const charSpaceHal = 0.4;
-    // @ts-ignore
-    doc.text("hal", textX, textY, { renderingMode: 'fillThenStroke', charSpace: charSpaceHal });
-    const rawHalWidth = doc.getTextWidth("hal");
-    const halWidth = rawHalWidth + (2 * charSpaceHal);
-    const dhY = textY + 2.2;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(80, 80, 80);
-    doc.setLineWidth(0.1);
-    // @ts-ignore
-    doc.text("DESIGN HUB", textX, dhY, { renderingMode: 'fill' });
-
-    const iconCx = textX + halWidth + 8;
-    const iconCy = textY - 1;
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(1.6);
-    doc.circle(iconCx, iconCy, 6.5, 'S');
-    doc.setDrawColor(193, 216, 47);
-    doc.setLineWidth(2.5);
-    doc.circle(iconCx, iconCy, 3.5, 'S');
-
-    const angle = -45 * (Math.PI / 180);
-    doc.setDrawColor(255, 255, 255);
-    doc.setLineWidth(2.2);
-    doc.line(iconCx, iconCy, iconCx + Math.cos(angle) * 4.8, iconCy + Math.sin(angle) * 4.8);
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(1.2);
-    doc.line(iconCx, iconCy, iconCx + Math.cos(angle) * 4.8, iconCy + Math.sin(angle) * 4.8);
-
-    doc.setFillColor(255, 255, 255);
-    doc.circle(iconCx - 6.5, iconCy, 1.4, 'F');
-    doc.setFillColor(128, 128, 128);
-    doc.circle(iconCx - 6.5, iconCy, 0.9, 'F');
-
-    doc.setDrawColor(80, 80, 80);
-    doc.setLineWidth(0.4);
-    doc.line(textX, dhY + 1.5, textX + halWidth, dhY + 1.5);
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.2);
+    doc.setFontSize(22);
+    doc.text("halo", logoX, logoY + 8);
+    doc.setFontSize(7.5);
+    doc.text("DESIGN HUB", logoX, logoY + 13);
   }
 };
 
-export type PDFAction = 'view' | 'save' | 'file';
+export type PDFAction = 'view' | 'save' | 'file' | 'print';
 
 export interface GeneratedPDFOutput {
   blob: Blob;
@@ -124,15 +188,75 @@ const finalizePDF = (
     return { blob, file, filename };
   }
 
+  if (action === 'print') {
+    doc.autoPrint();
+    const blob = doc.output('blob');
+    const blobUrl = URL.createObjectURL(blob);
+
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          setTimeout(() => {
+            try {
+              document.body.removeChild(iframe);
+              URL.revokeObjectURL(blobUrl);
+            } catch (_) {}
+          }, 60000);
+        } catch (e) {
+          console.warn('Iframe print error:', e);
+          doc.save(filename);
+        }
+      };
+    } catch (e) {
+      console.warn('Could not launch iframe print:', e);
+    }
+
+    try {
+      const win = window.open(blobUrl, '_blank');
+      if (!win) {
+        doc.save(filename);
+      }
+    } catch (e) {
+      doc.save(filename);
+    }
+    return;
+  }
+
   // Action is 'view'
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   if (isMobile) {
     const dataUri = doc.output('datauristring');
-    const win = window.open();
-    if (win) win.location.href = dataUri;
+    try {
+      const win = window.open();
+      if (win) {
+        win.location.href = dataUri;
+      } else {
+        doc.save(filename);
+      }
+    } catch (e) {
+      doc.save(filename);
+    }
   } else {
-    const blobUrl = doc.output('bloburl');
-    window.open(blobUrl as unknown as string, '_blank');
+    try {
+      const blobUrl = doc.output('bloburl');
+      const win = window.open(blobUrl as unknown as string, '_blank');
+      if (!win) {
+        doc.save(filename);
+      }
+    } catch (e) {
+      doc.save(filename);
+    }
   }
 };
 
@@ -674,6 +798,227 @@ export const createDocumentPDFFile = (
     return generateReceiptPDF(items, data, grandTotal, discountAmount, finalTotal, 'file') as GeneratedPDFOutput;
   } else {
     return generateQuotationPDF(items, data, grandTotal, discountAmount, finalTotal, 'file') as GeneratedPDFOutput;
+  }
+};
+
+export interface DailyScheduleEntry {
+  companyName: string;
+  address: string;
+  descriptions: string;
+}
+
+export interface DailyScheduleData {
+  date: string;
+  entries: DailyScheduleEntry[];
+}
+
+/**
+ * Generate and print / download Daily Outside Schedule PDF
+ * Matches the official Halo Design Pte Ltd 4-slot daily installation & delivery schedule form
+ */
+export const generateDailyOutsideSchedulePDF = (
+  data: DailyScheduleData,
+  action: PDFAction = 'view'
+): GeneratedPDFOutput | void => {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+  });
+
+  const pageWidth = doc.internal.pageSize.width; // 210mm
+  const leftMargin = 18;
+  const rightMargin = 18;
+  const contentWidth = pageWidth - leftMargin - rightMargin; // 174mm
+
+  // Header position
+  const headerY = 14;
+
+  // 1. Logo "halo DESIGN PTE LTD"
+  const logoW = 44;
+  const logoH = 14;
+  const logoSrc = getHaloLogoBase64('DESIGN PTE LTD');
+  if (logoSrc) {
+    try {
+      doc.addImage(logoSrc, 'PNG', leftMargin, headerY, logoW, logoH, undefined, 'FAST');
+    } catch (e) {
+      console.error("Error adding logo to schedule PDF", e);
+    }
+  } else {
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("halo", leftMargin, headerY + 8);
+    doc.setFontSize(7.5);
+    doc.text("DESIGN PTE LTD", leftMargin, headerY + 13);
+  }
+
+  // 2. Title: "Daily Outside Schedule"
+  const titleX = leftMargin + logoW + 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(0, 0, 0);
+  doc.text("Daily Outside Schedule", titleX, headerY + 8);
+
+  // 3. Date on the right: "Date: "
+  const dateRightX = pageWidth - rightMargin;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  const dateText = data.date ? `Date: ${data.date}` : "Date: ___________________";
+  doc.text(dateText, dateRightX, headerY + 8, { align: 'right' });
+
+  // 4. Five Schedule Slots (1, 2, 3, 4, 5)
+  const startY = headerY + 16;
+  const slotHeight = 49; // 14 + 16 + 5 * 49 = 275mm (fits cleanly on 297mm A4)
+  const numberWidth = 8;
+  const tableX = leftMargin + numberWidth;
+  const tableWidth = contentWidth - numberWidth; // ~166mm
+  const col1Width = 36; // Width for "Company Name:" and "Add:"
+  const rowHeight = 6.8;
+
+  for (let i = 0; i < 5; i++) {
+    const entry = data.entries[i] || { companyName: '', address: '', descriptions: '' };
+    const slotTopY = startY + i * slotHeight;
+
+    // Number (1 to 5) placed to the left of the table
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${i + 1}`, leftMargin + 1.5, slotTopY + 5);
+
+    // Box outer border
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.35);
+    doc.rect(tableX, slotTopY, tableWidth, rowHeight * 2);
+
+    // Horizontal line separating Row 1 ("Company Name:") and Row 2 ("Add:")
+    doc.line(tableX, slotTopY + rowHeight, tableX + tableWidth, slotTopY + rowHeight);
+
+    // Vertical line separating column 1 from column 2
+    doc.line(tableX + col1Width, slotTopY, tableX + col1Width, slotTopY + rowHeight * 2);
+
+    // Row 1: Company Name
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Company Name:", tableX + 2.5, slotTopY + 4.8);
+
+    if (entry.companyName) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.text(entry.companyName, tableX + col1Width + 3.5, slotTopY + 4.8);
+    }
+
+    // Row 2: Add:
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.text("Add:", tableX + 2.5, slotTopY + rowHeight + 4.8);
+
+    if (entry.address) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const splitAddress = doc.splitTextToSize(entry.address, tableWidth - col1Width - 6);
+      doc.text(splitAddress, tableX + col1Width + 3.5, slotTopY + rowHeight + 4.8);
+    }
+
+    // Row 3: Descriptions: (text directly below table, with blank handwriting space)
+    const descY = slotTopY + rowHeight * 2 + 4.2;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.text("Descriptions:", tableX, descY);
+
+    if (entry.descriptions) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(30, 30, 30);
+      const splitDesc = doc.splitTextToSize(entry.descriptions, tableWidth - 4);
+      doc.text(splitDesc, tableX, descY + 4.2);
+      doc.setTextColor(0, 0, 0);
+    }
+  }
+
+  const filename = `Daily_Outside_Schedule_${(data.date || 'Template').replace(/[\/\s:]+/g, '_')}.pdf`;
+
+  if (action === 'save') {
+    doc.save(filename);
+    return;
+  }
+
+  if (action === 'file') {
+    const blob = doc.output('blob');
+    const file = new File([blob], filename, { type: 'application/pdf', lastModified: Date.now() });
+    return { blob, file, filename };
+  }
+
+  if (action === 'print') {
+    doc.autoPrint();
+    const blob = doc.output('blob');
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Try printing via hidden iframe
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          setTimeout(() => {
+            try {
+              document.body.removeChild(iframe);
+              URL.revokeObjectURL(blobUrl);
+            } catch (_) {}
+          }, 60000);
+        } catch (e) {
+          console.warn('Iframe print error for schedule:', e);
+          doc.save(filename);
+        }
+      };
+    } catch (e) {
+      console.warn('Could not launch iframe print for schedule:', e);
+    }
+
+    try {
+      const win = window.open(blobUrl, '_blank');
+      if (!win) {
+        doc.save(filename);
+      }
+    } catch (e) {
+      doc.save(filename);
+    }
+    return;
+  }
+
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobile) {
+    const dataUri = doc.output('datauristring');
+    try {
+      const win = window.open();
+      if (win) {
+        win.location.href = dataUri;
+      } else {
+        doc.save(filename);
+      }
+    } catch (e) {
+      doc.save(filename);
+    }
+  } else {
+    try {
+      const blobUrl = doc.output('bloburl');
+      const win = window.open(blobUrl as unknown as string, '_blank');
+      if (!win) {
+        doc.save(filename);
+      }
+    } catch (e) {
+      doc.save(filename);
+    }
   }
 };
 

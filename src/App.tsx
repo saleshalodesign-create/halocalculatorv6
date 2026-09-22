@@ -16,6 +16,7 @@ import { MobileInstallBanner } from './components/MobileInstallBanner';
 import { MathCalculatorModal } from './components/MathCalculatorModal';
 import { HaloLogo } from './components/HaloLogo';
 import { LightboxShapeModal } from './components/LightboxShapeModal';
+import { DailyOutsideScheduleModal } from './components/DailyOutsideScheduleModal';
 import { RotateCcw, RectangleHorizontal, RectangleVertical, Square } from 'lucide-react';
 
 export default function App() {
@@ -62,10 +63,19 @@ export default function App() {
     }
   }, [quoteItems]);
   const [quoteListOpen, setQuoteListOpen] = useState(false);
+  const [dailyScheduleOpen, setDailyScheduleOpen] = useState(false);
+  const [scheduleCustomerName, setScheduleCustomerName] = useState('');
+  const [scheduleCustomerAddress, setScheduleCustomerAddress] = useState('');
   const [mobileModalOpen, setMobileModalOpen] = useState(false);
   const [mathCalcOpen, setMathCalcOpen] = useState(false);
   const [shapeModalOpen, setShapeModalOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  const handleOpenDailySchedule = (customerName?: string, customerAddress?: string) => {
+    if (customerName !== undefined) setScheduleCustomerName(customerName);
+    if (customerAddress !== undefined) setScheduleCustomerAddress(customerAddress);
+    setDailyScheduleOpen(true);
+  };
 
   useEffect(() => {
     const handleBeforeInstall = (e: Event) => {
@@ -261,6 +271,7 @@ export default function App() {
         onOpenMobileApp={() => setMobileModalOpen(true)}
         onOpenMathCalc={() => setMathCalcOpen(true)}
         onOpenShapeModal={() => setShapeModalOpen(true)}
+        onOpenDailySchedule={() => handleOpenDailySchedule()}
         shapeType={shapeInfo.type}
         shapeLabel={shapeInfo.label}
       />
@@ -630,6 +641,7 @@ export default function App() {
         onOpenMobileApp={() => setMobileModalOpen(true)}
         onOpenMathCalc={() => setMathCalcOpen(true)}
         onOpenShapeModal={() => setShapeModalOpen(true)}
+        onOpenDailySchedule={() => handleOpenDailySchedule()}
         shapeType={shapeInfo.type}
         shapeLabel={shapeInfo.label}
       />
@@ -662,6 +674,7 @@ export default function App() {
         }
         auth={auth}
         onLoadQuoteRecord={handleLoadQuoteRecord}
+        onOpenDailySchedule={handleOpenDailySchedule}
       />
 
       {/* Google Account Modal */}
@@ -699,6 +712,15 @@ export default function App() {
         onUpdateWidth={(w) => setWidth(w)}
         onUpdateHeight={(h) => setHeight(h)}
         onUpdateUnit={(u) => setUnit(u)}
+      />
+
+      {/* Daily Outside Schedule Form Modal */}
+      <DailyOutsideScheduleModal
+        isOpen={dailyScheduleOpen}
+        onClose={() => setDailyScheduleOpen(false)}
+        quoteItems={quoteItems}
+        currentCustomerName={scheduleCustomerName}
+        currentCustomerAddress={scheduleCustomerAddress}
       />
     </div>
   );
