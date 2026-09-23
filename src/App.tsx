@@ -442,63 +442,33 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Dimension Conversion Badges (Auto-scrolling Right-to-Left Ticker) */}
-              <div className="overflow-hidden w-full lg:w-auto lg:max-w-xs xl:max-w-md relative [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)] py-0.5 flex justify-center">
-                <div className="animate-marquee-left flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs font-mono">
-                  {/* First copy */}
-                  {unit !== Unit.IN && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_in.toFixed(1)}" × {dimensions.h_in.toFixed(1)}" in
-                    </div>
-                  )}
-                  {unit !== Unit.FT && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_ft.toFixed(2)}' × {dimensions.h_ft.toFixed(2)}' ft
-                    </div>
-                  )}
-                  {unit !== Unit.CM && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_cm % 1 === 0 ? dimensions.w_cm.toFixed(0) : dimensions.w_cm.toFixed(1)} × {dimensions.h_cm % 1 === 0 ? dimensions.h_cm.toFixed(0) : dimensions.h_cm.toFixed(1)} cm
-                    </div>
-                  )}
-                  {unit !== Unit.MM && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-cyan-500/10 text-cyan-800 dark:text-cyan-400 border border-cyan-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_mm % 1 === 0 ? dimensions.w_mm.toFixed(0) : dimensions.w_mm.toFixed(1)} × {dimensions.h_mm % 1 === 0 ? dimensions.h_mm.toFixed(0) : dimensions.h_mm.toFixed(1)} mm
-                    </div>
-                  )}
-                  {unit !== Unit.M && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_m.toFixed(2)} × {dimensions.h_m.toFixed(2)} m
-                    </div>
-                  )}
-
-                  {/* Second copy for seamless continuous loop */}
-                  {unit !== Unit.IN && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_in.toFixed(1)}" × {dimensions.h_in.toFixed(1)}" in
-                    </div>
-                  )}
-                  {unit !== Unit.FT && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_ft.toFixed(2)}' × {dimensions.h_ft.toFixed(2)}' ft
-                    </div>
-                  )}
-                  {unit !== Unit.CM && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_cm % 1 === 0 ? dimensions.w_cm.toFixed(0) : dimensions.w_cm.toFixed(1)} × {dimensions.h_cm % 1 === 0 ? dimensions.h_cm.toFixed(0) : dimensions.h_cm.toFixed(1)} cm
-                    </div>
-                  )}
-                  {unit !== Unit.MM && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-cyan-500/10 text-cyan-800 dark:text-cyan-400 border border-cyan-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_mm % 1 === 0 ? dimensions.w_mm.toFixed(0) : dimensions.w_mm.toFixed(1)} × {dimensions.h_mm % 1 === 0 ? dimensions.h_mm.toFixed(0) : dimensions.h_mm.toFixed(1)} mm
-                    </div>
-                  )}
-                  {unit !== Unit.M && (
-                    <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/25 font-bold whitespace-nowrap shrink-0">
-                      {dimensions.w_m.toFixed(2)} × {dimensions.h_m.toFixed(2)} m
-                    </div>
-                  )}
-                </div>
+              {/* Dimension Conversion Badges (Static Non-moving Display) */}
+              <div className="w-full lg:w-auto flex items-center justify-center lg:justify-end gap-1.5 sm:gap-2 text-[9px] sm:text-xs font-mono flex-wrap py-0.5">
+                {unit !== Unit.IN && (
+                  <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/25 font-bold whitespace-nowrap shrink-0">
+                    {dimensions.w_in.toFixed(1)}" × {dimensions.h_in.toFixed(1)}" in
+                  </div>
+                )}
+                {unit !== Unit.FT && (
+                  <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/25 font-bold whitespace-nowrap shrink-0">
+                    {dimensions.w_ft.toFixed(2)}' × {dimensions.h_ft.toFixed(2)}' ft
+                  </div>
+                )}
+                {unit !== Unit.CM && (
+                  <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 font-bold whitespace-nowrap shrink-0">
+                    {dimensions.w_cm % 1 === 0 ? dimensions.w_cm.toFixed(0) : dimensions.w_cm.toFixed(1)} × {dimensions.h_cm % 1 === 0 ? dimensions.h_cm.toFixed(0) : dimensions.h_cm.toFixed(1)} cm
+                  </div>
+                )}
+                {unit !== Unit.MM && (
+                  <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-cyan-500/10 text-cyan-800 dark:text-cyan-400 border border-cyan-500/25 font-bold whitespace-nowrap shrink-0">
+                    {dimensions.w_mm % 1 === 0 ? dimensions.w_mm.toFixed(0) : dimensions.w_mm.toFixed(1)} × {dimensions.h_mm % 1 === 0 ? dimensions.h_mm.toFixed(0) : dimensions.h_mm.toFixed(1)} mm
+                  </div>
+                )}
+                {unit !== Unit.M && (
+                  <div className="px-2 py-0.5 sm:py-1 rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/25 font-bold whitespace-nowrap shrink-0">
+                    {dimensions.w_m.toFixed(2)} × {dimensions.h_m.toFixed(2)} m
+                  </div>
+                )}
               </div>
             </div>
 
