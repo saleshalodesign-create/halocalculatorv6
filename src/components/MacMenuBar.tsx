@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Theme, ThemeType } from '../types';
 import { GoogleIcon } from './GoogleIcon';
 import { HaloLogo } from './HaloLogo';
-import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square, Globe, FileSpreadsheet } from 'lucide-react';
+import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square, Globe, FileSpreadsheet, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface MacMenuBarProps {
@@ -16,6 +16,7 @@ interface MacMenuBarProps {
   onOpenMathCalc?: () => void;
   onOpenShapeModal?: () => void;
   onOpenDailySchedule?: () => void;
+  onOpenAiModal?: () => void;
   shapeType?: 'horizontal' | 'vertical' | 'square' | 'invalid';
   shapeLabel?: string;
 }
@@ -31,6 +32,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
   onOpenMathCalc,
   onOpenShapeModal,
   onOpenDailySchedule,
+  onOpenAiModal,
   shapeType = 'horizontal',
   shapeLabel = 'Horizontal',
 }) => {
@@ -131,6 +133,16 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
                 <span>{t.nav.schedule}</span>
+              </button>
+            )}
+            {onOpenAiModal && (
+              <button
+                onClick={onOpenAiModal}
+                className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center gap-1 font-semibold text-purple-600 dark:text-purple-400"
+                title="Gemini AI Assistant & Multi-turn Chat"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-500 animate-pulse" />
+                <span>{language === 'zh' ? 'Gemini 智能助手' : 'Gemini AI'}</span>
               </button>
             )}
           </div>

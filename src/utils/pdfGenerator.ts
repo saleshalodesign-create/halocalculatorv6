@@ -809,7 +809,10 @@ export interface DailyScheduleEntry {
 
 export interface DailyScheduleData {
   date: string;
+  dayOfWeek?: string;
   entries: DailyScheduleEntry[];
+  fontSizeScale?: number;
+  slotCount?: number;
 }
 
 /**
@@ -853,34 +856,45 @@ export const generateDailyOutsideSchedulePDF = (
     doc.text("DESIGN PTE LTD", leftMargin, headerY + 13);
   }
 
-  // 2. Title: "Daily Outside Schedule"
-  const titleX = leftMargin + logoW + 8;
+  // 2. Title: "Daily Outside Works Schedule" (Single row)
+  const titleX = leftMargin + logoW + 6;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
+  doc.setFontSize(15);
   doc.setTextColor(0, 0, 0);
-  doc.text("Daily Outside Schedule", titleX, headerY + 8);
+  doc.text("Daily Outside Works Schedule", titleX, headerY + 8);
 
-  // 3. Date on the right: "Date: "
+  // 3. Right side: Day of week placed ON TOP of Date
   const dateRightX = pageWidth - rightMargin;
   doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
   doc.setFontSize(10.5);
-  const dateText = data.date ? `Date: ${data.date}` : "Date: ___________________";
-  doc.text(dateText, dateRightX, headerY + 8, { align: 'right' });
 
-  // 4. Five Schedule Slots (1, 2, 3, 4, 5)
+  if (data.dayOfWeek) {
+    doc.text(data.dayOfWeek, dateRightX, headerY + 4, { align: 'right' });
+    const dateText = data.date ? `Date: ${data.date}` : "Date: ___________________";
+    doc.text(dateText, dateRightX, headerY + 9.5, { align: 'right' });
+  } else {
+    const dateText = data.date ? `Date: ${data.date}` : "Date: ___________________";
+    doc.text(dateText, dateRightX, headerY + 8, { align: 'right' });
+  }
+
+  // 4. Schedule Slots (Dynamic count 1 - 8)
+  const fontScale = data.fontSizeScale && data.fontSizeScale > 0 ? data.fontSizeScale : 1.0;
+  const numSlots = Math.max(1, Math.min(8, data.slotCount || data.entries.length || 5));
   const startY = headerY + 16;
-  const slotHeight = 49; // 14 + 16 + 5 * 49 = 275mm (fits cleanly on 297mm A4)
+  const availableHeight = 250; // mm available on A4
+  const slotHeight = Math.min(75, Math.floor(availableHeight / numSlots));
   const numberWidth = 8;
   const tableX = leftMargin + numberWidth;
   const tableWidth = contentWidth - numberWidth; // ~166mm
   const col1Width = 36; // Width for "Company Name:" and "Add:"
-  const rowHeight = 6.8;
+  const rowHeight = numSlots >= 6 ? 6.0 : 6.8;
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < numSlots; i++) {
     const entry = data.entries[i] || { companyName: '', address: '', descriptions: '' };
     const slotTopY = startY + i * slotHeight;
 
-    // Number (1 to 5) placed to the left of the table
+    // Number (1 to 5) placed to the left of the table - fixed standard template size
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
@@ -897,47 +911,51 @@ export const generateDailyOutsideSchedulePDF = (
     // Vertical line separating column 1 from column 2
     doc.line(tableX + col1Width, slotTopY, tableX + col1Width, slotTopY + rowHeight * 2);
 
-    // Row 1: Company Name
+    // Row 1: Company Name label (fixed standard template size)
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.setTextColor(0, 0, 0);
     doc.text("Company Name:", tableX + 2.5, slotTopY + 4.8);
 
+    // Row 1 Input: User-entered company name (scaled by fontScale, distinct & prominent)
     if (entry.companyName) {
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(9.5);
-      doc.text(entry.companyName, tableX + col1Width + 3.5, slotTopY + 4.8);
+      doc.setFontSize(12 * fontScale);
+      const splitCompany = doc.splitTextToSize(entry.companyName, tableWidth - col1Width - 6);
+      doc.text(splitCompany, tableX + col1Width + 3.5, slotTopY + 4.9);
     }
 
-    // Row 2: Add:
+    // Row 2: Add: label (fixed standard template size)
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.text("Add:", tableX + 2.5, slotTopY + rowHeight + 4.8);
 
+    // Row 2 Input: User-entered address (scaled by fontScale)
     if (entry.address) {
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(10.5 * fontScale);
       const splitAddress = doc.splitTextToSize(entry.address, tableWidth - col1Width - 6);
-      doc.text(splitAddress, tableX + col1Width + 3.5, slotTopY + rowHeight + 4.8);
+      doc.text(splitAddress, tableX + col1Width + 3.5, slotTopY + rowHeight + 4.9);
     }
 
-    // Row 3: Descriptions: (text directly below table, with blank handwriting space)
+    // Row 3: Descriptions: label (fixed standard template size)
     const descY = slotTopY + rowHeight * 2 + 4.2;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.text("Descriptions:", tableX, descY);
 
+    // Row 3 Input: User-entered descriptions (scaled by fontScale)
     if (entry.descriptions) {
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(10 * fontScale);
       doc.setTextColor(30, 30, 30);
       const splitDesc = doc.splitTextToSize(entry.descriptions, tableWidth - 4);
-      doc.text(splitDesc, tableX, descY + 4.2);
+      doc.text(splitDesc, tableX, descY + Math.max(4.0, 4.6 * fontScale));
       doc.setTextColor(0, 0, 0);
     }
   }
 
-  const filename = `Daily_Outside_Schedule_${(data.date || 'Template').replace(/[\/\s:]+/g, '_')}.pdf`;
+  const filename = `Daily_Outside_Works_Schedule_${(data.date || 'Template').replace(/[\/\s:]+/g, '_')}.pdf`;
 
   if (action === 'save') {
     doc.save(filename);
