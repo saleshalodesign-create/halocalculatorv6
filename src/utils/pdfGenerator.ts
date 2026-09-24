@@ -7,13 +7,13 @@ import { QuoteItem, QuoteRecord } from '../types';
  * Renders "hal" + circular halo indicator icon + "DESIGN PTE LTD" / "DESIGN HUB"
  * at 4x Retina resolution to guarantee zero distortion, crisp vector alignment, and no clipping in PDFs.
  */
-export const getHaloLogoBase64 = (subtitle: string = 'DESIGN PTE LTD'): string => {
+export const getHaloLogoBase64 = (subtitle: string = 'DESIGN PTE LTD', tight: boolean = false): string => {
   try {
     if (typeof document === 'undefined') return '';
     const canvas = document.createElement('canvas');
     const scale = 4; // 4x Retina resolution for razor-sharp PDF printing
-    const w = 220;
-    const h = 70;
+    const w = tight ? 110 : 220;
+    const h = tight ? 56 : 70;
     canvas.width = w * scale;
     canvas.height = h * scale;
     const ctx = canvas.getContext('2d');
@@ -154,6 +154,77 @@ export interface GeneratedPDFOutput {
   filename: string;
 }
 
+/**
+ * Safely triggers printing of a jsPDF document using a single invisible iframe.
+ * Avoids duplicate windows, multiple autoPrint() triggers, and popup blocker conflicts.
+ */
+export const printJsPDF = (doc: jsPDF, filename: string): void => {
+  doc.autoPrint();
+  const blob = doc.output('blob');
+  const blobUrl = URL.createObjectURL(blob);
+
+  // Clean up any existing print iframe
+  const existingFrame = document.getElementById('__halo_pdf_print_frame__');
+  if (existingFrame && existingFrame.parentNode) {
+    try {
+      existingFrame.parentNode.removeChild(existingFrame);
+    } catch (_) {}
+  }
+
+  const iframe = document.createElement('iframe');
+  iframe.id = '__halo_pdf_print_frame__';
+  iframe.style.position = 'fixed';
+  iframe.style.top = '-9999px';
+  iframe.style.left = '-9999px';
+  iframe.style.width = '1px';
+  iframe.style.height = '1px';
+  iframe.style.opacity = '0.01';
+  iframe.style.border = 'none';
+  iframe.style.pointerEvents = 'none';
+
+  let printHandled = false;
+
+  const cleanup = () => {
+    setTimeout(() => {
+      try {
+        if (iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe);
+        }
+        URL.revokeObjectURL(blobUrl);
+      } catch (_) {}
+    }, 45000);
+  };
+
+  iframe.onload = () => {
+    try {
+      if (printHandled) return;
+      printHandled = true;
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      cleanup();
+    } catch (e) {
+      console.warn('Iframe print blocked or not supported by browser:', e);
+      cleanup();
+      // Never auto-download when printing was requested
+      try {
+        window.open(blobUrl, '_blank');
+      } catch (_) {}
+    }
+  };
+
+  try {
+    iframe.src = blobUrl;
+    document.body.appendChild(iframe);
+  } catch (err) {
+    console.warn('Could not launch iframe print:', err);
+    cleanup();
+    // Never auto-download when printing was requested
+    try {
+      window.open(blobUrl, '_blank');
+    } catch (_) {}
+  }
+};
+
 const finalizePDF = (
   doc: jsPDF,
   data: Partial<QuoteRecord>,
@@ -189,47 +260,7 @@ const finalizePDF = (
   }
 
   if (action === 'print') {
-    doc.autoPrint();
-    const blob = doc.output('blob');
-    const blobUrl = URL.createObjectURL(blob);
-
-    try {
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.src = blobUrl;
-      document.body.appendChild(iframe);
-      iframe.onload = () => {
-        try {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-          setTimeout(() => {
-            try {
-              document.body.removeChild(iframe);
-              URL.revokeObjectURL(blobUrl);
-            } catch (_) {}
-          }, 60000);
-        } catch (e) {
-          console.warn('Iframe print error:', e);
-          doc.save(filename);
-        }
-      };
-    } catch (e) {
-      console.warn('Could not launch iframe print:', e);
-    }
-
-    try {
-      const win = window.open(blobUrl, '_blank');
-      if (!win) {
-        doc.save(filename);
-      }
-    } catch (e) {
-      doc.save(filename);
-    }
+    printJsPDF(doc, filename);
     return;
   }
 
@@ -837,10 +868,10 @@ export const generateDailyOutsideSchedulePDF = (
   // Header position
   const headerY = 14;
 
-  // 1. Logo "halo DESIGN PTE LTD"
-  const logoW = 44;
-  const logoH = 14;
-  const logoSrc = getHaloLogoBase64('DESIGN PTE LTD');
+  // 1. Logo "halo DESIGN PTE LTD" (clean tight bounds)
+  const logoW = 26;
+  const logoH = 13.2;
+  const logoSrc = getHaloLogoBase64('DESIGN PTE LTD', true);
   if (logoSrc) {
     try {
       doc.addImage(logoSrc, 'PNG', leftMargin, headerY, logoW, logoH, undefined, 'FAST');
@@ -856,27 +887,27 @@ export const generateDailyOutsideSchedulePDF = (
     doc.text("DESIGN PTE LTD", leftMargin, headerY + 13);
   }
 
-  // 2. Title: "Daily Outside Works Schedule" (Single row)
-  const titleX = leftMargin + logoW + 6;
+  // 2. Title: "Daily Outside Works Schedule" (Single row, generous clearance)
+  const titleX = leftMargin + logoW + 4; // 18 + 26 + 4 = 48mm
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
+  doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
   doc.text("Daily Outside Works Schedule", titleX, headerY + 8);
 
-  // 3. Right side: Day of week placed ON TOP of Date
+  // 3. Right side: Day of week placed ALWAYS ON TOP of Date
   const dateRightX = pageWidth - rightMargin;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10.5);
+  doc.setFontSize(10);
 
-  if (data.dayOfWeek) {
-    doc.text(data.dayOfWeek, dateRightX, headerY + 4, { align: 'right' });
-    const dateText = data.date ? `Date: ${data.date}` : "Date: ___________________";
-    doc.text(dateText, dateRightX, headerY + 9.5, { align: 'right' });
-  } else {
-    const dateText = data.date ? `Date: ${data.date}` : "Date: ___________________";
-    doc.text(dateText, dateRightX, headerY + 8, { align: 'right' });
-  }
+  const dayText = data.dayOfWeek ? data.dayOfWeek : "Day: ____________";
+  const dateText = data.date ? `Date: ${data.date}` : "Date: ____________";
+
+  // Top line: Day of week
+  doc.text(dayText, dateRightX, headerY + 4.5, { align: 'right' });
+
+  // Bottom line: Date (never on same line as title or overlapping)
+  doc.text(dateText, dateRightX, headerY + 10, { align: 'right' });
 
   // 4. Schedule Slots (Dynamic count 1 - 8)
   const fontScale = data.fontSizeScale && data.fontSizeScale > 0 ? data.fontSizeScale : 1.0;
@@ -942,16 +973,34 @@ export const generateDailyOutsideSchedulePDF = (
     const descY = slotTopY + rowHeight * 2 + 4.2;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
+    doc.setTextColor(0, 0, 0);
     doc.text("Descriptions:", tableX, descY);
 
     // Row 3 Input: User-entered descriptions (scaled by fontScale)
+    const descContentY = descY + Math.max(4.0, 4.6 * fontScale);
+    let descBottomY = descContentY;
+
     if (entry.descriptions) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10 * fontScale);
-      doc.setTextColor(30, 30, 30);
+      doc.setTextColor(25, 25, 25);
       const splitDesc = doc.splitTextToSize(entry.descriptions, tableWidth - 4);
-      doc.text(splitDesc, tableX, descY + Math.max(4.0, 4.6 * fontScale));
+      doc.text(splitDesc, tableX, descContentY);
+      const lines = Array.isArray(splitDesc) ? splitDesc.length : 1;
+      descBottomY = descContentY + (lines - 1) * (4.8 * fontScale);
       doc.setTextColor(0, 0, 0);
+    }
+
+    // Handwriting guide lines for remaining notes space or blank clipboard templates
+    const slotBottomLimit = slotTopY + slotHeight - 3.0;
+    const guideSpacing = 5.2;
+    doc.setDrawColor(215, 215, 215);
+    doc.setLineWidth(0.18);
+
+    let guideY = Math.max(descBottomY + 5.0, descY + 6.0);
+    while (guideY <= slotBottomLimit) {
+      doc.line(tableX, guideY, tableX + tableWidth, guideY);
+      guideY += guideSpacing;
     }
   }
 
@@ -969,48 +1018,7 @@ export const generateDailyOutsideSchedulePDF = (
   }
 
   if (action === 'print') {
-    doc.autoPrint();
-    const blob = doc.output('blob');
-    const blobUrl = URL.createObjectURL(blob);
-
-    // Try printing via hidden iframe
-    try {
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.src = blobUrl;
-      document.body.appendChild(iframe);
-      iframe.onload = () => {
-        try {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-          setTimeout(() => {
-            try {
-              document.body.removeChild(iframe);
-              URL.revokeObjectURL(blobUrl);
-            } catch (_) {}
-          }, 60000);
-        } catch (e) {
-          console.warn('Iframe print error for schedule:', e);
-          doc.save(filename);
-        }
-      };
-    } catch (e) {
-      console.warn('Could not launch iframe print for schedule:', e);
-    }
-
-    try {
-      const win = window.open(blobUrl, '_blank');
-      if (!win) {
-        doc.save(filename);
-      }
-    } catch (e) {
-      doc.save(filename);
-    }
+    printJsPDF(doc, filename);
     return;
   }
 

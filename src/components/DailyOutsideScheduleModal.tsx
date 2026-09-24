@@ -164,7 +164,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
   }, [slotCount, activeSlot]);
   const [justCopied, setJustCopied] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [isPrinting, setIsPrinting] = useState(false);
+  const [printBlankMode, setPrintBlankMode] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -289,27 +289,9 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
     setTimeout(() => setJustCopied(false), 2000);
   };
 
-  // Print Form
-  const handlePrint = (isBlank: boolean = false) => {
-    setIsPrinting(true);
-    showToast(
-      language === 'zh'
-        ? '正在准备打印排程单...'
-        : 'Preparing A4 schedule for print...'
-    );
-
-    // 1. If running in top-level window without sandbox restriction, attempt window.print()
-    let nativePrintTriggered = false;
-    try {
-      if (window.self === window.top) {
-        window.print();
-        nativePrintTriggered = true;
-      }
-    } catch (e) {
-      console.warn('Native window.print() not available in this context:', e);
-    }
-
-    // 2. Always trigger the PDF print engine (auto-print iframe + popup + download fallback)
+  // Export Schedule as PDF ('view' opens PDF in new tab for print/view, 'save' downloads file)
+  // Exactly matching Invoice and Quotation export behavior
+  const handleExport = (action: 'view' | 'save', isBlank: boolean = false) => {
     try {
       const activeEntries = isBlank
         ? Array.from({ length: slotCount }, () => ({ companyName: '', address: '', descriptions: '' }))
@@ -323,47 +305,30 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
           slotCount,
           fontSizeScale: fontScale / 100,
         },
-        'print'
+        action
       );
 
-      if (!nativePrintTriggered) {
+      if (action === 'save') {
+        showToast(language === 'zh' ? 'PDF 排程表已下载！' : 'Schedule PDF downloaded!');
+      } else {
         showToast(
           language === 'zh'
-            ? '已生成打印排程单！若打印窗口未自动弹出，可直接打印已下载的 PDF。'
-            : 'Print document ready! If print dialog does not pop up, print the downloaded PDF.'
+            ? (isBlank ? '已在浏览器新标签页打开空白排程单！' : '已在浏览器新标签页打开排程单！')
+            : (isBlank ? 'Opened blank schedule in new tab!' : 'Opened schedule in new tab!')
         );
       }
-    } catch (err) {
-      console.error('PDF print generation error:', err);
-      handleDownloadPDF(isBlank);
-    } finally {
-      setTimeout(() => setIsPrinting(false), 1000);
+    } catch (e) {
+      console.error('PDF schedule export failed:', e);
+      showToast(language === 'zh' ? '生成 PDF 出错，请重试' : 'Error generating PDF, please retry');
     }
   };
 
-  // Download PDF
-  const handleDownloadPDF = (isBlank: boolean = false) => {
-    try {
-      const activeEntries = isBlank
-        ? Array.from({ length: slotCount }, () => ({ companyName: '', address: '', descriptions: '' }))
-        : entries.slice(0, slotCount);
+  const handlePrint = (isBlank: boolean = false) => {
+    handleExport('view', isBlank);
+  };
 
-      generateDailyOutsideSchedulePDF(
-        {
-          date: isBlank ? '' : date,
-          dayOfWeek: isBlank ? undefined : (currentDay || undefined),
-          entries: activeEntries,
-          slotCount,
-          fontSizeScale: fontScale / 100,
-        },
-        'save'
-      );
-      showToast(
-        language === 'zh' ? 'PDF 排程表已下载！' : 'Schedule PDF downloaded!'
-      );
-    } catch (e) {
-      console.error('PDF download error:', e);
-    }
+  const handleDownloadPDF = (isBlank: boolean = false) => {
+    handleExport('save', isBlank);
   };
 
   const handleZoomChange = (newVal: 'fit' | number) => {
@@ -482,12 +447,11 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
               <button
                 type="button"
                 onClick={() => handlePrint(false)}
-                disabled={isPrinting}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-60 rounded-lg shadow-sm transition-all"
-                title="Print on standard A4 paper"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-lg shadow-sm transition-all"
+                title="Print or view A4 schedule in new tab"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>{isPrinting ? (language === 'zh' ? '正在准备...' : 'Printing...') : ds.print}</span>
+                <span>{ds.print}</span>
               </button>
 
               <button
@@ -503,9 +467,8 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
               <button
                 type="button"
                 onClick={() => handlePrint(true)}
-                disabled={isPrinting}
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 disabled:opacity-60 rounded-lg transition-all"
-                title="Print blank template for clipboard handwriting"
+                className="hidden sm:inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-lg transition-all"
+                title="Print or view blank template in new tab"
               >
                 {ds.printBlank}
               </button>
@@ -856,7 +819,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                               setDate(e.target.value);
                               setDayOverride('');
                             }}
-                            placeholder="___________________"
+                            placeholder="____________"
                             className="w-28 text-sm font-serif font-bold text-black bg-transparent border-b border-black/60 focus:border-black outline-none px-1 text-left"
                           />
                         </div>
@@ -1132,11 +1095,10 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                     <button
                       type="button"
                       onClick={() => handlePrint(false)}
-                      disabled={isPrinting}
-                      className="flex-1 py-3 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-60 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"
+                      className="flex-1 py-3 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"
                     >
                       <Printer className="w-4 h-4" />
-                      {isPrinting ? (language === 'zh' ? '正在准备打印...' : 'Preparing Print...') : ds.print}
+                      {ds.print}
                     </button>
                     <button
                       type="button"
@@ -1182,21 +1144,22 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
           </div>
 
           <div className="text-right pt-0.5 shrink-0 flex flex-col items-end">
-            {currentDay && (
-              <span className="text-sm font-serif font-bold text-black pb-0.5">
-                {currentDay}
-              </span>
-            )}
+            <span className="text-sm font-serif font-bold text-black pb-0.5">
+              {printBlankMode ? 'Day: ____________' : (currentDay || 'Day: ____________')}
+            </span>
             <span className="text-sm font-serif font-bold text-black">
-              Date: {date || '___________________'}
+              Date: {printBlankMode ? '____________' : (date || '____________')}
             </span>
           </div>
         </div>
 
         {/* Schedule Entries */}
         <div className={`flex flex-col ${slotCount <= 3 ? 'gap-6' : slotCount === 4 ? 'gap-5' : slotCount === 5 ? 'gap-4' : 'gap-2.5'} mt-2.5`}>
-          {entries.slice(0, slotCount).map((entry, idx) => (
-            <div key={idx} className="flex items-start gap-3">
+          {(printBlankMode
+            ? Array.from({ length: slotCount }, () => ({ companyName: '', address: '', descriptions: '' }))
+            : entries.slice(0, slotCount)
+          ).map((entry, idx) => (
+            <div key={idx} className="flex items-start gap-3 break-inside-avoid [break-inside:avoid] [page-break-inside:avoid]">
               {/* Number 1 to N (Fixed template size) */}
               <span
                 className="w-5 font-bold text-black font-serif text-base pt-1 shrink-0 text-center"
@@ -1249,7 +1212,15 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                       lineHeight: `${1.45 * (fontScale / 100)}rem`,
                     }}
                   >
-                    {entry.descriptions}
+                    {entry.descriptions ? (
+                      entry.descriptions
+                    ) : (
+                      <div className="space-y-3 pt-1.5 opacity-30 select-none">
+                        <div className="border-b border-black w-full"></div>
+                        <div className="border-b border-black w-full"></div>
+                        <div className="border-b border-black w-full"></div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

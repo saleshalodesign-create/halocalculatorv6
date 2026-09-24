@@ -118,6 +118,8 @@ async function startServer() {
         systemInstruction = GENERAL_SYSTEM_INSTRUCTION;
       }
 
+      let actualModelUsed = selectedModel;
+
       // If GEMINI_API_KEY is available, use Gemini SDK
       if (process.env.GEMINI_API_KEY) {
         const ai = getGenAI();
@@ -143,7 +145,6 @@ async function startServer() {
         });
 
         let reply = '';
-        let actualModelUsed = selectedModel;
 
         try {
           const response = await ai.models.generateContent({
