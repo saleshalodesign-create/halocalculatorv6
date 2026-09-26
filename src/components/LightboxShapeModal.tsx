@@ -199,10 +199,13 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
           onClick={e => e.stopPropagation()}
-          className="w-full max-w-2xl bg-white dark:bg-[#16171c] border border-slate-200 dark:border-white/15 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92dvh]"
+          className="w-full max-w-2xl bg-white dark:bg-[#0a0f24] border border-slate-200 dark:border-indigo-500/25 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92dvh]"
         >
+          {/* Ambient Cyber Neon Crown Accent */}
+          <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 opacity-90 shrink-0"></div>
+
           {/* macOS Title Bar */}
-          <div className="h-10 px-3 sm:px-4 bg-slate-100/95 dark:bg-[#1f2026] border-b border-slate-200 dark:border-white/10 flex items-center justify-between select-none shrink-0 gap-2">
+          <div className="h-10 px-3 sm:px-4 bg-slate-100/95 dark:bg-[#0c122c] border-b border-slate-200 dark:border-indigo-500/20 flex items-center justify-between select-none shrink-0 gap-2">
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={onClose}
@@ -215,7 +218,7 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
               <span className="w-3 h-3 rounded-full bg-[#27C93F] border border-black/15 opacity-60"></span>
             </div>
 
-            <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-slate-800 dark:text-neutral-100 min-w-0 truncate">
+            <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-slate-800 dark:text-cyan-300 min-w-0 truncate">
               <Maximize2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
               <span className="truncate">Lightbox Shape & Aspect Ratio Inspector</span>
             </div>
@@ -231,14 +234,14 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
           {/* Modal Scrollable Body */}
           <div className="p-2.5 sm:p-4 space-y-3.5 overflow-y-auto mac-scrollbar">
             {/* Quick Sizing & Rotation Bar */}
-            <div className="p-2.5 sm:p-3 rounded-xl bg-slate-100/90 dark:bg-[#1a1b22] border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-slate-100/90 dark:bg-[#0d1433] border border-slate-200 dark:border-indigo-500/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs">
               {/* Sizes Inputs */}
               <div className="flex items-center justify-between sm:justify-start gap-2 flex-wrap">
                 <span className="font-bold text-slate-700 dark:text-neutral-300 uppercase tracking-wider text-[11px] shrink-0">
                   Sizes ({unit.toUpperCase()}):
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <div className="flex items-center bg-white dark:bg-[#121316] rounded-lg px-2 py-1 border border-slate-300 dark:border-white/15 shadow-inner">
+                  <div className="flex items-center bg-white dark:bg-[#050817] rounded-lg px-2 py-1 border border-slate-300 dark:border-indigo-500/25 shadow-inner">
                     <span className="text-slate-400 dark:text-neutral-500 font-bold text-[10px] mr-1">W:</span>
                     <input
                       type="number"

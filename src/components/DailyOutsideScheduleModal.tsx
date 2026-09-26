@@ -351,8 +351,11 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
     <>
       {/* 1. Modal Dialog for App Screen */}
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 print:hidden overflow-hidden">
-        <div className="relative w-full max-w-6xl h-[94vh] sm:h-[90vh] bg-white dark:bg-[#15161a] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="relative w-full max-w-6xl h-[94vh] sm:h-[90vh] bg-white dark:bg-[#0a0f24] border border-slate-200/90 dark:border-indigo-500/25 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
           
+          {/* Ambient Cyber Neon Crown Accent */}
+          <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 opacity-90 shrink-0"></div>
+
           {/* Floating Toast Notification */}
           {toastMessage && (
             <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-neutral-900/95 dark:bg-white/95 text-white dark:text-neutral-900 px-4 py-2 rounded-full text-xs font-bold shadow-2xl backdrop-blur-md flex items-center gap-2 border border-white/20 animate-in fade-in slide-in-from-top-2 duration-150 select-none">
@@ -362,7 +365,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
           )}
 
           {/* Top macOS Control Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2 bg-slate-100 dark:bg-[#1d1e24] border-b border-slate-200 dark:border-white/10 select-none shrink-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2 bg-slate-100 dark:bg-[#0c122c] border-b border-slate-200/90 dark:border-indigo-500/20 select-none shrink-0">
             {/* Left: Window Dots & Title */}
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-1.5 traffic-group">
@@ -467,10 +470,19 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
               <button
                 type="button"
                 onClick={() => handlePrint(true)}
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-lg transition-all"
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white bg-slate-200/60 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-lg transition-all"
                 title="Print or view blank template in new tab"
               >
                 {ds.printBlank}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="hidden md:inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
+                title="Clear all schedule entries"
+              >
+                {ds.clearAll || 'Clear'}
               </button>
 
               <button
@@ -484,30 +496,29 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
             </div>
           </div>
 
-          {/* Sub-toolbar: Date, Font Size, Zoom controls & Quick actions */}
-          <div className="flex items-center justify-between px-4 py-1.5 bg-slate-50/80 dark:bg-[#18191f] border-b border-slate-200/70 dark:border-white/5 text-xs shrink-0 flex-wrap gap-2">
-            {/* Date Quick Selector & Day */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              <span className="font-semibold text-slate-500 dark:text-neutral-400 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-blue-500" />
-                <span className="hidden sm:inline">{ds.date}:</span>
-              </span>
-              <input
-                type="text"
-                value={date}
-                onChange={e => {
-                  setDate(e.target.value);
-                  setDayOverride('');
-                }}
-                placeholder="DD/MM/YYYY"
-                className="w-24 sm:w-28 px-2 py-0.5 text-xs font-mono font-bold rounded bg-white dark:bg-[#101114] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
-              />
+          {/* Sub-toolbar: Date, Slots, Font Size, Zoom & Quick actions */}
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-slate-50/90 dark:bg-[#080d22] border-b border-slate-200/70 dark:border-indigo-500/15 text-xs shrink-0 flex-wrap gap-2">
+            {/* Left: Date & Day controls */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center bg-white dark:bg-[#050817] border border-slate-300 dark:border-indigo-500/25 rounded-lg px-2 py-1 shadow-xs">
+                <Calendar className="w-3.5 h-3.5 text-blue-500 mr-1.5 shrink-0" />
+                <input
+                  type="text"
+                  value={date}
+                  onChange={e => {
+                    setDate(e.target.value);
+                    setDayOverride('');
+                  }}
+                  placeholder="DD/MM/YYYY"
+                  className="w-24 sm:w-28 text-xs font-mono font-bold bg-transparent text-slate-900 dark:text-white outline-none"
+                />
+              </div>
 
               {/* Day of Week Selector */}
               <select
                 value={currentDay}
                 onChange={e => setDayOverride(e.target.value)}
-                className="px-2 py-0.5 text-[11px] font-bold rounded bg-blue-50 hover:bg-blue-100/80 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 outline-none cursor-pointer transition-colors"
+                className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 hover:bg-blue-100/80 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-cyan-800/60 outline-none cursor-pointer transition-colors shadow-xs"
                 title="Day of week (Monday, Tuesday, Wednesday...)"
               >
                 <option value="">-- Day --</option>
@@ -520,195 +531,132 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                 <option value="Sunday">Sunday</option>
               </select>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setDate(getTodayFormatted());
-                  setDayOverride('');
-                }}
-                className="px-1.5 py-0.5 text-[11px] rounded bg-slate-200/70 hover:bg-slate-300 dark:bg-white/10 text-slate-700 dark:text-neutral-300 transition-colors"
-              >
-                {ds.today}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setDate(getTomorrowFormatted());
-                  setDayOverride('');
-                }}
-                className="px-1.5 py-0.5 text-[11px] rounded bg-slate-200/70 hover:bg-slate-300 dark:bg-white/10 text-slate-700 dark:text-neutral-300 transition-colors"
-              >
-                {ds.tomorrow}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setDate('');
-                  setDayOverride('');
-                }}
-                className="px-1.5 py-0.5 text-[11px] rounded bg-slate-200/70 hover:bg-slate-300 dark:bg-white/10 text-slate-700 dark:text-neutral-300 transition-colors"
-              >
-                {ds.blankDate}
-              </button>
+              {/* Quick Date Pills */}
+              <div className="flex items-center rounded-lg bg-slate-200/70 dark:bg-white/10 p-0.5 text-[11px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDate(getTodayFormatted());
+                    setDayOverride('');
+                  }}
+                  className="px-2 py-0.5 rounded-md hover:bg-white dark:hover:bg-white/20 text-slate-700 dark:text-neutral-300 transition-colors"
+                >
+                  {ds.today}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDate(getTomorrowFormatted());
+                    setDayOverride('');
+                  }}
+                  className="px-2 py-0.5 rounded-md hover:bg-white dark:hover:bg-white/20 text-slate-700 dark:text-neutral-300 transition-colors"
+                >
+                  {ds.tomorrow}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDate('');
+                    setDayOverride('');
+                  }}
+                  className="px-2 py-0.5 rounded-md hover:bg-white dark:hover:bg-white/20 text-slate-700 dark:text-neutral-300 transition-colors"
+                  title="Clear date"
+                >
+                  {ds.blankDate}
+                </button>
+              </div>
             </div>
 
-            {/* Right side controls: Slot Count + Font Size + Zoom + Import */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Slot Count Selector */}
+            {/* Right: Slots Stepper + Font Size Stepper + Zoom + Import Quote */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              {/* Simplified Slots Stepper (1 - 8) */}
               <div
-                className="flex items-center gap-1 bg-slate-200/70 dark:bg-black/30 px-1.5 py-0.5 rounded-lg"
+                className="flex items-center bg-slate-200/70 dark:bg-black/30 p-0.5 rounded-lg border border-slate-300/50 dark:border-white/5"
                 title={ds.slotsTooltip}
               >
-                <span className="text-[11px] font-bold text-slate-600 dark:text-neutral-300 flex items-center gap-1 pl-0.5 select-none">
-                  <Layers className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="hidden xl:inline">{ds.slotsCount || 'Slots'}:</span>
-                </span>
-
                 <button
                   type="button"
                   onClick={() => setSlotCount(prev => Math.max(1, prev - 1))}
                   disabled={slotCount <= 1}
-                  className="px-1.5 py-0.5 rounded font-bold text-[11px] text-slate-600 dark:text-neutral-300 hover:bg-slate-300 dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  title="Fewer slots (-)"
+                  className="w-6 h-6 flex items-center justify-center rounded-md font-bold text-xs text-slate-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Fewer slots"
                 >
                   -
                 </button>
-
-                <div className="flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5, 6].map(num => (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => setSlotCount(num)}
-                      className={`w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded transition-all ${
-                        slotCount === num
-                          ? 'bg-blue-600 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                      title={`${num} Slots`}
-                    >
-                      {num}
-                    </button>
-                  ))}
-                  {slotCount > 6 && (
-                    <button
-                      type="button"
-                      onClick={() => setSlotCount(slotCount)}
-                      className="px-1.5 h-5 flex items-center justify-center text-[10px] font-bold rounded bg-blue-600 text-white shadow-xs"
-                      title={`${slotCount} Slots`}
-                    >
-                      {slotCount}
-                    </button>
-                  )}
-                </div>
-
+                <span className="px-2 text-xs font-bold text-slate-800 dark:text-neutral-200 min-w-[56px] text-center select-none flex items-center justify-center gap-1">
+                  <Layers className="w-3 h-3 text-blue-500" />
+                  <span>{slotCount} {language === 'zh' ? '项' : 'Slots'}</span>
+                </span>
                 <button
                   type="button"
                   onClick={() => setSlotCount(prev => Math.min(8, prev + 1))}
                   disabled={slotCount >= 8}
-                  className="px-1.5 py-0.5 rounded font-bold text-[11px] text-slate-600 dark:text-neutral-300 hover:bg-slate-300 dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  title="More slots (+)"
+                  className="w-6 h-6 flex items-center justify-center rounded-md font-bold text-xs text-slate-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="More slots"
                 >
                   +
                 </button>
               </div>
 
-              {/* Font Size Adjuster */}
+              {/* Simplified Font Size Stepper (75% - 180%) */}
               <div
-                className="flex items-center gap-1 bg-slate-200/70 dark:bg-black/30 px-1.5 py-0.5 rounded-lg"
+                className="flex items-center bg-slate-200/70 dark:bg-black/30 p-0.5 rounded-lg border border-slate-300/50 dark:border-white/5"
                 title={ds.fontSizeTooltip}
               >
-                <span className="text-[11px] font-bold text-slate-600 dark:text-neutral-300 flex items-center gap-1 pl-0.5 select-none">
-                  <Type className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="hidden xl:inline">{ds.fontSize}:</span>
-                </span>
-
                 <button
                   type="button"
                   onClick={decreaseFontScale}
                   disabled={fontScale <= 75}
-                  className="px-1.5 py-0.5 rounded font-bold text-[11px] text-slate-600 dark:text-neutral-300 hover:bg-slate-300 dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  title="Smaller font size (A-)"
+                  className="w-6 h-6 flex items-center justify-center rounded-md font-bold text-xs text-slate-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Smaller font size"
                 >
-                  A-
+                  <span className="text-[10px]">A-</span>
                 </button>
-
-                <div className="flex items-center gap-0.5">
-                  {[85, 100, 120, 140, 160].map(scale => (
-                    <button
-                      key={scale}
-                      type="button"
-                      onClick={() => setFontScale(scale)}
-                      className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition-all ${
-                        fontScale === scale
-                          ? 'bg-white dark:bg-white/20 text-blue-600 dark:text-blue-400 shadow-xs'
-                          : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                      title={`${scale}%`}
-                    >
-                      {scale}%
-                    </button>
-                  ))}
-                </div>
-
+                <span className="px-1.5 text-xs font-mono font-bold text-slate-800 dark:text-neutral-200 min-w-[42px] text-center select-none">
+                  {fontScale}%
+                </span>
                 <button
                   type="button"
                   onClick={increaseFontScale}
                   disabled={fontScale >= 180}
-                  className="px-1.5 py-0.5 rounded font-bold text-[11px] text-slate-600 dark:text-neutral-300 hover:bg-slate-300 dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  title="Larger font size (A+)"
+                  className="w-6 h-6 flex items-center justify-center rounded-md font-bold text-xs text-slate-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Larger font size"
                 >
-                  A+
+                  <span className="text-[10px]">A+</span>
                 </button>
               </div>
 
-              {/* Zoom Controls (Active in 'sheet' and 'split' modes) */}
+              {/* Simplified Zoom Controls (Sheet & Split view) */}
               {(viewMode === 'sheet' || viewMode === 'split') && (
-                <div className="flex items-center gap-1 bg-slate-200/70 dark:bg-black/30 px-1.5 py-0.5 rounded-lg">
+                <div className="flex items-center bg-slate-200/70 dark:bg-black/30 p-0.5 rounded-lg border border-slate-300/50 dark:border-white/5">
                   <button
                     type="button"
                     onClick={() => handleZoomChange('fit')}
-                    className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all ${
+                    className={`px-2 py-0.5 text-xs font-bold rounded-md transition-all flex items-center gap-1 ${
                       zoomMode === 'fit'
-                        ? 'bg-white dark:bg-white/20 text-blue-600 dark:text-blue-400 shadow-xs'
+                        ? 'bg-white dark:bg-white/20 text-blue-600 dark:text-cyan-400 shadow-xs'
                         : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
-                    title="Fit whole A4 sheet onto screen without scrolling"
+                    title="Fit page"
                   >
-                    <Maximize2 className="w-3 h-3 inline mr-1" />
-                    {ds.fitPage || 'Fit Page'}
+                    <Maximize2 className="w-3 h-3" />
+                    <span className="hidden sm:inline">{ds.fitPage || 'Fit'}</span>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleZoomChange(100)}
-                    className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
-                      zoomMode === 100
-                        ? 'bg-white dark:bg-white/20 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
-                        : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                    title="100% Actual Print Size"
-                  >
-                    100%
-                  </button>
-
                   <button
                     type="button"
                     onClick={zoomOut}
-                    className="p-1 rounded text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                    className="w-6 h-6 flex items-center justify-center rounded-md text-slate-600 dark:text-neutral-400 hover:bg-white dark:hover:bg-white/15"
                     title="Zoom out"
                   >
                     <ZoomOut className="w-3 h-3" />
                   </button>
-
-                  <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-neutral-400 min-w-[32px] text-center">
+                  <span className="px-1 text-[11px] font-mono font-bold text-slate-600 dark:text-neutral-300 min-w-[36px] text-center select-none">
                     {Math.round(scaleFactor * 100)}%
                   </span>
-
                   <button
                     type="button"
                     onClick={zoomIn}
-                    className="p-1 rounded text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                    className="w-6 h-6 flex items-center justify-center rounded-md text-slate-600 dark:text-neutral-400 hover:bg-white dark:hover:bg-white/15"
                     title="Zoom in"
                   >
                     <ZoomIn className="w-3 h-3" />
@@ -721,10 +669,10 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                 <button
                   type="button"
                   onClick={() => handleImportActiveQuote(activeSlot)}
-                  className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 shrink-0"
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-cyan-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-cyan-800/50 flex items-center gap-1.5 transition-colors shadow-xs shrink-0"
                   title="Fill active quotation details into Slot 1"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-blue-500" />
                   <span>{justCopied ? (language === 'zh' ? '已填入 Slot 1！' : 'Filled Slot 1!') : ds.importActive}</span>
                 </button>
               )}
@@ -737,8 +685,8 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
             {(viewMode === 'sheet' || viewMode === 'split') && (
               <div
                 ref={previewContainerRef}
-                className={`flex-1 h-full bg-slate-300/60 dark:bg-[#0c0d0f] overflow-auto flex flex-col items-center justify-start p-3 sm:p-6 ${
-                  viewMode === 'split' ? 'lg:w-1/2 lg:border-r lg:border-slate-200 dark:lg:border-white/10' : 'w-full'
+                className={`flex-1 h-full bg-slate-300/60 dark:bg-[#040611] overflow-auto flex flex-col items-center justify-start p-3 sm:p-6 ${
+                  viewMode === 'split' ? 'lg:w-1/2 lg:border-r lg:border-slate-200 dark:lg:border-indigo-500/20' : 'w-full'
                 }`}
               >
                 {/* Direct Editing Hint Pill */}
@@ -856,7 +804,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                               {/* Row 1: Company Name */}
                               <div className="flex border-b border-black">
                                 <div
-                                  className="w-36 px-2.5 py-1 font-serif font-bold text-[13px] text-black border-r border-black shrink-0 select-none bg-slate-50/40"
+                                  className="w-36 px-2.5 py-1 font-serif font-bold text-[13px] text-slate-900 border-r border-black shrink-0 select-none bg-[#edf2fc]"
                                 >
                                   Company Name:
                                 </div>
@@ -876,7 +824,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                               {/* Row 2: Add: */}
                               <div className="flex">
                                 <div
-                                  className="w-36 px-2.5 py-1 font-serif font-bold text-[13px] text-black border-r border-black shrink-0 select-none bg-slate-50/40"
+                                  className="w-36 px-2.5 py-1 font-serif font-bold text-[13px] text-slate-900 border-r border-black shrink-0 select-none bg-[#edf2fc]"
                                 >
                                   Add:
                                 </div>
@@ -933,7 +881,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
             {/* MODE 2: FORM EDITOR VIEW (Structured field by field) */}
             {(viewMode === 'editor' || viewMode === 'split') && (
               <div
-                className={`flex-1 h-full overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-[#15161a] ${
+                className={`flex-1 h-full overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-[#070b19] ${
                   viewMode === 'split' ? 'lg:w-1/2' : 'w-full max-w-3xl mx-auto'
                 }`}
               >
@@ -947,7 +895,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                       <button
                         type="button"
                         onClick={() => handleImportActiveQuote(activeSlot)}
-                        className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                        className="text-xs font-bold text-blue-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         {justCopied ? (language === 'zh' ? '已导入！' : 'Imported!') : ds.importActive}
@@ -973,15 +921,15 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                           onClick={() => setActiveSlot(idx)}
                           className={`px-2 sm:px-3 py-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center relative ${
                             activeSlot === idx
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                              : 'bg-white dark:bg-[#1e1f26] text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5'
+                              ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white border-cyan-400 shadow-md shadow-cyan-500/25'
+                              : 'bg-white dark:bg-[#0d1433] text-slate-700 dark:text-neutral-200 border-slate-200 dark:border-indigo-500/20 hover:bg-slate-100 dark:hover:bg-[#121c45]'
                           }`}
                         >
                           <span>Slot {idx + 1}</span>
                           {hasData && (
                             <span
                               className={`w-1.5 h-1.5 rounded-full mt-1 ${
-                                activeSlot === idx ? 'bg-white' : 'bg-emerald-500'
+                                activeSlot === idx ? 'bg-white' : 'bg-emerald-400'
                               }`}
                             />
                           )}
@@ -991,10 +939,10 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                   </div>
 
                   {/* Active Slot Form Box */}
-                  <div className="bg-white dark:bg-[#1a1b22] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs flex flex-col gap-4">
+                  <div className="bg-white dark:bg-[#0d1433] p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-indigo-500/20 shadow-xs flex flex-col gap-4">
                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider">
+                        <span className="text-xs font-black uppercase text-blue-600 dark:text-cyan-400 tracking-wider">
                           Task #{activeSlot + 1}
                         </span>
                         {entries[activeSlot].companyName && (
@@ -1027,7 +975,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                         value={entries[activeSlot].companyName}
                         onChange={e => updateEntry(activeSlot, 'companyName', e.target.value)}
                         placeholder="e.g. ABC Pte Ltd / John Tan"
-                        className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-[#121316] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-[#050817] border border-slate-200 dark:border-indigo-500/25 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                       />
                     </div>
 
@@ -1042,7 +990,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                         value={entries[activeSlot].address}
                         onChange={e => updateEntry(activeSlot, 'address', e.target.value)}
                         placeholder="e.g. 10 Ubi Crescent, #01-20 Singapore 408564"
-                        className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-[#121316] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                        className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-[#050817] border border-slate-200 dark:border-indigo-500/25 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                       />
                     </div>
 
@@ -1057,13 +1005,13 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                         value={entries[activeSlot].descriptions}
                         onChange={e => updateEntry(activeSlot, 'descriptions', e.target.value)}
                         placeholder="Installation specs, sign sizes, contact person, or leave empty for physical handwriting"
-                        className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-[#121316] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none leading-relaxed"
+                        className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-[#050817] border border-slate-200 dark:border-indigo-500/25 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none leading-relaxed"
                       />
                     </div>
                   </div>
 
                   {/* All Slots Overview List */}
-                  <div className="bg-white dark:bg-[#1a1b22] p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs flex flex-col gap-2">
+                  <div className="bg-white dark:bg-[#0d1433] p-4 rounded-2xl border border-slate-200/90 dark:border-indigo-500/20 shadow-xs flex flex-col gap-2">
                     <span className="text-xs font-bold text-slate-500 dark:text-neutral-400">
                       All {slotCount} Slots Status
                     </span>
@@ -1074,8 +1022,8 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                           onClick={() => setActiveSlot(i)}
                           className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
                             activeSlot === i
-                              ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-500/10'
-                              : 'border-slate-200 dark:border-white/5 hover:border-slate-300'
+                              ? 'border-cyan-500 bg-blue-50/50 dark:bg-cyan-500/10'
+                              : 'border-slate-200 dark:border-indigo-500/15 hover:border-slate-300 dark:hover:border-indigo-500/30'
                           }`}
                         >
                           <div className="font-bold text-slate-800 dark:text-neutral-200 flex items-center justify-between">
@@ -1172,7 +1120,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                 <div className="border border-black border-collapse w-full">
                   <div className="flex border-b border-black">
                     <div
-                      className="w-36 px-2.5 py-1 font-serif font-bold text-black border-r border-black shrink-0 text-[13px]"
+                      className="w-36 px-2.5 py-1 font-serif font-bold text-slate-900 border-r border-black shrink-0 text-[13px] bg-[#edf2fc]"
                     >
                       Company Name:
                     </div>
@@ -1186,7 +1134,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
 
                   <div className="flex">
                     <div
-                      className="w-36 px-2.5 py-1 font-serif font-bold text-black border-r border-black shrink-0 text-[13px]"
+                      className="w-36 px-2.5 py-1 font-serif font-bold text-slate-900 border-r border-black shrink-0 text-[13px] bg-[#edf2fc]"
                     >
                       Add:
                     </div>

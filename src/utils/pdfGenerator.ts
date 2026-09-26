@@ -931,6 +931,10 @@ export const generateDailyOutsideSchedulePDF = (
     doc.setTextColor(0, 0, 0);
     doc.text(`${i + 1}`, leftMargin + 1.5, slotTopY + 5);
 
+    // Column 1 fill background (#edf2fc)
+    doc.setFillColor(237, 242, 252);
+    doc.rect(tableX, slotTopY, col1Width, rowHeight * 2, 'F');
+
     // Box outer border
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.35);

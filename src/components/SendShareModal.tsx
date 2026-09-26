@@ -338,8 +338,11 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-2xl bg-white dark:bg-[#1e1e24] rounded-2xl shadow-2xl border border-slate-200/90 dark:border-white/10 flex flex-col max-h-[92vh] overflow-hidden relative"
+        className="w-full max-w-2xl bg-white dark:bg-[#0a0f24] rounded-2xl shadow-2xl border border-slate-200/90 dark:border-indigo-500/25 flex flex-col max-h-[92vh] overflow-hidden relative"
       >
+        {/* Ambient Cyber Neon Crown Accent */}
+        <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 opacity-90 shrink-0"></div>
+
         {/* Floating Toast Notification */}
         {toastMsg && (
           <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 dark:bg-white/95 text-white dark:text-neutral-900 px-4 py-2 rounded-full text-xs font-bold shadow-xl backdrop-blur-md flex items-center gap-2 border border-white/20 animate-fade-in pointer-events-none">
@@ -349,7 +352,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
         )}
 
         {/* macOS Titlebar */}
-        <div className="h-10 px-4 bg-slate-50 dark:bg-[#18181c] border-b border-slate-200/90 dark:border-white/10 flex items-center justify-between shrink-0 select-none">
+        <div className="h-10 px-4 bg-slate-50 dark:bg-[#0c122c] border-b border-slate-200/90 dark:border-indigo-500/20 flex items-center justify-between shrink-0 select-none">
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
@@ -559,7 +562,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
 
                 {/* PDF Card Preview when in PDF mode */}
                 {sendFormat === 'pdf' && (
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#18181c] border border-emerald-500/30 flex items-center justify-between gap-3 shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#070b19] border border-emerald-500/30 flex items-center justify-between gap-3 shadow-sm">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 font-bold text-xs border border-red-500/20">
                         PDF
@@ -706,7 +709,7 @@ export const SendShareModal: React.FC<SendShareModalProps> = ({
 
                 {/* PDF Card Preview when in PDF mode */}
                 {sendFormat === 'pdf' && (
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#18181c] border border-blue-500/30 flex items-center justify-between gap-3 shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#070b19] border border-blue-500/30 flex items-center justify-between gap-3 shadow-sm">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 font-bold text-xs border border-red-500/20">
                         PDF

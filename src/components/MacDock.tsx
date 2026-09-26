@@ -49,7 +49,7 @@ export const MacDock: React.FC<MacDockProps> = ({
   shapeLabel = 'Horizontal',
 }) => {
   const { language, toggleLanguage, t } = useLanguage();
-  const wallpapersList = ['sequoia', 'sonoma', 'dark', 'silver'];
+  const wallpapersList = ['cyber-midnight', 'sequoia', 'sonoma', 'dark', 'silver'];
 
   const nextWallpaper = () => {
     const idx = wallpapersList.indexOf(wallpaper);
@@ -86,7 +86,7 @@ export const MacDock: React.FC<MacDockProps> = ({
 
   return (
     <div className="fixed bottom-safe left-1/2 -translate-x-1/2 z-40 pointer-events-none pb-1 sm:pb-2 gpu-layer">
-      <div className="flex items-center gap-1 sm:gap-2.5 px-2 sm:px-3.5 py-1 sm:py-1.5 bg-white/80 dark:bg-black/70 backdrop-blur-md border border-white/60 dark:border-white/15 rounded-2xl sm:rounded-[22px] shadow-lg shadow-black/20 transition-all duration-200 pointer-events-auto max-w-[96vw]">
+      <div className="flex items-center gap-1 sm:gap-2.5 px-2 sm:px-3.5 py-1 sm:py-1.5 bg-white/80 dark:bg-[#070b19]/85 backdrop-blur-xl border border-white/60 dark:border-indigo-500/25 rounded-2xl sm:rounded-[22px] shadow-lg shadow-black/40 transition-all duration-200 pointer-events-auto max-w-[96vw]">
         {/* Quotations & Invoices Tab */}
         <button
           onClick={onOpenQuoteList}
@@ -190,9 +190,9 @@ export const MacDock: React.FC<MacDockProps> = ({
         <button
           onClick={nextWallpaper}
           className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
-          title={`Change Wallpaper (Current: ${wallpaper})`}
+          title={`Change Wallpaper (Current: ${wallpaper === 'cyber-midnight' ? 'Cyber Midnight' : wallpaper})`}
         >
-          <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-blue-500 flex items-center justify-center text-white shadow-md shadow-purple-500/30 border border-white/30">
+          <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-fuchsia-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/40 border border-white/30">
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">

@@ -644,8 +644,11 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-4xl h-[96vh] sm:h-[90vh] bg-white dark:bg-[#1e1e24] rounded-xl sm:rounded-2xl shadow-2xl border border-black/10 dark:border-white/10 flex flex-col overflow-hidden relative"
+        className="w-full max-w-4xl h-[96vh] sm:h-[90vh] bg-white dark:bg-[#0a0f24] rounded-xl sm:rounded-2xl shadow-2xl border border-black/10 dark:border-indigo-500/25 flex flex-col overflow-hidden relative"
       >
+        {/* Ambient Cyber Neon Crown Accent */}
+        <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 opacity-90 shrink-0"></div>
+
         {/* Floating Toast Notification */}
         {toastMessage && (
           <div className="absolute top-12 sm:top-14 left-1/2 -translate-x-1/2 z-50 bg-neutral-900/95 dark:bg-white/95 text-white dark:text-neutral-900 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-bold shadow-xl backdrop-blur-md flex items-center gap-1.5 sm:gap-2 border border-white/20 animate-fade-in">
@@ -655,7 +658,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
         )}
 
         {/* macOS Window Top Bar */}
-        <div className="min-h-[38px] sm:min-h-[44px] px-2.5 sm:px-4 py-1 sm:py-1.5 bg-slate-50 dark:bg-[#18181c] border-b border-slate-200/90 dark:border-white/10 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0 select-none">
+        <div className="min-h-[38px] sm:min-h-[44px] px-2.5 sm:px-4 py-1 sm:py-1.5 bg-slate-50 dark:bg-[#0c122c] border-b border-slate-200/90 dark:border-indigo-500/20 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0 select-none">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={onClose}
@@ -674,7 +677,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               }}
               className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-md transition-all flex items-center gap-1 sm:gap-1.5 ${
                 activeSubTab === 'active'
-                  ? 'bg-white dark:bg-[#282830] shadow-sm text-slate-900 dark:text-white font-bold'
+                  ? 'bg-white dark:bg-[#141d44] shadow-sm text-slate-900 dark:text-cyan-300 font-bold'
                   : 'text-slate-600 hover:text-slate-900 dark:hover:text-neutral-200'
               }`}
             >
@@ -688,7 +691,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               }}
               className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-md transition-all flex items-center gap-1 sm:gap-1.5 ${
                 activeSubTab === 'cloudRecords'
-                  ? 'bg-white dark:bg-[#282830] shadow-sm text-slate-900 dark:text-white font-bold'
+                  ? 'bg-white dark:bg-[#141d44] shadow-sm text-slate-900 dark:text-cyan-300 font-bold'
                   : 'text-slate-600 hover:text-slate-900 dark:hover:text-neutral-200'
               }`}
             >
@@ -737,10 +740,10 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
         {/* TAB 1: ACTIVE QUOTE WORKSPACE */}
         {activeSubTab === 'active' &&
           (!formMode ? (
-            <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-[#18181c]/50">
+            <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-[#070b19]/60">
               {/* Compact Custom Item Drawer */}
               {showCustomForm && (
-                <div className="p-2 sm:p-3 bg-white dark:bg-[#24242a] border-b border-black/10 dark:border-white/10 space-y-1.5 sm:space-y-2 animate-fade-in shrink-0">
+                <div className="p-2 sm:p-3 bg-white dark:bg-[#0c122c] border-b border-black/10 dark:border-indigo-500/20 space-y-1.5 sm:space-y-2 animate-fade-in shrink-0">
                   <div className="flex items-center gap-1.5">
                     <input
                       type="text"
@@ -752,7 +755,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       value={customName}
                       onChange={e => setCustomName(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
-                      className="flex-1 min-w-0 px-2.5 py-1 sm:py-1.5 text-xs rounded-lg bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 focus:ring-1 focus:ring-blue-500 outline-none text-neutral-900 dark:text-white"
+                      className="flex-1 min-w-0 px-2.5 py-1 sm:py-1.5 text-xs rounded-lg bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/25 focus:ring-1 focus:ring-cyan-500 outline-none text-neutral-900 dark:text-white"
                     />
                     {/* Beside Item Description: Preset Items Dropdown */}
                     <select
@@ -769,7 +772,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                           showToast(`${language === 'zh' ? '已选择' : 'Selected'}: ${localizedName} ($${selected.price})`);
                         }
                       }}
-                      className="w-32 sm:w-44 px-2 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 outline-none hover:border-blue-500 transition-colors cursor-pointer shrink-0 truncate"
+                      className="w-32 sm:w-44 px-2 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg bg-blue-50 dark:bg-[#080d22] border border-blue-300 dark:border-cyan-800/60 text-blue-700 dark:text-cyan-300 outline-none hover:border-cyan-500 transition-colors cursor-pointer shrink-0 truncate"
                       title={language === 'zh' ? '快捷预设项目' : 'Preset Items'}
                     >
                       <option value="" disabled>
@@ -783,7 +786,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                           <option
                             key={item.name}
                             value={item.name}
-                            className="bg-white dark:bg-[#1e1e24] text-neutral-900 dark:text-neutral-100 font-normal"
+                            className="bg-white dark:bg-[#080d22] text-neutral-900 dark:text-neutral-100 font-normal"
                           >
                             {displayName} — ${item.price}
                           </option>
@@ -800,7 +803,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         value={customWidth}
                         onChange={e => setCustomWidth(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
-                        className="w-11 sm:w-16 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
+                        className="w-11 sm:w-16 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/25 outline-none text-neutral-900 dark:text-white text-center"
                         title={language === 'zh' ? '宽度' : 'Width'}
                       />
                       <span className="text-[10px] text-neutral-400">×</span>
@@ -810,13 +813,13 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         value={customHeight}
                         onChange={e => setCustomHeight(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
-                        className="w-11 sm:w-16 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
+                        className="w-11 sm:w-16 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/25 outline-none text-neutral-900 dark:text-white text-center"
                         title={language === 'zh' ? '高度' : 'Height'}
                       />
                       <select
                         value={customUnit}
                         onChange={e => setCustomUnit(e.target.value as UnitType)}
-                        className="px-1 py-1 text-xs rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-800 dark:text-neutral-200"
+                        className="px-1 py-1 text-xs rounded-md bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/25 outline-none text-neutral-800 dark:text-neutral-200"
                       >
                         <option value={Unit.IN}>in</option>
                         <option value={Unit.FT}>ft</option>
@@ -832,11 +835,11 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       value={customQuantity}
                       onChange={e => setCustomQuantity(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
-                      className="w-10 sm:w-14 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 outline-none text-neutral-900 dark:text-white text-center"
+                      className="w-10 sm:w-14 px-1.5 py-1 text-xs font-mono rounded-md bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/25 outline-none text-neutral-900 dark:text-white text-center"
                       title={language === 'zh' ? '数量' : 'Quantity'}
                     />
 
-                    <div className="flex items-center bg-neutral-100 dark:bg-[#18181c] px-1.5 py-1 rounded-md border border-black/10 dark:border-white/10">
+                    <div className="flex items-center bg-neutral-100 dark:bg-[#050817] px-1.5 py-1 rounded-md border border-black/10 dark:border-indigo-500/25">
                       <span className="text-[11px] text-neutral-500 mr-0.5">$</span>
                       <input
                         type="number"
@@ -851,10 +854,26 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
 
                     <button
                       onClick={handleAddCustom}
-                      className="px-3 py-1 rounded-md bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 ml-auto transition-transform active:scale-95 shadow-sm shrink-0"
+                      className="px-3 py-1 rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold hover:brightness-110 ml-auto transition-transform active:scale-95 shadow-sm shrink-0"
                     >
                       {language === 'zh' ? '添加项目' : 'Add Item'}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Themed Table Column Header Bar */}
+              {items.length > 0 && (
+                <div className="px-3 sm:px-4 py-1.5 bg-slate-100/90 dark:bg-[#080d22] border-b border-slate-200/90 dark:border-indigo-500/20 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-cyan-300 flex items-center justify-between gap-2 shrink-0 select-none">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="w-5 text-center font-mono">#</span>
+                    <span className="flex-1">{language === 'zh' ? '项目名称与尺寸' : 'Item Description & Size'}</span>
+                    <span className="hidden sm:inline-block w-28 text-center">{language === 'zh' ? '单价' : 'Unit Price'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 text-right">
+                    <span className="w-16 sm:w-20 text-center">{language === 'zh' ? '数量' : 'Qty'}</span>
+                    <span className="w-16 sm:w-20 text-right">{language === 'zh' ? '小计' : 'Total'}</span>
+                    <span className="w-14 sm:w-16 text-center">{language === 'zh' ? '操作' : 'Action'}</span>
                   </div>
                 </div>
               )}
@@ -879,26 +898,26 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   items.map((item, index) => (
                     <div
                       key={item.id}
-                      className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white dark:bg-[#24242a] border border-slate-200/80 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 shadow-sm hover:border-blue-500/40 transition-all group"
+                      className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white dark:bg-[#0d1433]/85 hover:dark:bg-[#121c45] border border-slate-200/80 dark:border-indigo-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 shadow-sm hover:border-cyan-500/40 transition-all group"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2">
-                          <span className="text-xs font-mono text-slate-400 dark:text-neutral-500 font-bold">{index + 1}.</span>
+                          <span className="w-5 text-center text-xs font-mono text-slate-400 dark:text-cyan-400/80 font-bold">{index + 1}.</span>
                           <input
                             type="text"
                             value={item.title}
                             onChange={e => onUpdateItem(item.id, { title: e.target.value })}
-                            className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500 flex-1 min-w-0"
+                            className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-cyan-500 flex-1 min-w-0"
                           />
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-500 dark:text-neutral-400 font-mono mt-0.5 sm:mt-1 ml-3 sm:ml-5">
                           {item.originalWidth > 0 && (
-                            <span className="text-slate-500 dark:text-neutral-400 text-[10px] sm:text-xs">
+                            <span className="px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/40 text-[10px] sm:text-xs font-semibold">
                               {item.originalWidth} × {item.originalHeight} {item.unit}
                             </span>
                           )}
-                          <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-[#18181c] px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-white/10 hover:border-blue-500/50 focus-within:border-blue-500 transition-colors">
-                            <span className="text-slate-500 dark:text-neutral-500 font-bold text-[10px] sm:text-xs">$</span>
+                          <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-[#050817] px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-indigo-500/25 hover:border-cyan-500/50 focus-within:border-cyan-500 transition-colors">
+                            <span className="text-slate-500 dark:text-cyan-400/80 font-bold text-[10px] sm:text-xs">$</span>
                             <input
                               type="number"
                               step="any"
@@ -917,12 +936,12 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-3 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-3 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-indigo-500/15">
                         {/* Qty */}
-                        <div className="flex items-center gap-0.5 sm:gap-1">
+                        <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-100/60 dark:bg-[#050817] p-0.5 rounded-lg border border-slate-200/60 dark:border-indigo-500/20">
                           <button
                             onClick={() => onUpdateQuantity(item.id, -1)}
-                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-neutral-100 dark:bg-white/10 flex items-center justify-center font-bold hover:bg-neutral-200 text-xs text-neutral-800 dark:text-neutral-200 active:scale-95"
+                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-white dark:bg-white/10 flex items-center justify-center font-bold hover:bg-neutral-200 text-xs text-neutral-800 dark:text-neutral-200 active:scale-95"
                           >
                             -
                           </button>
@@ -934,12 +953,12 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                               const q = parseInt(e.target.value);
                               onUpdateItem(item.id, { quantity: isNaN(q) || q < 1 ? 1 : q });
                             }}
-                            className="w-6 sm:w-7 text-center font-mono font-bold text-xs text-neutral-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500"
+                            className="w-6 sm:w-7 text-center font-mono font-bold text-xs text-neutral-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-cyan-500"
                             title="Edit quantity"
                           />
                           <button
                             onClick={() => onUpdateQuantity(item.id, 1)}
-                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-neutral-100 dark:bg-white/10 flex items-center justify-center font-bold hover:bg-neutral-200 text-xs text-neutral-800 dark:text-neutral-200 active:scale-95"
+                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-white dark:bg-white/10 flex items-center justify-center font-bold hover:bg-neutral-200 text-xs text-neutral-800 dark:text-neutral-200 active:scale-95"
                           >
                             +
                           </button>
@@ -947,7 +966,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
 
                         {/* Line Total */}
                         <div className="text-right min-w-[60px] sm:w-20">
-                          <span className="font-mono font-bold text-xs sm:text-sm text-neutral-900 dark:text-white">
+                          <span className="font-mono font-bold text-xs sm:text-sm text-slate-900 dark:text-cyan-300">
                             ${(item.totalPrice * item.quantity).toFixed(2)}
                           </span>
                         </div>
@@ -958,8 +977,8 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                             onClick={() => handleCopySingleItem(item, index)}
                             className={`p-1 sm:p-1.5 rounded-md border transition-all ${
                               copiedItemId === item.id
-                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-                                : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 border-transparent hover:bg-neutral-100 dark:hover:bg-white/10'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                : 'text-neutral-400 hover:text-cyan-400 border-transparent hover:bg-neutral-100 dark:hover:bg-white/10'
                             }`}
                             title="Copy this line item"
                           >
@@ -971,7 +990,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                           </button>
                           <button
                             onClick={() => onRemoveItem(item.id)}
-                            className="text-neutral-400 hover:text-red-500 p-1 sm:p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/10 transition-all"
+                            className="text-neutral-400 hover:text-red-400 p-1 sm:p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/10 transition-all"
                             title="Delete item"
                           >
                             <Trash className="w-3.5 h-3.5" />
@@ -984,7 +1003,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               </div>
 
               {/* Compact Footer & Export bar */}
-              <div className="p-2 sm:p-4 bg-white dark:bg-[#1e1e24] border-t border-slate-200/90 dark:border-white/10 flex flex-col gap-1.5 sm:gap-3 shrink-0">
+              <div className="p-2 sm:p-4 bg-white dark:bg-[#0c122c] border-t border-slate-200/90 dark:border-indigo-500/20 flex flex-col gap-1.5 sm:gap-3 shrink-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                     <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-neutral-400">
@@ -1127,7 +1146,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <button
                     disabled={items.length === 0}
                     onClick={() => setFormMode('textPreview')}
-                    className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-800 dark:text-neutral-200 font-bold text-[10px] sm:text-xs disabled:opacity-40 transition-all flex items-center justify-center gap-1 border border-slate-200 dark:border-white/10 active:scale-95 shadow-sm"
+                    className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-[#0e1638] hover:bg-slate-200 dark:hover:bg-[#142050] text-slate-800 dark:text-cyan-300 font-bold text-[10px] sm:text-xs disabled:opacity-40 transition-all flex items-center justify-center gap-1 border border-slate-200 dark:border-indigo-500/25 active:scale-95 shadow-sm"
                   >
                     <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                     <span className="truncate">{language === 'zh' ? '文本预览' : 'Preview'}</span>
@@ -1135,7 +1154,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <button
                     disabled={items.length === 0}
                     onClick={() => setFormMode('quote')}
-                    className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-blue-600 text-white font-bold text-[10px] sm:text-xs hover:bg-blue-500 disabled:opacity-40 transition-all flex items-center justify-center gap-1 shadow-md shadow-blue-500/20 active:scale-95"
+                    className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-[10px] sm:text-xs hover:brightness-110 disabled:opacity-40 transition-all flex items-center justify-center gap-1 shadow-md shadow-blue-500/25 active:scale-95"
                   >
                     <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                     <span className="truncate">{language === 'zh' ? '报价单 PDF' : 'Quote PDF'}</span>
@@ -1143,7 +1162,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <button
                     disabled={items.length === 0}
                     onClick={() => setFormMode('invoice')}
-                    className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-purple-600 text-white font-bold text-[10px] sm:text-xs hover:bg-purple-500 disabled:opacity-40 transition-all flex items-center justify-center gap-1 shadow-md shadow-purple-500/20 active:scale-95"
+                    className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-[10px] sm:text-xs hover:brightness-110 disabled:opacity-40 transition-all flex items-center justify-center gap-1 shadow-md shadow-purple-500/25 active:scale-95"
                   >
                     <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                     <span className="truncate">{language === 'zh' ? '发票 PDF' : 'Invoice PDF'}</span>
@@ -1154,22 +1173,22 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
           ) : formMode === 'textPreview' ? (
             /* Text Preview & Copy Mode */
             <div className="flex-1 flex flex-col overflow-hidden p-4 sm:p-6 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/10 shrink-0">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-indigo-500/20 shrink-0">
                 <button
                   onClick={() => setFormMode(null)}
-                  className="text-sm text-blue-500 font-semibold flex items-center gap-1 hover:underline"
+                  className="text-sm text-cyan-400 font-semibold flex items-center gap-1 hover:underline"
                 >
                   {language === 'zh' ? '← 返回清单' : '← Back to List'}
                 </button>
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Doc Type Selector */}
-                  <div className="flex p-0.5 rounded-lg bg-neutral-200/70 dark:bg-white/10 text-xs font-bold">
+                  <div className="flex p-0.5 rounded-lg bg-neutral-200/70 dark:bg-[#0c122c] border dark:border-indigo-500/20 text-xs font-bold">
                     <button
                       type="button"
                       onClick={() => setTextPreviewDocType('quote')}
                       className={`px-2.5 py-1 rounded-md transition-all ${
                         textPreviewDocType === 'quote'
-                          ? 'bg-blue-500 text-white shadow-sm'
+                          ? 'bg-blue-600 text-white shadow-sm'
                           : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                       }`}
                     >
@@ -1194,8 +1213,8 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     onClick={() => setShowSizes(!showSizes)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1.5 ${
                       showSizes
-                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30'
-                        : 'bg-neutral-100 dark:bg-white/10 text-neutral-500 border-black/10 dark:border-white/10'
+                        ? 'bg-blue-500/10 text-blue-600 dark:text-cyan-400 border-blue-500/30 dark:border-cyan-500/30'
+                        : 'bg-neutral-100 dark:bg-[#0c122c] text-neutral-500 border-black/10 dark:border-indigo-500/20'
                     }`}
                     title={showSizes ? 'Item dimensions included' : 'Item dimensions excluded'}
                   >
@@ -1203,7 +1222,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     <span>{language === 'zh' ? (showSizes ? '尺寸: 显示' : '尺寸: 隐藏') : (showSizes ? 'Sizes: ON' : 'Sizes: OFF')}</span>
                   </button>
 
-                  <div className="flex p-0.5 rounded-lg bg-neutral-100 dark:bg-white/10 text-xs font-semibold">
+                  <div className="flex p-0.5 rounded-lg bg-neutral-100 dark:bg-[#0c122c] border dark:border-indigo-500/20 text-xs font-semibold">
                     <button
                       onClick={() => setTextFormat('whatsapp')}
                       className={`px-2.5 py-1 rounded-md transition-all ${
@@ -1218,7 +1237,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       onClick={() => setTextFormat('standard')}
                       className={`px-2.5 py-1 rounded-md transition-all ${
                         textFormat === 'standard'
-                          ? 'bg-blue-500 text-white shadow-sm'
+                          ? 'bg-blue-600 text-white shadow-sm'
                           : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                       }`}
                     >
@@ -1242,12 +1261,12 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                 <textarea
                   readOnly
                   value={getPreviewText()}
-                  className="flex-1 w-full p-4 rounded-xl font-mono text-xs bg-neutral-100/80 dark:bg-[#141418] border border-black/10 dark:border-white/10 outline-none text-neutral-800 dark:text-neutral-200 resize-none leading-relaxed mac-scrollbar select-all"
+                  className="flex-1 w-full p-4 rounded-xl font-mono text-xs bg-neutral-100/80 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/25 outline-none text-neutral-800 dark:text-neutral-200 resize-none leading-relaxed mac-scrollbar select-all"
                 />
               </div>
 
               {/* Recipient Quick Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 shrink-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-[#0c122c] border border-slate-200/80 dark:border-indigo-500/20 shrink-0">
                 <div className="flex items-center gap-2 px-1">
                   <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <input
@@ -1325,7 +1344,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
                     placeholder={language === 'zh' ? '输入客户姓名或公司名称' : 'Client name'}
-                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white"
+                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-neutral-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1337,7 +1356,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     value={docNo}
                     onChange={e => setDocNo(e.target.value)}
                     placeholder="e.g. QT-2026-001"
-                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white"
+                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm font-mono outline-none focus:ring-2 focus:ring-cyan-500 text-neutral-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -1350,7 +1369,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   value={customerAddress}
                   onChange={e => setCustomerAddress(e.target.value)}
                   placeholder={language === 'zh' ? '施工现场或收货送货地址' : 'Site or delivery location'}
-                  className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 h-20 text-neutral-900 dark:text-white"
+                  className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm outline-none focus:ring-2 focus:ring-cyan-500 h-20 text-neutral-900 dark:text-white"
                 />
               </div>
 
@@ -1364,7 +1383,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     value={contact}
                     onChange={e => setContact(e.target.value)}
                     placeholder={language === 'zh' ? '联系人姓名' : 'Contact person'}
-                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white"
+                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-neutral-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1380,7 +1399,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     value={deposit}
                     onChange={e => setDeposit(e.target.value)}
                     placeholder={formMode === 'receipt' ? finalTotal.toFixed(2) : "0.00"}
-                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white"
+                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm font-mono outline-none focus:ring-2 focus:ring-cyan-500 text-neutral-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -1397,7 +1416,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     value={customerPhone}
                     onChange={e => setCustomerPhone(e.target.value)}
                     placeholder="+65 9123 4567"
-                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-emerald-500 text-neutral-900 dark:text-white font-mono"
+                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm outline-none focus:ring-2 focus:ring-emerald-500 text-neutral-900 dark:text-white font-mono"
                   />
                 </div>
                 <div>
@@ -1410,7 +1429,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     value={customerEmail}
                     onChange={e => setCustomerEmail(e.target.value)}
                     placeholder="client@company.com"
-                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white font-mono"
+                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-neutral-900 dark:text-white font-mono"
                   />
                 </div>
               </div>
@@ -1424,7 +1443,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   <select
                     value={paymentMethod}
                     onChange={e => setPaymentMethod(e.target.value)}
-                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white font-medium"
+                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-neutral-900 dark:text-white font-medium"
                   >
                     <option value="PAYNOW">PayNow (UEN: 201826136D)</option>
                     <option value="BANK TRANSFER">{language === 'zh' ? '银行转账 (OCBC 华侨银行)' : 'Bank Transfer (OCBC)'}</option>
@@ -1442,13 +1461,13 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     value={paymentTerms}
                     onChange={e => setPaymentTerms(e.target.value)}
                     placeholder={language === 'zh' ? '例如: 7天内付清 / 交付时结清' : 'e.g. Due within 7 days'}
-                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#18181c] border border-black/10 dark:border-white/10 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-neutral-900 dark:text-white"
+                    className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-neutral-900 dark:text-white"
                   />
                 </div>
               </div>
 
               {/* Show / Hide Dimensions Option Card */}
-              <div className="p-3.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/10 dark:border-white/10 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl bg-neutral-100 dark:bg-[#0c122c] border border-black/10 dark:border-indigo-500/20 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className={`p-2.5 rounded-xl transition-all ${showSizes ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-neutral-500/10 text-neutral-400'}`}>
                     <Ruler className="w-5 h-5" />
@@ -1474,7 +1493,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   </div>
                 </div>
 
-                <div className="flex p-0.5 rounded-xl bg-white dark:bg-[#121316] border border-black/10 dark:border-white/10 shadow-sm shrink-0">
+                <div className="flex p-0.5 rounded-xl bg-white dark:bg-[#070b19] border border-black/10 dark:border-indigo-500/25 shadow-sm shrink-0">
                   <button
                     type="button"
                     onClick={() => setShowSizes(true)}
@@ -1539,7 +1558,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
               </div>
 
               {/* Send Format Selector: Text vs PDF */}
-              <div className="p-3 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/10 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
+              <div className="p-3 rounded-xl bg-neutral-100 dark:bg-[#0c122c]/70 border border-black/10 dark:border-indigo-500/20 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <div className={`p-2 rounded-lg ${sendFormat === 'pdf' ? 'bg-blue-500/10 text-blue-500' : 'bg-neutral-200/50 dark:bg-white/10 text-neutral-600 dark:text-neutral-300'}`}>
                     {sendFormat === 'pdf' ? <FileCheck className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
@@ -1558,7 +1577,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                   </div>
                 </div>
 
-                <div className="flex p-0.5 rounded-xl bg-white dark:bg-[#121316] border border-black/10 dark:border-white/10 shadow-sm shrink-0">
+                <div className="flex p-0.5 rounded-xl bg-white dark:bg-[#070b19] border border-black/10 dark:border-indigo-500/25 shadow-sm shrink-0">
                   <button
                     type="button"
                     onClick={() => setSendFormat('text')}
@@ -1586,78 +1605,81 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="space-y-2 pt-2 border-t border-slate-200/80 dark:border-white/10">
+                {/* Tier 1: Primary Output Actions (Print, Download, Copy) */}
+                <div className="flex flex-wrap sm:flex-nowrap gap-2">
                   <button
                     type="button"
-                    onClick={() => handleQuickWhatsApp(formMode === 'invoice' ? 'invoice' : 'quote', sendFormat)}
-                    className="py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20 active:scale-95"
-                    title={sendFormat === 'pdf' ? 'Prepare & send PDF via WhatsApp' : 'Send WhatsApp text summary'}
+                    onClick={() => handleExport('view')}
+                    className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-600/25 active:scale-95"
+                    title={language === 'zh' ? '在浏览器新标签页打开 PDF 供预览和打印' : 'Open PDF in new tab to view and print'}
                   >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>
-                      {language === 'zh'
-                        ? (sendFormat === 'pdf' ? 'WhatsApp 发送 (PDF)' : 'WhatsApp 发送 (文本)')
-                        : (sendFormat === 'pdf' ? 'Send WhatsApp (PDF)' : 'Send WhatsApp (Text)')}
-                    </span>
+                    <Printer className="w-4 h-4" />
+                    <span>{language === 'zh' ? '打印单据' : 'Print Form'}</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickEmail(formMode === 'invoice' ? 'invoice' : 'quote', sendFormat)}
-                    className="py-3 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-600/20 active:scale-95"
-                    title={sendFormat === 'pdf' ? 'Prepare & attach PDF in email' : 'Send email body text'}
-                  >
-                    <Mail className="w-4 h-4" />
-                    <span>
-                      {language === 'zh'
-                        ? (sendFormat === 'pdf' ? '邮件发送 (PDF)' : '邮件发送 (文本)')
-                        : (sendFormat === 'pdf' ? 'Send Email (PDF)' : 'Send Email (Text)')}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenSendModal(formMode === 'invoice' ? 'invoice' : 'quote')}
-                    className="py-3 px-3 rounded-xl bg-neutral-800 dark:bg-white/15 hover:bg-neutral-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
-                  >
-                    <Share2 className="w-4 h-4 text-blue-400" />
-                    <span>{language === 'zh' ? '发送与分享中心' : 'Send & Share Hub'}</span>
-                  </button>
-                </div>
 
-                <div className="flex flex-wrap sm:flex-nowrap gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => handleExport('save')}
+                    className="flex-1 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 dark:bg-white/15 dark:hover:bg-white/20 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95"
+                    title={language === 'zh' ? '下载矢量 PDF 文件到电脑' : 'Download Vector PDF file'}
+                  >
+                    <Download className="w-4 h-4 text-blue-400" />
+                    <span>{language === 'zh' ? '下载 PDF' : 'Download PDF'}</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => handleCopyAllQuotes(textFormat, formMode === 'invoice' ? 'invoice' : 'quote')}
-                    className="py-3 px-3.5 rounded-xl bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all border border-black/5 dark:border-white/10 active:scale-95"
+                    className="py-3 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-neutral-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all border border-slate-200 dark:border-white/10 active:scale-95 shrink-0"
+                    title={language === 'zh' ? '复制格式化文本清单' : 'Copy formatted text summary'}
                   >
                     {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                     <span>{copied ? (language === 'zh' ? '已复制！' : 'Copied!') : (language === 'zh' ? '复制文本' : 'Copy Text')}</span>
                   </button>
+                </div>
+
+                {/* Tier 2: Communication & Workflows (WhatsApp, Email, Share Hub, Schedule) */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
                   <button
                     type="button"
-                    onClick={() => handleExport('view')}
-                    className="flex-1 py-3 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95"
-                    title={language === 'zh' ? '打开打印/预览窗口' : 'Open print / PDF view window'}
+                    onClick={() => handleQuickWhatsApp(formMode === 'invoice' ? 'invoice' : 'quote', sendFormat)}
+                    className="py-2.5 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95"
+                    title={sendFormat === 'pdf' ? 'Send PDF via WhatsApp' : 'Send text summary via WhatsApp'}
                   >
-                    <Printer className="w-4 h-4 text-emerald-400" />
-                    <span>{language === 'zh' ? '打印单据' : 'Print Form'}</span>
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span className="truncate">WhatsApp</span>
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => handleExport('save')}
-                    className="flex-1 py-3 px-3 rounded-xl bg-blue-500 text-white font-bold text-xs sm:text-sm hover:bg-blue-600 flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20 transition-all active:scale-95"
+                    onClick={() => handleQuickEmail(formMode === 'invoice' ? 'invoice' : 'quote', sendFormat)}
+                    className="py-2.5 px-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95"
+                    title={sendFormat === 'pdf' ? 'Send PDF via Email' : 'Send text summary via Email'}
                   >
-                    <Download className="w-4 h-4" /> {language === 'zh' ? '下载 PDF' : 'Download PDF'}
+                    <Mail className="w-3.5 h-3.5" />
+                    <span className="truncate">{language === 'zh' ? '邮件' : 'Email'}</span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleOpenSendModal(formMode === 'invoice' ? 'invoice' : 'quote')}
+                    className="py-2.5 px-2.5 rounded-xl bg-slate-200/80 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/15 text-slate-800 dark:text-neutral-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                    title="Send & Share Hub"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-blue-500" />
+                    <span className="truncate">{language === 'zh' ? '分享中心' : 'Share Hub'}</span>
+                  </button>
+
                   {onOpenDailySchedule && (
                     <button
                       type="button"
                       onClick={() => onOpenDailySchedule(customerName, customerAddress)}
-                      className="py-3 px-3.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-emerald-500/20 transition-all active:scale-95"
-                      title={language === 'zh' ? '打开每日外出安装排程表并自动填入此客户信息' : 'Open Daily Outside Schedule form with this client pre-filled'}
+                      className="py-2.5 px-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-emerald-500/25 transition-all active:scale-95"
+                      title={language === 'zh' ? '填入每日外出安装排程表' : 'Open in Daily Outside Schedule'}
                     >
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="hidden sm:inline">{language === 'zh' ? '排程表' : 'Daily Schedule'}</span>
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span className="truncate">{language === 'zh' ? '排程表' : 'Schedule'}</span>
                     </button>
                   )}
                 </div>
@@ -1667,7 +1689,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
 
         {/* TAB 2: CLOUD SAVED RECORDS */}
         {activeSubTab === 'cloudRecords' && (
-          <div className="flex-1 flex flex-col min-h-0 bg-neutral-50/50 dark:bg-[#18181c]/50 p-4 sm:p-6 space-y-4">
+          <div className="flex-1 flex flex-col min-h-0 bg-neutral-50/50 dark:bg-[#070b19]/60 p-4 sm:p-6 space-y-4">
             {user ? (
               <>
                 {/* Search & Cloud Status Header */}
@@ -1679,7 +1701,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       placeholder={language === 'zh' ? '搜索已存报价 (按单号、客户姓名、项目内容)...' : 'Search saved quotes by Doc #, customer name, items...'}
                       value={recordSearch}
                       onChange={e => setRecordSearch(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl bg-white dark:bg-[#24242a] border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-blue-500 outline-none text-neutral-900 dark:text-white"
+                      className="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl bg-white dark:bg-[#0d1433] border border-slate-200 dark:border-indigo-500/20 focus:ring-2 focus:ring-cyan-500 outline-none text-neutral-900 dark:text-white"
                     />
                   </div>
                   <div className="flex items-center gap-2 text-xs text-neutral-500 shrink-0">
@@ -1712,7 +1734,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     filteredCloudRecords.map(record => (
                       <div
                         key={record.id}
-                        className="p-4 rounded-2xl bg-white dark:bg-[#24242a] border border-black/5 dark:border-white/5 hover:border-blue-500/40 shadow-sm transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                        className="p-4 rounded-2xl bg-white dark:bg-[#0d1433] border border-slate-200/80 dark:border-indigo-500/20 hover:border-cyan-500/40 shadow-sm transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">

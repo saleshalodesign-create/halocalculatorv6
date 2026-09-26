@@ -76,7 +76,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top,0px)] bg-white/85 dark:bg-[#121316]/90 backdrop-blur-2xl border-b border-slate-200/90 dark:border-white/10 z-50 select-none shadow-sm">
+    <div className="fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top,0px)] bg-white/85 dark:bg-[#070b19]/90 backdrop-blur-2xl border-b border-slate-200/90 dark:border-indigo-500/20 z-50 select-none shadow-sm">
       <div className="h-7 sm:h-8 flex items-center justify-between px-2 xs:px-3 text-[12px] sm:text-[13px] font-sans font-medium text-slate-800 dark:text-neutral-200">
         {/* Left System Menu */}
         <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-4 min-w-0">

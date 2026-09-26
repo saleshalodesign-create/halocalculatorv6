@@ -22,7 +22,13 @@ import { RotateCcw, RectangleHorizontal, RectangleVertical, Square } from 'lucid
 export default function App() {
   const { language, t } = useLanguage();
   const [theme, setTheme] = useState<ThemeType>(Theme.DARK);
-  const [wallpaper, setWallpaper] = useState('sequoia');
+  const [wallpaper, setWallpaper] = useState<string>(() => {
+    return localStorage.getItem('halo_wallpaper') || 'cyber-midnight';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('halo_wallpaper', wallpaper);
+  }, [wallpaper]);
 
   // Firebase Auth & Cloud Sync
   const auth = useFirebaseAuth();
@@ -120,7 +126,7 @@ export default function App() {
     if (newTheme === Theme.LIGHT) {
       setWallpaper('silver');
     } else if (newTheme === Theme.DARK) {
-      setWallpaper('sequoia');
+      setWallpaper('cyber-midnight');
     }
   };
 
@@ -243,6 +249,8 @@ export default function App() {
 
   const getWallpaperClass = () => {
     switch (wallpaper) {
+      case 'cyber-midnight':
+        return 'wallpaper-cyber-midnight';
       case 'sequoia':
         return 'wallpaper-sequoia';
       case 'sonoma':
@@ -252,7 +260,7 @@ export default function App() {
       case 'silver':
         return 'wallpaper-silver';
       default:
-        return 'wallpaper-dark';
+        return 'wallpaper-cyber-midnight';
     }
   };
 
@@ -303,10 +311,13 @@ export default function App() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="mac-main-window w-full max-w-5xl xl:max-w-6xl rounded-xl sm:rounded-2xl overflow-hidden backdrop-blur-lg border border-slate-200/90 dark:border-white/10 shadow-xl z-10 my-auto"
+          className="mac-main-window w-full max-w-5xl xl:max-w-6xl rounded-xl sm:rounded-2xl overflow-hidden backdrop-blur-lg border border-slate-200/90 dark:border-indigo-500/25 shadow-xl z-10 my-auto relative"
         >
+          {/* Ambient Cyber Neon Crown Accent */}
+          <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 opacity-90"></div>
+
           {/* Window Titlebar with Traffic Lights */}
-          <div className="h-8 sm:h-10 px-2.5 sm:px-4 bg-slate-100/95 dark:bg-[#16171c]/95 border-b border-slate-200/90 dark:border-white/10 flex items-center justify-between select-none">
+          <div className="h-8 sm:h-10 px-2.5 sm:px-4 bg-slate-100/95 dark:bg-[#0c122c]/95 border-b border-slate-200/90 dark:border-indigo-500/20 flex items-center justify-between select-none">
             <div className="flex items-center gap-1.5 sm:gap-2 traffic-group">
               <button
                 className="traffic-btn w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#FF5F56] border border-black/10 flex items-center justify-center"
@@ -367,15 +378,15 @@ export default function App() {
           {/* Window Content */}
           <div className="p-2 sm:p-4 md:p-6 space-y-2.5 sm:space-y-4 md:space-y-5">
             {/* Dimensions Input Panel (Native macOS Toolbar Style) */}
-            <div className="p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl bg-white/80 dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/5 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-2.5 sm:gap-4">
+            <div className="p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl bg-white/80 dark:bg-[#0c122c]/75 border border-slate-200/90 dark:border-indigo-500/20 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-2.5 sm:gap-4">
               {/* Center/Main Dimension & Unit Controls */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 w-full lg:w-auto">
                 {/* Long Centered Dimension Input */}
                 <div className="flex items-center justify-center gap-1.5 sm:gap-2 w-full sm:w-auto">
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 select-none shrink-0">
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-cyan-300 select-none shrink-0">
                     {t.toolbar.dim}
                   </span>
-                  <div className="flex items-center justify-center gap-1 sm:gap-2 bg-slate-100 dark:bg-[#121316] px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-xl border border-slate-200/90 dark:border-white/10 shadow-inner focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all w-full sm:w-auto">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2 bg-slate-100 dark:bg-[#050817] px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-xl border border-slate-200/90 dark:border-indigo-500/25 shadow-inner focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all w-full sm:w-auto">
                     <input
                       type="number"
                       step="any"
@@ -385,10 +396,10 @@ export default function App() {
                       onChange={e => setWidth(e.target.value)}
                       onFocus={e => e.target.select()}
                       placeholder={t.toolbar.width}
-                      className="w-full sm:w-24 md:w-32 text-center font-mono font-bold text-xs sm:text-sm md:text-base bg-transparent focus:bg-transparent outline-none text-slate-700 dark:text-neutral-400 placeholder:text-slate-400 dark:placeholder:text-neutral-500 min-w-[60px]"
+                      className="w-full sm:w-24 md:w-32 text-center font-mono font-bold text-xs sm:text-sm md:text-base bg-transparent focus:bg-transparent outline-none text-slate-700 dark:text-neutral-200 placeholder:text-slate-400 dark:placeholder:text-neutral-500 min-w-[60px]"
                       title={t.toolbar.width}
                     />
-                    <span className="text-slate-500 dark:text-neutral-400 font-light text-sm sm:text-base px-0.5 select-none">×</span>
+                    <span className="text-slate-500 dark:text-cyan-500/70 font-light text-sm sm:text-base px-0.5 select-none">×</span>
                     <input
                       type="number"
                       step="any"
@@ -398,7 +409,7 @@ export default function App() {
                       onChange={e => setHeight(e.target.value)}
                       onFocus={e => e.target.select()}
                       placeholder={t.toolbar.height}
-                      className="w-full sm:w-24 md:w-32 text-center font-mono font-bold text-xs sm:text-sm md:text-base bg-transparent focus:bg-transparent outline-none text-slate-700 dark:text-neutral-400 placeholder:text-slate-400 dark:placeholder:text-neutral-500 min-w-[60px]"
+                      className="w-full sm:w-24 md:w-32 text-center font-mono font-bold text-xs sm:text-sm md:text-base bg-transparent focus:bg-transparent outline-none text-slate-700 dark:text-neutral-200 placeholder:text-slate-400 dark:placeholder:text-neutral-500 min-w-[60px]"
                       title={t.toolbar.height}
                     />
                   </div>
@@ -406,7 +417,7 @@ export default function App() {
 
                 {/* Centered Unit Switcher & Reset Rates */}
                 <div className="flex items-center justify-center gap-1.5 shrink-0 flex-wrap">
-                  <div className="flex p-0.5 rounded-xl bg-slate-100 dark:bg-[#121316] border border-slate-200/90 dark:border-white/10 shadow-sm">
+                  <div className="flex p-0.5 rounded-xl bg-slate-100 dark:bg-[#050817] border border-slate-200/90 dark:border-indigo-500/25 shadow-sm">
                     {[
                       { key: Unit.IN, label: 'IN' },
                       { key: Unit.FT, label: 'FT' },

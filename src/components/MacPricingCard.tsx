@@ -52,7 +52,7 @@ const cardThemes: Record<MacPricingCardProps['iconType'], {
     hoverBorder: 'hover:border-amber-500/70 dark:hover:border-amber-400/70',
     hoverPriceText: 'group-hover:text-amber-600 dark:group-hover:text-amber-400',
     hoverTitleText: 'group-hover:text-amber-700 dark:group-hover:text-amber-300',
-    hoverBgDark: 'dark:hover:bg-[#1f1d18]',
+    hoverBgDark: 'dark:hover:bg-[#141224]',
     hoverBgLight: 'hover:bg-amber-50/60',
     lightBg: 'bg-slate-100/95',
     lightBorder: 'border-slate-200/90',
@@ -69,7 +69,7 @@ const cardThemes: Record<MacPricingCardProps['iconType'], {
     hoverBorder: 'hover:border-rose-500/70 dark:hover:border-rose-400/70',
     hoverPriceText: 'group-hover:text-rose-600 dark:group-hover:text-rose-400',
     hoverTitleText: 'group-hover:text-rose-700 dark:group-hover:text-rose-300',
-    hoverBgDark: 'dark:hover:bg-[#22181f]',
+    hoverBgDark: 'dark:hover:bg-[#1a0f2b]',
     hoverBgLight: 'hover:bg-rose-50/60',
     lightBg: 'bg-slate-100/95',
     lightBorder: 'border-slate-200/90',
@@ -86,7 +86,7 @@ const cardThemes: Record<MacPricingCardProps['iconType'], {
     hoverBorder: 'hover:border-blue-500/70 dark:hover:border-blue-400/70',
     hoverPriceText: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
     hoverTitleText: 'group-hover:text-blue-700 dark:group-hover:text-blue-300',
-    hoverBgDark: 'dark:hover:bg-[#151a25]',
+    hoverBgDark: 'dark:hover:bg-[#0b1536]',
     hoverBgLight: 'hover:bg-blue-50/60',
     lightBg: 'bg-slate-100/95',
     lightBorder: 'border-slate-200/90',
@@ -103,7 +103,7 @@ const cardThemes: Record<MacPricingCardProps['iconType'], {
     hoverBorder: 'hover:border-indigo-500/70 dark:hover:border-indigo-400/70',
     hoverPriceText: 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400',
     hoverTitleText: 'group-hover:text-indigo-700 dark:group-hover:text-indigo-300',
-    hoverBgDark: 'dark:hover:bg-[#1a1725]',
+    hoverBgDark: 'dark:hover:bg-[#0f143a]',
     hoverBgLight: 'hover:bg-indigo-50/60',
     lightBg: 'bg-slate-100/95',
     lightBorder: 'border-slate-200/90',
@@ -120,7 +120,7 @@ const cardThemes: Record<MacPricingCardProps['iconType'], {
     hoverBorder: 'hover:border-orange-500/70 dark:hover:border-orange-400/70',
     hoverPriceText: 'group-hover:text-orange-600 dark:group-hover:text-orange-400',
     hoverTitleText: 'group-hover:text-orange-700 dark:group-hover:text-orange-300',
-    hoverBgDark: 'dark:hover:bg-[#221a16]',
+    hoverBgDark: 'dark:hover:bg-[#171328]',
     hoverBgLight: 'hover:bg-orange-50/60',
     lightBg: 'bg-slate-100/95',
     lightBorder: 'border-slate-200/90',
@@ -137,7 +137,7 @@ const cardThemes: Record<MacPricingCardProps['iconType'], {
     hoverBorder: 'hover:border-fuchsia-500/70 dark:hover:border-fuchsia-400/70',
     hoverPriceText: 'group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400',
     hoverTitleText: 'group-hover:text-fuchsia-700 dark:group-hover:text-fuchsia-300',
-    hoverBgDark: 'dark:hover:bg-[#221624]',
+    hoverBgDark: 'dark:hover:bg-[#1b0d2e]',
     hoverBgLight: 'hover:bg-fuchsia-50/60',
     lightBg: 'bg-slate-100/95',
     lightBorder: 'border-slate-200/90',
@@ -154,7 +154,7 @@ const cardThemes: Record<MacPricingCardProps['iconType'], {
     hoverBorder: 'hover:border-emerald-500/70 dark:hover:border-emerald-400/70',
     hoverPriceText: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400',
     hoverTitleText: 'group-hover:text-emerald-700 dark:group-hover:text-emerald-300',
-    hoverBgDark: 'dark:hover:bg-[#14221b]',
+    hoverBgDark: 'dark:hover:bg-[#081829]',
     hoverBgLight: 'hover:bg-emerald-50/60',
     lightBg: 'bg-slate-100/95',
     lightBorder: 'border-slate-200/90',
@@ -171,7 +171,7 @@ const cardThemes: Record<MacPricingCardProps['iconType'], {
     hoverBorder: 'hover:border-teal-500/70 dark:hover:border-teal-400/70',
     hoverPriceText: 'group-hover:text-teal-600 dark:group-hover:text-teal-400',
     hoverTitleText: 'group-hover:text-teal-700 dark:group-hover:text-teal-300',
-    hoverBgDark: 'dark:hover:bg-[#132022]',
+    hoverBgDark: 'dark:hover:bg-[#07192e]',
     hoverBgLight: 'hover:bg-teal-50/60',
     lightBg: 'bg-slate-100/95',
     lightBorder: 'border-slate-200/90',
@@ -241,7 +241,7 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
       className={`group relative rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden min-h-[76px] sm:min-h-[96px] lg:min-h-[118px] gpu-layer active:scale-[0.98] ${
         isLit
           ? `${theme.selectedLightBg} ${theme.selectedDarkBg} border-2 ${theme.selectedLightBorder} ${theme.selectedDarkBorder} ${theme.selectedDarkShadow} ring-2 ring-current/20 shadow-md`
-          : `${theme.lightBg} ${theme.hoverBgLight} dark:bg-[#181920]/95 ${theme.hoverBgDark} backdrop-blur-md border ${theme.lightBorder} dark:border-white/10 ${theme.hoverBorder} shadow-sm hover:shadow-md hover:-translate-y-0.5`
+          : `${theme.lightBg} ${theme.hoverBgLight} dark:bg-[#0a0f24]/90 ${theme.hoverBgDark} backdrop-blur-md border ${theme.lightBorder} dark:border-indigo-500/20 ${theme.hoverBorder} shadow-sm hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5`
       }`}
     >
       {/* Top Row: Icon + Title */}
@@ -272,12 +272,12 @@ const MacPricingCardComponent: React.FC<MacPricingCardProps> = ({
       </div>
 
       {/* Bottom Row: Rate Badge & Total Price */}
-      <div className="mt-1.5 sm:mt-2 pt-1 sm:pt-1.5 flex items-center justify-between gap-1 flex-nowrap border-t border-black/5 dark:border-white/[0.04]">
+      <div className="mt-1.5 sm:mt-2 pt-1 sm:pt-1.5 flex items-center justify-between gap-1 flex-nowrap border-t border-black/5 dark:border-indigo-500/15">
         {/* Editable Rate Pill ($ 35 /SQ FT) */}
         {rate !== undefined ? (
           <div
             onClick={e => e.stopPropagation()}
-            className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-md ${theme.lightRateBadge} dark:bg-[#0c0d0f] border dark:border-white/15 hover:border-blue-400/60 focus-within:border-blue-500 shadow-sm shrink-0 transition-colors group/rate cursor-text`}
+            className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-md ${theme.lightRateBadge} dark:bg-[#050817] border dark:border-indigo-500/25 hover:border-cyan-400/60 focus-within:border-cyan-500 shadow-sm shrink-0 transition-colors group/rate cursor-text`}
             title={editTooltip}
           >
             <span className="text-[8px] sm:text-[10px] font-bold text-slate-800 dark:text-neutral-400 select-none">$</span>

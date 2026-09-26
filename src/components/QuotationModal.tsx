@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { QuoteItem, RatesConfig } from '../types';
 import { copyToClipboard } from '../utils/clipboard';
 import { useLanguage } from '../context/LanguageContext';
-import { Check, Plus, Copy } from 'lucide-react';
+import { Check, Plus, Copy, ChevronDown, ChevronUp, Calculator } from 'lucide-react';
 
 interface QuotationModalProps {
   isOpen: boolean;
@@ -131,12 +131,15 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
     >
       <div
         onClick={e => e.stopPropagation()}
-        className={`w-full max-w-lg bg-white dark:bg-[#222226] rounded-2xl shadow-2xl border ${
-          itemColor ? itemColor.border : 'border-slate-200/90 dark:border-white/10'
+        className={`w-full max-w-lg bg-white dark:bg-[#0a0f24] rounded-2xl shadow-2xl border ${
+          itemColor ? itemColor.border : 'border-slate-200/90 dark:border-indigo-500/25'
         } overflow-hidden flex flex-col max-h-[90dvh] transition-all`}
       >
+        {/* Ambient Cyber Neon Crown Accent */}
+        <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 opacity-90 shrink-0"></div>
+
         {/* macOS Modal Titlebar */}
-        <div className="h-9 sm:h-10 px-3 sm:px-4 bg-slate-50 dark:bg-[#1a1a1c] border-b border-slate-200/90 dark:border-white/10 flex items-center justify-between shrink-0">
+        <div className="h-9 sm:h-10 px-3 sm:px-4 bg-slate-50 dark:bg-[#0c122c] border-b border-slate-200/90 dark:border-indigo-500/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={onClose}
@@ -147,7 +150,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#27C93F]"></span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-neutral-300">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-cyan-300">
               {t.quotationModal.title}
             </span>
             {itemColor && (
@@ -160,31 +163,37 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         </div>
 
         <div className="p-3.5 sm:p-5 space-y-3 sm:space-y-3.5 overflow-y-auto mac-scrollbar">
-          {/* Interactive Signage Spec Box (Clicking column toggles Formula Breakdown) */}
-          <div className="rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 overflow-hidden transition-all shadow-sm">
-            <div
-              onClick={() => setShowFormula(prev => !prev)}
-              className="p-2.5 sm:p-3 flex items-center justify-between cursor-pointer hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-colors select-none group"
-            >
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-neutral-200">
+          {/* Signage Spec Box with Formula Toggle */}
+          <div className="rounded-xl bg-slate-50 dark:bg-[#0d1433]/70 border border-slate-200/90 dark:border-indigo-500/20 overflow-hidden transition-all shadow-xs">
+            <div className="p-3">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-neutral-400 block mb-1">
                 {t.quotationModal.spec}
               </span>
-            </div>
-
-            <div className="px-2.5 sm:px-3 pb-2.5 sm:pb-3">
               <input
                 type="text"
                 value={editedTitle}
                 onChange={e => setEditedTitle(e.target.value)}
-                className="w-full text-sm sm:text-base font-bold text-slate-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500 py-0.5"
+                className="w-full text-sm sm:text-base font-bold text-slate-900 dark:text-white bg-transparent outline-none border-b border-slate-200 dark:border-white/10 focus:border-blue-500 py-0.5 transition-colors"
                 placeholder="Signage item title"
               />
             </div>
 
+            {/* Formula Breakdown Toggle Bar */}
+            <div
+              onClick={() => setShowFormula(prev => !prev)}
+              className="px-3 py-2 bg-slate-100/70 dark:bg-white/[0.03] border-t border-slate-200/80 dark:border-white/5 flex items-center justify-between cursor-pointer hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors select-none text-xs text-slate-600 dark:text-neutral-400"
+            >
+              <span className="flex items-center gap-1.5 font-medium text-[11px]">
+                <Calculator className="w-3.5 h-3.5 text-blue-500" />
+                <span>{showFormula ? (t.quotationModal.hideFormula || 'Hide formula breakdown') : (t.quotationModal.formulaBreakdown || 'View calculation formula')}</span>
+              </span>
+              {showFormula ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </div>
+
             {/* Formula Calculation Breakdown Display */}
             {showFormula && (
-              <div className="border-t border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-[#121316] p-3 sm:p-3.5 space-y-2.5 text-xs animate-fade-in">
-                <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-white/10">
+              <div className="border-t border-slate-200/80 dark:border-indigo-500/20 bg-slate-100/80 dark:bg-[#050817] p-3 sm:p-3.5 space-y-2.5 text-xs animate-fade-in">
+                <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-indigo-500/20">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                     <span className="font-bold text-[11px] text-slate-800 dark:text-neutral-200">
@@ -226,7 +235,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 {/* Step by step Calculation Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
                   {/* Step 1 */}
-                  <div className="p-2 rounded-lg bg-white dark:bg-neutral-900/80 border border-slate-200/80 dark:border-white/5">
+                  <div className="p-2 rounded-lg bg-white dark:bg-[#070b19]/90 border border-slate-200/80 dark:border-indigo-500/20">
                     <div className="text-[9px] font-bold uppercase text-slate-500 dark:text-neutral-400 mb-0.5">
                       1. Size &amp; Unit Conversion
                     </div>
@@ -239,7 +248,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                   </div>
 
                   {/* Step 2 */}
-                  <div className="p-2 rounded-lg bg-white dark:bg-neutral-900/80 border border-slate-200/80 dark:border-white/5">
+                  <div className="p-2 rounded-lg bg-white dark:bg-[#070b19]/90 border border-slate-200/80 dark:border-indigo-500/20">
                     <div className="text-[9px] font-bold uppercase text-slate-500 dark:text-neutral-400 mb-0.5">
                       {isLedStrip ? '2. Module Multiplier' : '2. Calculated Area'}
                     </div>
@@ -298,7 +307,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           </div>
 
           {/* Dimensions & Area Quick Bar */}
-          <div className="p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-between">
+          <div className="p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-[#0c122c]/70 border border-slate-200 dark:border-indigo-500/20 flex items-center justify-between">
             <div>
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                 {t.quotationModal.dim}
@@ -323,15 +332,15 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               <span className="text-xs font-bold text-slate-800 dark:text-neutral-300">{t.quotationModal.unitPrice}</span>
               <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-neutral-400">{t.quotationModal.editable}</p>
             </div>
-            <div className="flex items-center gap-1 bg-white dark:bg-[#18181c] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-blue-300/80 dark:border-white/10 shadow-sm">
-              <span className="text-base sm:text-lg font-bold font-mono text-blue-600 dark:text-blue-500">$</span>
+            <div className="flex items-center gap-1 bg-white dark:bg-[#070b19] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-blue-300/80 dark:border-indigo-500/30 shadow-sm">
+              <span className="text-base sm:text-lg font-bold font-mono text-blue-600 dark:text-cyan-400">$</span>
               <input
                 type="number"
                 step="any"
                 min="0"
                 value={editedPrice}
                 onChange={e => setEditedPrice(e.target.value)}
-                className="w-20 sm:w-24 text-base sm:text-xl font-black font-mono text-blue-600 dark:text-blue-500 bg-transparent outline-none"
+                className="w-20 sm:w-24 text-base sm:text-xl font-black font-mono text-blue-600 dark:text-cyan-300 bg-transparent outline-none"
                 placeholder="0.00"
               />
             </div>
@@ -342,7 +351,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             <button
               onClick={handleAdd}
               className={`py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 ${
-                isAdded ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-500/25'
+                isAdded ? 'bg-emerald-600 text-white' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/25'
               }`}
             >
               {isAdded ? (
@@ -357,7 +366,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             </button>
             <button
               onClick={handleShare}
-              className="py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-800 dark:text-neutral-200 transition-all flex items-center justify-center gap-1.5 border border-slate-200 dark:border-white/10 active:scale-95 shadow-sm"
+              className="py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 dark:bg-[#0c122c] hover:bg-slate-200 dark:hover:bg-[#121c45] text-slate-800 dark:text-neutral-200 transition-all flex items-center justify-center gap-1.5 border border-slate-200 dark:border-indigo-500/25 active:scale-95 shadow-sm"
             >
               {copied ? (
                 <>
