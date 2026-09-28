@@ -170,7 +170,7 @@ export const formatDocumentMessage = (params: {
       lines.push(`----------------------------------------`);
       lines.push(`*${isZh ? '付款方式' : 'Payment Mode'}:* ${data.paymentMethod || 'PAYNOW'}`);
       if (data.paymentTerms) lines.push(`*${isZh ? '付款条款' : 'Payment Terms'}:* ${data.paymentTerms}`);
-      lines.push(`*PayNow UEN:* 201826136D (Halo Design Hub)`);
+      lines.push(`*PayNow UEN:* 53142015M (Halo Design Hub)`);
       lines.push(`*${isZh ? '华侨银行转账' : 'Bank Transfer'}:* OCBC 687-849-301-001`);
       lines.push(``);
       lines.push(`_Halo Design Hub (Halo 招牌设计中心)_`);
@@ -178,7 +178,7 @@ export const formatDocumentMessage = (params: {
       lines.push(`Tel: 6844 4928 / 6844 4929 | sales.halodesign@gmail.com`);
     } else {
       lines.push(`----------------------------------------`);
-      lines.push(`*PayNow UEN:* 201826136D (Halo Design Hub)`);
+      lines.push(`*PayNow UEN:* 53142015M (Halo Design Hub)`);
     }
   } else if (format === 'email') {
     // Email plain text format
@@ -222,7 +222,7 @@ export const formatDocumentMessage = (params: {
       lines.push(`PAYMENT DETAILS:`);
       lines.push(`- Payment Mode: ${data.paymentMethod || 'PAYNOW'}`);
       if (data.paymentTerms) lines.push(`- Terms: ${data.paymentTerms}`);
-      lines.push(`- PayNow UEN: 201826136D (Entity: Halo Design Hub)`);
+      lines.push(`- PayNow UEN: 53142015M (Entity: Halo Design Hub)`);
       lines.push(`- Bank Transfer: OCBC Bank (Current A/C: 687-849-301-001)`);
       lines.push(``);
       lines.push(`Best regards,`);
@@ -232,7 +232,7 @@ export const formatDocumentMessage = (params: {
       lines.push(`Email: sales.halodesign@gmail.com`);
     } else {
       lines.push(`====================================================`);
-      lines.push(`PayNow UEN: 201826136D (Halo Design Hub)`);
+      lines.push(`PayNow UEN: 53142015M (Halo Design Hub)`);
     }
   } else {
     // Standard plain
@@ -275,7 +275,7 @@ export const formatDocumentMessage = (params: {
       lines.push(`Tel: 6844 4928 / 6844 4929`);
     } else {
       lines.push(`----------------------------------------`);
-      lines.push(`PayNow UEN: 201826136D (Halo Design Hub)`);
+      lines.push(`PayNow UEN: 53142015M (Halo Design Hub)`);
     }
   }
 
@@ -434,7 +434,7 @@ export const formatPDFCoverMessage = (params: {
         `📎 *官方 PDF 单据文件:* ${filename}`,
         `随信呈附官方单据，请审阅确认。如需修改细节请随时告知。`,
         ``,
-        `*付款指引 (PayNow UEN):* 201826136D (HALO DESIGN HUB)`,
+        `*付款指引 (PayNow UEN):* 53142015M (HALO DESIGN HUB)`,
         `*华侨银行转账:* OCBC Bank 687-849-301-001`,
         ``,
         `_Halo Design Hub (Halo 招牌设计中心)_ | Blk 113 Eunos Ave 3, #01-16 Singapore 409838`,
@@ -451,7 +451,7 @@ export const formatPDFCoverMessage = (params: {
       `📎 *Official PDF Document:* ${filename}`,
       `Please find our official PDF document for your review.`,
       ``,
-      `*Payment Instructions (PayNow UEN):* 201826136D (HALO DESIGN HUB)`,
+      `*Payment Instructions (PayNow UEN):* 53142015M (HALO DESIGN HUB)`,
       `*Bank Transfer:* OCBC Bank 687-345678-001`,
       ``,
       `_Halo Design Hub_ | Blk 113 Eunos Ave 3, #01-16 Singapore 409838`,
@@ -469,7 +469,7 @@ export const formatPDFCoverMessage = (params: {
       `📎 附件单据: ${filename}`,
       ``,
       `付款信息:`,
-      `• PayNow (UEN): 201826136D (HALO DESIGN HUB)`,
+      `• PayNow (UEN): 53142015M (HALO DESIGN HUB)`,
       `• 银行转账: OCBC Bank 687-849-301-001 (HALO DESIGN HUB)`,
       ``,
       `如您有任何疑问或需要调整设计与规格，请随时联系我们。`,
@@ -489,7 +489,7 @@ export const formatPDFCoverMessage = (params: {
     `📎 Attached Document: ${filename}`,
     ``,
     `Payment Details:`,
-    `• PayNow (UEN): 201826136D (HALO DESIGN HUB)`,
+    `• PayNow (UEN): 53142015M (HALO DESIGN HUB)`,
     `• Bank Transfer: OCBC Bank 687-345678-001 (HALO DESIGN HUB)`,
     ``,
     `Please let us know if you have any questions or require revisions.`,

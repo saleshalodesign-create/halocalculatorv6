@@ -1503,7 +1503,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     onChange={e => setPaymentMethod(e.target.value)}
                     className="w-full mt-1 p-2.5 rounded-xl bg-neutral-100 dark:bg-[#050817] border border-black/10 dark:border-indigo-500/20 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-neutral-900 dark:text-white font-medium"
                   >
-                    <option value="PAYNOW">PayNow (UEN: 201826136D)</option>
+                    <option value="PAYNOW">PayNow (UEN: 53142015M - Halo Design Hub)</option>
                     <option value="BANK TRANSFER">{language === 'zh' ? '银行转账 (OCBC 华侨银行)' : 'Bank Transfer (OCBC)'}</option>
                     <option value="CHEQUE">{language === 'zh' ? '支票 (Halo Design Hub)' : 'Cheque (Halo Design Hub)'}</option>
                     <option value="CASH">{language === 'zh' ? '现金 (货到付款)' : 'Cash on Delivery'}</option>

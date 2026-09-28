@@ -118,15 +118,16 @@ const drawHeader = (doc: jsPDF, data: Partial<QuoteRecord> & { logo?: string }, 
   doc.setFontSize(16);
   doc.text(type, textRightX, logoY + 8, { align: 'right' });
 
-  const addrY = logoY + 15;
+  const addrY = logoY + 14;
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setFont("helvetica", "bold");
-  const lineHeight = 4.5;
+  const lineHeight = 4.0;
   doc.text("BLK 113 EUNOS AVE 3, #01-16", textRightX, addrY, { align: 'right' });
   doc.text("GORDON INDUSTRIAL BUILDING", textRightX, addrY + lineHeight, { align: 'right' });
   doc.text("SINGAPORE 409838", textRightX, addrY + (lineHeight * 2), { align: 'right' });
   doc.text("Tel: 6844 4928 / 6844 4929", textRightX, addrY + (lineHeight * 3), { align: 'right' });
+  doc.text("UEN: 53142015M", textRightX, addrY + (lineHeight * 4), { align: 'right' });
 
   const logoSrc = data.logo || getHaloLogoBase64('DESIGN HUB');
   if (logoSrc) {
@@ -599,7 +600,7 @@ export const generateInvoicePDF = (
   doc.text("1. PayNow (UEN):", boxX + 4, py);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 118, 110);
-  doc.text("201826136D", boxX + 32, py);
+  doc.text("53142015M", boxX + 32, py);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(80, 80, 80);
   doc.text("(HALO DESIGN HUB)", boxX + 54, py);
