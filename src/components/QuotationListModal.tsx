@@ -26,6 +26,8 @@ import {
   FileText,
   Plus,
   Trash,
+  Trash2,
+  RotateCcw,
   Check,
   Copy,
   Download,
@@ -82,6 +84,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
   items,
   onRemoveItem,
   onUpdateQuantity,
+  onClearAll,
   onAddCustomItem,
   onUpdateItem,
   auth,
@@ -98,6 +101,18 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
   const [toastMessage, setToastMessage] = useState('');
   const [recordSearch, setRecordSearch] = useState('');
   const [isSavingCloud, setIsSavingCloud] = useState(false);
+  const [confirmClearQuotes, setConfirmClearQuotes] = useState(false);
+
+  const handleClearAllQuotes = () => {
+    if (!confirmClearQuotes) {
+      setConfirmClearQuotes(true);
+      setTimeout(() => setConfirmClearQuotes(false), 3500);
+      return;
+    }
+    setConfirmClearQuotes(false);
+    onClearAll();
+    showToast(language === 'zh' ? '✓ 已清空所有报价项目' : '✓ All quote items cleared');
+  };
 
   // Custom Item inputs
   const [customName, setCustomName] = useState('');
@@ -136,6 +151,19 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
   const [discountType, setDiscountType] = useState<'none' | 'percent' | 'fixed'>('none');
   const [discountValue, setDiscountValue] = useState(0);
   const [customDiscountInput, setCustomDiscountInput] = useState('');
+
+  const handleClearPdfDetailsForm = () => {
+    setCustomerName('');
+    setCustomerAddress('');
+    setContact('');
+    setCustomerPhone('');
+    setCustomerEmail('');
+    setDeposit('');
+    setCustomDiscountInput('');
+    setDiscountValue(0);
+    setDiscountType('none');
+    showToast(language === 'zh' ? '✓ 单据资料表单已清空' : '✓ Document form fields cleared');
+  };
 
   const grandTotal = items.reduce((sum, item) => sum + item.totalPrice * item.quantity, 0);
   const discountAmount =
@@ -716,6 +744,25 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       : (language === 'zh' ? '存云端' : 'Save')}
                   </span>
                 </button>
+                {items.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAllQuotes}
+                    className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 ${
+                      confirmClearQuotes
+                        ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-400/50 animate-pulse'
+                        : 'bg-slate-200/80 dark:bg-white/10 text-slate-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
+                    }`}
+                    title={confirmClearQuotes ? (language === 'zh' ? '再次点击确认清空' : 'Click again to confirm clear') : (language === 'zh' ? '清空所有项目' : 'Clear All Items')}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>
+                      {confirmClearQuotes
+                        ? (language === 'zh' ? '确定清空？' : 'Confirm?')
+                        : (language === 'zh' ? '清空' : 'Clear')}
+                    </span>
+                  </button>
+                )}
                 <button
                   onClick={() => setShowCustomForm(!showCustomForm)}
                   className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
@@ -1320,18 +1367,29 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
           ) : (
             /* PDF Details Configuration Form */
             <div className="flex-1 flex flex-col overflow-y-auto p-6 space-y-4 mac-scrollbar">
-              <div className="flex items-center justify-between pb-3 border-b border-black/10 dark:border-white/10">
+              <div className="flex items-center justify-between pb-3 border-b border-black/10 dark:border-indigo-500/20">
                 <button
                   onClick={() => setFormMode(null)}
-                  className="text-sm text-blue-500 font-semibold flex items-center gap-1 hover:underline"
+                  className="text-sm text-cyan-400 font-semibold flex items-center gap-1 hover:underline"
                 >
                   {language === 'zh' ? '← 返回清单' : '← Back to List'}
                 </button>
-                <span className="text-xs uppercase font-bold text-neutral-400">
-                  {language === 'zh'
-                    ? `生成${formMode === 'invoice' ? '发票' : formMode === 'receipt' ? '收据' : '报价单'}`
-                    : `Generate ${formMode}`}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleClearPdfDetailsForm}
+                    className="text-xs font-semibold text-slate-500 hover:text-red-500 dark:text-neutral-400 dark:hover:text-red-400 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-950/30 border border-slate-200 dark:border-indigo-500/20 transition-all active:scale-95"
+                    title={language === 'zh' ? '清空表单所有字段' : 'Clear all form fields'}
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>{language === 'zh' ? '清空表单' : 'Clear Form'}</span>
+                  </button>
+                  <span className="text-xs uppercase font-bold text-neutral-400">
+                    {language === 'zh'
+                      ? `生成${formMode === 'invoice' ? '发票' : formMode === 'receipt' ? '收据' : '报价单'}`
+                      : `Generate ${formMode}`}
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1805,16 +1863,8 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                             {/* Delete from Cloud */}
                             <button
                               onClick={() => {
-                                if (
-                                  confirm(
-                                    language === 'zh'
-                                      ? `确定从您的 Google 云端账号中删除单据 #${record.docNo || '此记录'} 吗？`
-                                      : `Delete quote #${record.docNo || 'this record'} from your Google account?`
-                                  )
-                                ) {
-                                  deleteQuoteFromCloud(record.id);
-                                  showToast(language === 'zh' ? '已从云端删除' : 'Deleted from Google Cloud');
-                                }
+                                deleteQuoteFromCloud(record.id);
+                                showToast(language === 'zh' ? '已从云端删除' : 'Deleted from Google Cloud');
                               }}
                               className="p-2 rounded-xl text-neutral-400 hover:text-red-500 hover:bg-red-500/10 transition-all"
                               title={language === 'zh' ? '删除记录' : 'Delete record'}

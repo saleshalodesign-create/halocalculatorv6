@@ -84,7 +84,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
             <HaloLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 shadow-sm" />
           </div>
           <span className="font-bold text-slate-900 dark:text-white truncate text-[11px] xs:text-xs sm:text-[13px]">
-            {language === 'zh' ? 'Halo 招牌设计中心' : 'Halo Design Hub'}
+            Halo Design Hub
           </span>
           <div className="hidden md:flex items-center gap-3 text-slate-600 dark:text-neutral-300">
             <button

@@ -211,10 +211,7 @@ export default function App() {
     };
     const rateInfo = rateMap[String(priceKey)] || { rate: 50, unit: '/SQ FT' };
 
-    const prodInfo = t.products[priceKey as keyof typeof t.products] as any;
-    const itemTitle = language === 'zh' && prodInfo?.title
-      ? `${prodInfo.title} (${prodInfo.enTitle || title})`
-      : title;
+    const itemTitle = title;
 
     setModalData({
       id: Date.now().toString(),
@@ -349,7 +346,7 @@ export default function App() {
             <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-none min-w-0 truncate">
               <HaloLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 shadow-sm shrink-0" />
               <span className="text-[11px] sm:text-xs md:text-sm font-bold text-slate-800 dark:text-neutral-100 tracking-tight truncate">
-                {language === 'zh' ? 'Halo 招牌设计中心' : 'Halo Design Hub'}
+                Halo Design Hub
               </span>
             </div>
 
@@ -358,19 +355,20 @@ export default function App() {
                 {t.nav.calculator}
               </span>
 
-              {/* Lightbox Shape Icon beside Calculator */}
+              {/* View Button beside Calculator */}
               <button
                 onClick={() => setShapeModalOpen(true)}
-                className="w-6 h-6 rounded-full flex items-center justify-center bg-slate-200/80 hover:bg-blue-500/15 dark:bg-white/10 dark:hover:bg-blue-500/20 text-slate-800 hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400 border border-slate-300/80 dark:border-white/15 hover:border-blue-500/30 transition-all active:scale-95 shadow-xs"
-                title={`Lightbox Shape: ${shapeInfo.label} (${shapeInfo.ratioText}) - Click to inspect`}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-cyan-400 border border-blue-500/30 font-bold text-[10px] transition-all active:scale-95 shadow-xs cursor-pointer"
+                title={`View: ${shapeInfo.label} (${shapeInfo.ratioText})`}
               >
                 {shapeInfo.type === 'horizontal' ? (
-                  <RectangleHorizontal className="w-3.5 h-3.5 text-blue-500" />
+                  <RectangleHorizontal className="w-3 h-3 text-blue-500" />
                 ) : shapeInfo.type === 'vertical' ? (
-                  <RectangleVertical className="w-3.5 h-3.5 text-emerald-500" />
+                  <RectangleVertical className="w-3 h-3 text-emerald-500" />
                 ) : (
-                  <Square className="w-3.5 h-3.5 text-amber-500" />
+                  <Square className="w-3 h-3 text-amber-500" />
                 )}
+                <span>View</span>
               </button>
             </div>
           </div>
@@ -693,6 +691,10 @@ export default function App() {
         onUpdateWidth={(w) => setWidth(w)}
         onUpdateHeight={(h) => setHeight(h)}
         onUpdateUnit={(u) => setUnit(u)}
+        onApplyBaseToCalculator={(w, h) => {
+          setWidth(w);
+          setHeight(h);
+        }}
       />
 
       {/* Daily Outside Schedule Form Modal */}

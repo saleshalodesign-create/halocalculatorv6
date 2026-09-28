@@ -394,9 +394,6 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
               <div className="flex items-center gap-1.5 ml-1 font-bold text-xs sm:text-sm text-slate-800 dark:text-neutral-100">
                 <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>{ds.title}</span>
-                <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-mono hidden md:inline">
-                  (Daily Outside Works Schedule)
-                </span>
               </div>
             </div>
 
@@ -474,15 +471,6 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                 title="Print or view blank template in new tab"
               >
                 {ds.printBlank}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="hidden md:inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
-                title="Clear all schedule entries"
-              >
-                {ds.clearAll || 'Clear'}
               </button>
 
               <button
@@ -585,7 +573,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                 </button>
                 <span className="px-2 text-xs font-bold text-slate-800 dark:text-neutral-200 min-w-[56px] text-center select-none flex items-center justify-center gap-1">
                   <Layers className="w-3 h-3 text-blue-500" />
-                  <span>{slotCount} {language === 'zh' ? '项' : 'Slots'}</span>
+                  <span>{slotCount} Slots</span>
                 </span>
                 <button
                   type="button"
@@ -898,7 +886,7 @@ export const DailyOutsideScheduleModal: React.FC<DailyOutsideScheduleModalProps>
                         className="text-xs font-bold text-blue-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        {justCopied ? (language === 'zh' ? '已导入！' : 'Imported!') : ds.importActive}
+                        {justCopied ? 'Imported!' : ds.importActive}
                       </button>
                     )}
                   </div>
