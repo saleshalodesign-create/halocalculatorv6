@@ -101,7 +101,7 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
   const [baseColor, setBaseColor] = useState<string>(() => {
     return localStorage.getItem('halo_shape_base_color') || '#181a20';
   });
-  const [alignment, setAlignment] = useState<'center' | 'top' | 'bottom'>('center');
+  const [alignment, setAlignment] = useState<'center' | 'top' | 'bottom'>('bottom');
   const [copied, setCopied] = useState(false);
   const [appliedBaseToast, setAppliedBaseToast] = useState(false);
 
@@ -479,15 +479,15 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
           {/* Modal Scrollable Body */}
           <div className="p-3 sm:p-4 space-y-3 sm:space-y-3.5 overflow-y-auto mac-scrollbar">
 
-            {/* Sizing Control Cards: BASE SIZES on left, LIGHTBOX SIZES on right */}
+            {/* Sizing Control Cards: BASE SIZES on left, LIGHTBOX SIZES on right (Fully square) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
               
-              {/* Card 1: BASE SIZES Panel (Outer Frame) */}
-              <div className="p-2.5 sm:p-3 rounded-xl bg-slate-100/90 dark:bg-[#0c132c] border border-slate-300 dark:border-indigo-500/25 relative flex flex-col justify-between">
+              {/* Card 1: BASE SIZES Panel (Outer Frame) - Fully square */}
+              <div className="p-2.5 sm:p-3 rounded-none bg-slate-100/90 dark:bg-[#0c132c] border border-slate-300 dark:border-indigo-500/25 relative flex flex-col justify-between shadow-xs">
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm bg-neutral-700 dark:bg-neutral-300 border border-black/40"></span>
+                      <span className="w-2.5 h-2.5 rounded-none bg-neutral-700 dark:bg-neutral-300 border border-black/40"></span>
                       <span className="font-black text-slate-900 dark:text-white text-xs uppercase tracking-wider">
                         BASE SIZES
                       </span>
@@ -499,7 +499,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
 
                   {/* Base W & H Inputs */}
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 flex items-center bg-white dark:bg-[#050817] rounded-lg px-2 py-1.5 border border-slate-300 dark:border-indigo-500/30 shadow-inner">
+                    <div className="flex-1 flex items-center bg-white dark:bg-[#050817] rounded-none px-2 py-1.5 border border-slate-300 dark:border-indigo-500/30 shadow-inner">
                       <span className="text-slate-500 dark:text-neutral-400 font-bold text-[10px] mr-1.5 shrink-0">
                         W:
                       </span>
@@ -518,7 +518,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
 
                     <span className="text-slate-400 font-bold">×</span>
 
-                    <div className="flex-1 flex items-center bg-white dark:bg-[#050817] rounded-lg px-2 py-1.5 border border-slate-300 dark:border-indigo-500/30 shadow-inner">
+                    <div className="flex-1 flex items-center bg-white dark:bg-[#050817] rounded-none px-2 py-1.5 border border-slate-300 dark:border-indigo-500/30 shadow-inner">
                       <span className="text-slate-500 dark:text-neutral-400 font-bold text-[10px] mr-1.5 shrink-0">
                         H:
                       </span>
@@ -539,7 +539,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                     <button
                       type="button"
                       onClick={handleSwapBase}
-                      className="p-1.5 rounded-lg bg-slate-200/80 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-neutral-200 transition-all active:scale-95 shrink-0"
+                      className="p-1.5 rounded-none bg-slate-200/80 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-neutral-200 transition-all active:scale-95 shrink-0"
                       title="Swap Base Width & Height"
                     >
                       <ArrowLeftRight className="w-3.5 h-3.5" />
@@ -550,7 +550,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                 {/* Base Image Insert Toolbar & Quick Margins */}
                 <div className="mt-2.5 pt-2 border-t border-slate-200/70 dark:border-white/10 space-y-2 text-[10px]">
                   {/* Base Color Selection Strip */}
-                  <div className="flex items-center justify-between gap-1.5 bg-white/70 dark:bg-black/30 p-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 flex-wrap">
+                  <div className="flex items-center justify-between gap-1.5 bg-white/70 dark:bg-black/30 p-1.5 rounded-none border border-slate-200/80 dark:border-white/10 flex-wrap">
                     <div className="flex items-center gap-1.5">
                       <Palette className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                       <span className="font-bold text-slate-700 dark:text-neutral-200 text-[10px]">
@@ -564,7 +564,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                           key={c.hex}
                           type="button"
                           onClick={() => setBaseColor(c.hex)}
-                          className={`w-3.5 h-3.5 rounded-full border transition-transform active:scale-90 ${
+                          className={`w-3.5 h-3.5 rounded-none border transition-transform active:scale-90 ${
                             baseColor.toLowerCase() === c.hex.toLowerCase()
                               ? 'ring-2 ring-blue-500 scale-125 border-white z-10'
                               : 'border-black/25 hover:scale-110'
@@ -576,7 +576,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
 
                       {/* Native HTML5 Color Picker */}
                       <label
-                        className="cursor-pointer relative flex items-center justify-center p-0.5 rounded border border-slate-300 dark:border-white/20 hover:border-blue-400 bg-white dark:bg-black/50"
+                        className="cursor-pointer relative flex items-center justify-center p-0.5 rounded-none border border-slate-300 dark:border-white/20 hover:border-blue-400 bg-white dark:bg-black/50"
                         title="Pick Custom Color"
                       >
                         <input
@@ -586,7 +586,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                           className="w-4 h-4 cursor-pointer p-0 border-0 bg-transparent opacity-0 absolute inset-0"
                         />
                         <div
-                          className="w-3.5 h-3.5 rounded"
+                          className="w-3.5 h-3.5 rounded-none"
                           style={{ backgroundColor: baseColor }}
                         />
                       </label>
@@ -598,12 +598,12 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                   </div>
 
                   {/* Image on Base Control Strip */}
-                  <div className="flex items-center justify-between gap-1.5 bg-white/70 dark:bg-black/30 p-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 flex-wrap">
+                  <div className="flex items-center justify-between gap-1.5 bg-white/70 dark:bg-black/30 p-1.5 rounded-none border border-slate-200/80 dark:border-white/10 flex-wrap">
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => baseFileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all shadow-xs active:scale-95"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-none bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all shadow-xs active:scale-95"
                         title="Upload Custom Image or Wall Texture for Base Board"
                       >
                         <Upload className="w-3 h-3" />
@@ -614,7 +614,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                       <button
                         type="button"
                         onClick={() => setShowPresetsMenu(prev => prev === 'base' ? 'none' : 'base')}
-                        className="px-1.5 py-1 rounded bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-neutral-300 font-semibold"
+                        className="px-1.5 py-1 rounded-none bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-neutral-300 font-semibold"
                         title="Choose Sample Base Texture"
                       >
                         Presets
@@ -630,7 +630,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                         <select
                           value={baseImageFit}
                           onChange={e => setBaseImageFit(e.target.value as any)}
-                          className="bg-white dark:bg-slate-800 text-[10px] font-bold rounded px-1 py-0.5 border border-slate-300 dark:border-white/10 outline-none"
+                          className="bg-white dark:bg-slate-800 text-[10px] font-bold rounded-none px-1 py-0.5 border border-slate-300 dark:border-white/10 outline-none"
                         >
                           <option value="cover">Cover</option>
                           <option value="fill">Fill</option>
@@ -639,7 +639,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                         <button
                           type="button"
                           onClick={handleClearBaseImage}
-                          className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                          className="p-1 rounded-none text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                           title="Remove Base Image"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -654,7 +654,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
 
                   {/* Base Sample Presets Selector Popover */}
                   {showPresetsMenu === 'base' && (
-                    <div className="p-1.5 bg-slate-200/90 dark:bg-slate-800 rounded-lg flex items-center gap-1 flex-wrap border border-slate-300 dark:border-white/10">
+                    <div className="p-1.5 bg-slate-200/90 dark:bg-slate-800 rounded-none flex items-center gap-1 flex-wrap border border-slate-300 dark:border-white/10">
                       <span className="font-bold text-slate-600 dark:text-neutral-300 mr-1">Textures:</span>
                       {SAMPLE_BASE_PRESETS.map(p => (
                         <button
@@ -664,7 +664,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                             setBaseImage(p.dataUrl);
                             setShowPresetsMenu('none');
                           }}
-                          className="px-2 py-0.5 rounded bg-white hover:bg-blue-50 dark:bg-white/10 dark:hover:bg-blue-500/20 text-slate-800 dark:text-white font-bold"
+                          className="px-2 py-0.5 rounded-none bg-white hover:bg-blue-50 dark:bg-white/10 dark:hover:bg-blue-500/20 text-slate-800 dark:text-white font-bold"
                         >
                           {p.name}
                         </button>
@@ -688,7 +688,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                           key={p.label}
                           type="button"
                           onClick={() => handleApplyPresetMargin(p.val)}
-                          className="px-1.5 py-0.5 rounded bg-white hover:bg-blue-50 dark:bg-white/10 dark:hover:bg-blue-500/20 text-slate-700 dark:text-cyan-300 border border-slate-200 dark:border-white/10 font-mono font-bold transition-all active:scale-95"
+                          className="px-1.5 py-0.5 rounded-none bg-white hover:bg-blue-50 dark:bg-white/10 dark:hover:bg-blue-500/20 text-slate-700 dark:text-cyan-300 border border-slate-200 dark:border-white/10 font-mono font-bold transition-all active:scale-95"
                         >
                           {p.label}
                         </button>
@@ -698,12 +698,12 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                 </div>
               </div>
 
-              {/* Card 2: LIGHTBOX SIZES Panel (Inner Sign) */}
-              <div className="p-2.5 sm:p-3 rounded-xl bg-slate-100/90 dark:bg-[#0c132c] border border-blue-300 dark:border-cyan-500/30 relative flex flex-col justify-between">
+              {/* Card 2: LIGHTBOX SIZES Panel (Inner Sign) - Fully square */}
+              <div className="p-2.5 sm:p-3 rounded-none bg-slate-100/90 dark:bg-[#0c132c] border border-blue-300 dark:border-cyan-500/30 relative flex flex-col justify-between shadow-xs">
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm bg-amber-400 border border-amber-600 shadow-[0_0_8px_rgba(251,191,36,0.6)]"></span>
+                      <span className="w-2.5 h-2.5 rounded-none bg-amber-400 border border-amber-600 shadow-[0_0_8px_rgba(251,191,36,0.6)]"></span>
                       <span className="font-black text-blue-700 dark:text-cyan-300 text-xs uppercase tracking-wider">
                         Lightbox sizes
                       </span>
@@ -715,7 +715,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
 
                   {/* Lightbox W & H Inputs */}
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 flex items-center bg-white dark:bg-[#050817] rounded-lg px-2 py-1.5 border border-blue-300 dark:border-cyan-500/30 shadow-inner">
+                    <div className="flex-1 flex items-center bg-white dark:bg-[#050817] rounded-none px-2 py-1.5 border border-blue-300 dark:border-cyan-500/30 shadow-inner">
                       <span className="text-blue-500 font-bold text-[10px] mr-1.5 shrink-0">
                         W:
                       </span>
@@ -734,7 +734,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
 
                     <span className="text-slate-400 font-bold">×</span>
 
-                    <div className="flex-1 flex items-center bg-white dark:bg-[#050817] rounded-lg px-2 py-1.5 border border-blue-300 dark:border-cyan-500/30 shadow-inner">
+                    <div className="flex-1 flex items-center bg-white dark:bg-[#050817] rounded-none px-2 py-1.5 border border-blue-300 dark:border-cyan-500/30 shadow-inner">
                       <span className="text-blue-500 font-bold text-[10px] mr-1.5 shrink-0">
                         H:
                       </span>
@@ -755,7 +755,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                     <button
                       type="button"
                       onClick={handleSwapLightbox}
-                      className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-cyan-400 border border-blue-500/25 transition-all active:scale-95 shrink-0"
+                      className="p-1.5 rounded-none bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-cyan-400 border border-blue-500/25 transition-all active:scale-95 shrink-0"
                       title="Swap Lightbox Width & Height"
                     >
                       <ArrowLeftRight className="w-3.5 h-3.5" />
@@ -766,13 +766,13 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                 {/* Lightbox Image Insert Toolbar & Unit Switcher */}
                 <div className="mt-2.5 pt-2 border-t border-slate-200/70 dark:border-white/10 space-y-2 text-[10px]">
                   {/* Image on Lightbox Control Strip */}
-                  <div className="flex items-center justify-between gap-1.5 bg-white/70 dark:bg-black/30 p-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 flex-wrap">
+                  <div className="flex items-center justify-between gap-1.5 bg-white/70 dark:bg-black/30 p-1.5 rounded-none border border-slate-200/80 dark:border-white/10 flex-wrap">
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => lightboxFileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all shadow-xs active:scale-95"
-                        title="Upload Logo, Artwork or Sign Graphic for Lightbox (Full Bleed)"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-none bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all shadow-xs active:scale-95"
+                        title="Upload Logo, Artwork or Sign Graphic for Lightbox (Full Bleed, Square)"
                       >
                         <ImageIcon className="w-3 h-3" />
                         <span>Insert Lightbox Image</span>
@@ -782,7 +782,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                       <button
                         type="button"
                         onClick={() => setShowPresetsMenu(prev => prev === 'lightbox' ? 'none' : 'lightbox')}
-                        className="px-1.5 py-1 rounded bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-neutral-300 font-semibold"
+                        className="px-1.5 py-1 rounded-none bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-neutral-300 font-semibold"
                         title="Choose Sample Lightbox Artwork"
                       >
                         Presets
@@ -798,7 +798,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                         <select
                           value={lightboxImageFit}
                           onChange={e => setLightboxImageFit(e.target.value as any)}
-                          className="bg-white dark:bg-slate-800 text-[10px] font-bold rounded px-1 py-0.5 border border-slate-300 dark:border-white/10 outline-none"
+                          className="bg-white dark:bg-slate-800 text-[10px] font-bold rounded-none px-1 py-0.5 border border-slate-300 dark:border-white/10 outline-none"
                         >
                           <option value="fill">Fill (Full Bleed)</option>
                           <option value="cover">Cover</option>
@@ -807,7 +807,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                         <button
                           type="button"
                           onClick={handleClearLightboxImage}
-                          className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                          className="p-1 rounded-none text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                           title="Remove Lightbox Image"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -822,7 +822,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
 
                   {/* Lightbox Sample Presets Selector Popover */}
                   {showPresetsMenu === 'lightbox' && (
-                    <div className="p-1.5 bg-slate-200/90 dark:bg-slate-800 rounded-lg flex items-center gap-1 flex-wrap border border-slate-300 dark:border-white/10">
+                    <div className="p-1.5 bg-slate-200/90 dark:bg-slate-800 rounded-none flex items-center gap-1 flex-wrap border border-slate-300 dark:border-white/10">
                       <span className="font-bold text-slate-600 dark:text-neutral-300 mr-1">Logos:</span>
                       {SAMPLE_LIGHTBOX_PRESETS.map(p => (
                         <button
@@ -832,7 +832,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                             setLightboxImage(p.dataUrl);
                             setShowPresetsMenu('none');
                           }}
-                          className="px-2 py-0.5 rounded bg-white hover:bg-amber-50 dark:bg-white/10 dark:hover:bg-amber-500/20 text-slate-800 dark:text-white font-bold"
+                          className="px-2 py-0.5 rounded-none bg-white hover:bg-amber-50 dark:bg-white/10 dark:hover:bg-amber-500/20 text-slate-800 dark:text-white font-bold"
                         >
                           {p.name}
                         </button>
@@ -846,13 +846,13 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                       Ratio: <strong className="text-blue-600 dark:text-cyan-400">{shapeInfo.ratioStr}</strong>
                     </span>
                     {onUpdateUnit && (
-                      <div className="flex p-0.5 rounded-md bg-white dark:bg-[#050817] border border-slate-300 dark:border-white/15">
+                      <div className="flex p-0.5 rounded-none bg-white dark:bg-[#050817] border border-slate-300 dark:border-white/15">
                         {[Unit.IN, Unit.FT, Unit.CM, Unit.MM, Unit.M].map(u => (
                           <button
                             key={u}
                             type="button"
                             onClick={() => onUpdateUnit(u)}
-                            className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase transition-all ${
+                            className={`px-1.5 py-0.2 rounded-none text-[9px] font-bold uppercase transition-all ${
                               unit === u
                                 ? 'bg-blue-600 text-white shadow-xs'
                                 : 'text-slate-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
@@ -875,7 +875,19 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                 <span>
                   Clearance Margins:{' '}
                   <strong>Left/Right: {leftRightMargin.toFixed(1)} {unit}</strong> |{' '}
-                  <strong>Top/Bottom: {topBottomMargin.toFixed(1)} {unit}</strong>
+                  {alignment === 'bottom' ? (
+                    <>
+                      <strong>Top: {(Math.max(0, numBaseHeight - numHeight)).toFixed(1)} {unit}</strong> |{' '}
+                      <strong>Bottom: 0.0 {unit} (Flush)</strong>
+                    </>
+                  ) : alignment === 'top' ? (
+                    <>
+                      <strong>Top: 0.0 {unit} (Flush)</strong> |{' '}
+                      <strong>Bottom: {(Math.max(0, numBaseHeight - numHeight)).toFixed(1)} {unit}</strong>
+                    </>
+                  ) : (
+                    <strong>Top/Bottom: {topBottomMargin.toFixed(1)} {unit}</strong>
+                  )}
                 </span>
               </div>
 
@@ -1088,27 +1100,27 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                       <div className="w-full h-px bg-cyan-400/50 border-t border-dashed border-cyan-400" />
                     </div>
 
-                    {/* Outer Box: BASE SIZES Frame */}
+                    {/* Outer Box: BASE SIZES Frame (Fully square without rounded edges) */}
                     <div
                       style={{
                         width: `${baseBoxW}px`,
                         height: `${baseBoxH}px`,
                         backgroundColor: baseColor,
                       }}
-                      className={`relative rounded-xl overflow-hidden flex transition-all duration-150 ease-out will-change-[width,height] shadow-2xl border border-black/40 ring-1 ring-white/10 ${
+                      className={`relative rounded-none overflow-hidden flex transition-all duration-150 ease-out will-change-[width,height] shadow-2xl border border-black/40 ring-1 ring-white/10 ${
                         alignment === 'top'
-                          ? 'items-start justify-center pt-2 sm:pt-3'
-                          : alignment === 'bottom'
-                          ? 'items-end justify-center pb-2 sm:pb-3'
-                          : 'items-center justify-center'
+                          ? 'items-start justify-center pt-0'
+                          : alignment === 'center'
+                          ? 'items-center justify-center'
+                          : 'items-end justify-center pb-0'
                       }`}
                     >
-                      {/* Inserted Base Custom Image Layer (Full bleed) */}
+                      {/* Inserted Base Custom Image Layer (Full bleed, square) */}
                       {baseImage && (
-                        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+                        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden rounded-none">
                           {baseImageFit === 'tile' ? (
                             <div
-                              className="w-full h-full"
+                              className="w-full h-full rounded-none"
                               style={{
                                 backgroundImage: `url(${baseImage})`,
                                 backgroundRepeat: 'repeat',
@@ -1119,29 +1131,29 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                             <img
                               src={baseImage}
                               alt="Base Background"
-                              className={`w-full h-full block ${
+                              className={`w-full h-full block rounded-none ${
                                 baseImageFit === 'fill' ? 'object-fill' : 'object-cover'
                               }`}
                             />
                           )}
-                          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                          <div className="absolute inset-0 bg-black/20 pointer-events-none rounded-none" />
                         </div>
                       )}
 
                       {/* Prominent "BASE SIZES" Label on top left of outer frame */}
                       <div className="absolute top-1 left-2 sm:top-1.5 sm:left-2.5 z-20 pointer-events-none flex items-center gap-1 select-none">
-                        <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-slate-200 dark:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/50 px-1.5 py-0.5 rounded">
+                        <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-slate-200 dark:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/60 px-1.5 py-0.5 rounded-none">
                           BASE SIZES
                         </span>
                       </div>
 
-                      {/* INNER BOX: Lightbox sizes (Clean, FULL BLEED, WITHOUT ANY WHITE LINE OR INNER BEZEL) */}
+                      {/* INNER BOX: Lightbox sizes (Clean, FULL BLEED, FULLY SQUARE WITHOUT ROUNDED EDGES) */}
                       <div
                         style={{
                           width: `${lightboxBoxW}px`,
                           height: `${lightboxBoxH}px`,
                         }}
-                        className={`relative rounded-md flex items-center justify-center transition-all duration-150 ease-out will-change-[width,height] z-10 overflow-hidden ${
+                        className={`relative rounded-none flex items-center justify-center transition-all duration-150 ease-out will-change-[width,height] z-10 overflow-hidden ${
                           lightboxImage
                             ? isLightOn
                               ? 'shadow-[0_0_35px_rgba(251,191,36,0.6),0_0_15px_rgba(255,255,255,0.7)] ring-1 ring-black/40'
@@ -1151,13 +1163,13 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                             : 'border-2 border-slate-400 bg-slate-200 text-slate-800 shadow-md'
                         }`}
                       >
-                        {/* Custom Uploaded Lightbox Image: 100% FULL BLEED, NO PADDING, NO WHITE BORDER */}
+                        {/* Custom Uploaded Lightbox Image: 100% FULL BLEED, FULLY SQUARE, NO ROUNDED EDGE */}
                         {lightboxImage ? (
-                          <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+                          <div className="w-full h-full relative overflow-hidden flex items-center justify-center rounded-none">
                             <img
                               src={lightboxImage}
                               alt="Lightbox Artwork"
-                              className={`w-full h-full block transition-all duration-200 ${
+                              className={`w-full h-full block rounded-none transition-all duration-200 ${
                                 lightboxImageFit === 'cover'
                                   ? 'object-cover'
                                   : lightboxImageFit === 'contain'
@@ -1171,12 +1183,12 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                             />
                             {/* Soft warm diffusion glow ONLY when light is ON */}
                             {isLightOn && (
-                              <div className="absolute inset-0 bg-amber-300/10 mix-blend-overlay pointer-events-none" />
+                              <div className="absolute inset-0 bg-amber-300/10 mix-blend-overlay pointer-events-none rounded-none" />
                             )}
                           </div>
                         ) : (
                           /* Default Text Inside Lightbox if no image */
-                          <div className="p-1 sm:p-2 flex flex-col items-center justify-center text-center select-none overflow-hidden max-w-full z-0">
+                          <div className="p-1 sm:p-2 flex flex-col items-center justify-center text-center select-none overflow-hidden max-w-full z-0 rounded-none">
                             <span
                               className={`font-black tracking-wide uppercase transition-all ${
                                 isLightOn ? 'text-slate-900' : 'text-slate-800'
@@ -1192,7 +1204,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                             )}
 
                             {lightboxBoxH > 75 && lightboxBoxW > 130 && (
-                              <span className="text-[8px] font-mono text-slate-500 px-1.5 py-0.5 rounded bg-black/5 mt-0.5">
+                              <span className="text-[8px] font-mono text-slate-500 px-1.5 py-0.5 rounded-none bg-black/5 mt-0.5">
                                 HALO SIGN ({shapeInfo.ratioStr})
                               </span>
                             )}
@@ -1202,7 +1214,9 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
 
                       {/* Margin Clearance Markers */}
                       {leftRightMargin > 0 && baseBoxW - lightboxBoxW > 30 && (
-                        <div className="absolute bottom-1 right-2 pointer-events-none text-[8px] font-mono font-bold text-cyan-300 bg-black/70 px-1 rounded z-20">
+                        <div className={`absolute right-2 pointer-events-none text-[8px] font-mono font-bold text-cyan-300 bg-black/70 px-1 rounded z-20 ${
+                          alignment === 'bottom' ? 'top-1' : 'bottom-1'
+                        }`}>
                           Margin: {leftRightMargin.toFixed(1)} {unit}
                         </div>
                       )}
