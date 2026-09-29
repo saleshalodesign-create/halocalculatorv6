@@ -1140,12 +1140,7 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                         </div>
                       )}
 
-                      {/* Prominent "BASE SIZES" Label on top left of outer frame */}
-                      <div className="absolute top-1 left-2 sm:top-1.5 sm:left-2.5 z-20 pointer-events-none flex items-center gap-1 select-none">
-                        <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-slate-200 dark:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/60 px-1.5 py-0.5 rounded-none">
-                          BASE SIZES
-                        </span>
-                      </div>
+                      {/* Base Image Layer ends */}
 
                       {/* INNER BOX: Lightbox sizes (Clean, FULL BLEED, FULLY SQUARE WITHOUT ROUNDED EDGES) */}
                       <div
