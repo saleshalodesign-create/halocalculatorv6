@@ -15,6 +15,8 @@ import {
   Upload,
   Trash2,
   Palette,
+  Download,
+  Camera,
 } from 'lucide-react';
 import { UnitType, Unit } from '../types';
 import { convertToInches } from '../utils/calculator';
@@ -377,6 +379,223 @@ export const LightboxShapeModal: React.FC<LightboxShapeModalProps> = ({
     setBaseHeight(temp);
   };
 
+  // Save high-resolution PNG image of Lightbox with Base
+  const [isSavingImage, setIsSavingImage] = useState(false);
+  const [savedImageToast, setSavedImageToast] = useState(false);
+
+  const handleSaveImage = async (withSpecs: boolean = false) => {
+    if (numBaseWidth <= 0 || numBaseHeight <= 0) return;
+    setIsSavingImage(true);
+
+    try {
+      // 1. Calculate high resolution canvas dimensions (2400px base width for razor-sharp export)
+      const targetW = 2400;
+      const targetH = Math.max(400, Math.round(targetW * (numBaseHeight / numBaseWidth)));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // 2. Draw Base Background (Color or Texture Image)
+      ctx.fillStyle = baseColor || '#181a20';
+      ctx.fillRect(0, 0, targetW, targetH);
+
+      if (baseImage) {
+        try {
+          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const i = new Image();
+            i.crossOrigin = 'anonymous';
+            i.onload = () => resolve(i);
+            i.onerror = reject;
+            i.src = baseImage;
+          });
+
+          if (baseImageFit === 'tile') {
+            const pattern = ctx.createPattern(img, 'repeat');
+            if (pattern) {
+              ctx.save();
+              ctx.fillStyle = pattern;
+              ctx.fillRect(0, 0, targetW, targetH);
+              ctx.restore();
+            } else {
+              ctx.drawImage(img, 0, 0, targetW, targetH);
+            }
+          } else if (baseImageFit === 'fill') {
+            ctx.drawImage(img, 0, 0, targetW, targetH);
+          } else {
+            // cover
+            const imgRatio = img.width / img.height;
+            const targetRatio = targetW / targetH;
+            let sW = img.width;
+            let sH = img.height;
+            let sX = 0;
+            let sY = 0;
+            if (imgRatio > targetRatio) {
+              sW = img.height * targetRatio;
+              sX = (img.width - sW) / 2;
+            } else {
+              sH = img.width / targetRatio;
+              sY = (img.height - sH) / 2;
+            }
+            ctx.drawImage(img, sX, sY, sW, sH, 0, 0, targetW, targetH);
+          }
+        } catch (e) {
+          console.warn('Could not load base image for export', e);
+        }
+      }
+
+      // 3. Calculate Lightbox coordinates inside Base (fully square, exact proportions)
+      const lbW = Math.round(targetW * (numWidth / numBaseWidth));
+      const lbH = Math.round(targetH * (numHeight / numBaseHeight));
+      const lbX = Math.round((targetW - lbW) / 2);
+      let lbY = targetH - lbH; // default bottom flush
+      if (alignment === 'top') {
+        lbY = 0;
+      } else if (alignment === 'center') {
+        lbY = Math.round((targetH - lbH) / 2);
+      }
+
+      // 4. Draw Lightbox
+      ctx.save();
+      // Clip to Lightbox rectangle (fully square, sharp right angle corners)
+      ctx.beginPath();
+      ctx.rect(lbX, lbY, lbW, lbH);
+      ctx.clip();
+
+      if (lightboxImage) {
+        try {
+          const lbImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const i = new Image();
+            i.crossOrigin = 'anonymous';
+            i.onload = () => resolve(i);
+            i.onerror = reject;
+            i.src = lightboxImage;
+          });
+
+          if (lightboxImageFit === 'fill') {
+            ctx.drawImage(lbImg, 0, 0, lbImg.width, lbImg.height, lbX, lbY, lbW, lbH);
+          } else if (lightboxImageFit === 'cover') {
+            const imgRatio = lbImg.width / lbImg.height;
+            const targetRatio = lbW / lbH;
+            let sW = lbImg.width;
+            let sH = lbImg.height;
+            let sX = 0;
+            let sY = 0;
+            if (imgRatio > targetRatio) {
+              sW = lbImg.height * targetRatio;
+              sX = (lbImg.width - sW) / 2;
+            } else {
+              sH = lbImg.width / targetRatio;
+              sY = (lbImg.height - sH) / 2;
+            }
+            ctx.drawImage(lbImg, sX, sY, sW, sH, lbX, lbY, lbW, lbH);
+          } else {
+            // contain
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(lbX, lbY, lbW, lbH);
+            const imgRatio = lbImg.width / lbImg.height;
+            const targetRatio = lbW / lbH;
+            let dW = lbW;
+            let dH = lbH;
+            let dX = lbX;
+            let dY = lbY;
+            if (imgRatio > targetRatio) {
+              dH = lbW / imgRatio;
+              dY = lbY + (lbH - dH) / 2;
+            } else {
+              dW = lbH * imgRatio;
+              dX = lbX + (lbW - dW) / 2;
+            }
+            ctx.drawImage(lbImg, 0, 0, lbImg.width, lbImg.height, dX, dY, dW, dH);
+          }
+
+          if (isLightOn) {
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
+            ctx.fillRect(lbX, lbY, lbW, lbH);
+          }
+        } catch (e) {
+          console.warn('Could not load lightbox image for export', e);
+        }
+      } else {
+        // Fallback clean sign drawing
+        if (isLightOn) {
+          const grad = ctx.createLinearGradient(lbX, lbY, lbX + lbW, lbY + lbH);
+          grad.addColorStop(0, '#fef3c7');
+          grad.addColorStop(0.5, '#fffbeb');
+          grad.addColorStop(1, '#ffffff');
+          ctx.fillStyle = grad;
+        } else {
+          ctx.fillStyle = '#e2e8f0';
+        }
+        ctx.fillRect(lbX, lbY, lbW, lbH);
+
+        // Text
+        ctx.fillStyle = isLightOn ? '#0f172a' : '#1e293b';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '900 64px sans-serif';
+        ctx.fillText('LIGHTBOX SIZES', lbX + lbW / 2, lbY + lbH / 2 - 25);
+        ctx.font = '700 42px monospace';
+        ctx.fillStyle = '#475569';
+        ctx.fillText(`${numWidth} × ${numHeight} ${unit.toUpperCase()}`, lbX + lbW / 2, lbY + lbH / 2 + 35);
+      }
+
+      ctx.restore();
+
+      // Draw subtle boundary stroke around lightbox
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(lbX, lbY, lbW, lbH);
+
+      // Optional Spec Tag watermark on bottom left if requested
+      if (withSpecs) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(20, targetH - 70, 720, 50);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 24px monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          `BASE: ${numBaseWidth}×${numBaseHeight} ${unit.toUpperCase()} | LIGHTBOX: ${numWidth}×${numHeight} ${unit.toUpperCase()}`,
+          35,
+          targetH - 45
+        );
+      }
+
+      // Convert to blob and trigger download & clipboard copy
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const filename = `Lightbox_Base_${numBaseWidth}x${numBaseHeight}_${unit.toUpperCase()}.png`;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+        // Copy to clipboard if available
+        try {
+          if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+          }
+        } catch (_) {}
+
+        setSavedImageToast(true);
+        setTimeout(() => setSavedImageToast(false), 2600);
+      }, 'image/png');
+    } catch (err) {
+      console.error('Failed to export image', err);
+    } finally {
+      setIsSavingImage(false);
+    }
+  };
+
   // Copy specs to clipboard
   const handleCopySpecs = () => {
     const text = `HALO SIGN SPECS:
@@ -418,6 +637,21 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
           {/* Ambient Cyber Neon Top Accent */}
           <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 opacity-90 shrink-0"></div>
 
+          {/* Floating Toast Notification for Image Saved */}
+          <AnimatePresence>
+            {savedImageToast && (
+              <motion.div
+                initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                className="absolute top-12 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-600 text-white rounded-xl shadow-2xl flex items-center gap-2 font-bold text-xs pointer-events-none"
+              >
+                <Check className="w-4 h-4 text-white" />
+                <span>Lightbox with Base image saved & downloaded!</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Hidden file inputs for image upload */}
           <input
             ref={baseFileInputRef}
@@ -456,7 +690,17 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
               </span>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleSaveImage(false)}
+                disabled={isSavingImage}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-all shadow-xs active:scale-95 disabled:opacity-50 cursor-pointer"
+                title="Save & Download High-Resolution Image of Lightbox with Base"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>{isSavingImage ? 'Saving...' : 'Save Image'}</span>
+              </button>
               <button
                 type="button"
                 onClick={handleCopySpecs}
@@ -1041,6 +1285,18 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
                     <User className="w-3 h-3" />
                     <span>1.75m</span>
                   </button>
+
+                  {/* Save Image Action Button in Preview Toolbar */}
+                  <button
+                    type="button"
+                    onClick={() => handleSaveImage(false)}
+                    disabled={isSavingImage}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-[10px] font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                    title="Save & Download High-Resolution Image of Lightbox with Base"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>{isSavingImage ? 'Saving...' : 'Save Image'}</span>
+                  </button>
                 </div>
               </div>
 
@@ -1282,6 +1538,18 @@ ASPECT RATIO: ${shapeInfo.ratioStr}`;
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? 'Copied Specs!' : 'Copy Specs'}</span>
+              </button>
+
+              {/* Save Image of Lightbox with Base */}
+              <button
+                type="button"
+                onClick={() => handleSaveImage(false)}
+                disabled={isSavingImage}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                title="Save & Download High-Resolution Image of Lightbox with Base"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>{isSavingImage ? 'Saving Image...' : 'Save Image (PNG)'}</span>
               </button>
             </div>
 
