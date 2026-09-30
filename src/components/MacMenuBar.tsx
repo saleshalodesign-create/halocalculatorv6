@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Theme, ThemeType } from '../types';
 import { GoogleIcon } from './GoogleIcon';
 import { HaloLogo } from './HaloLogo';
-import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square, Globe, FileSpreadsheet, Sparkles } from 'lucide-react';
+import { Moon, Sun, Smartphone, Calculator, RectangleHorizontal, RectangleVertical, Square, Globe, FileSpreadsheet, Sparkles, FileCheck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface MacMenuBarProps {
@@ -16,6 +16,7 @@ interface MacMenuBarProps {
   onOpenMathCalc?: () => void;
   onOpenShapeModal?: () => void;
   onOpenDailySchedule?: () => void;
+  onOpenPdfEditor?: () => void;
   onOpenAiModal?: () => void;
   shapeType?: 'horizontal' | 'vertical' | 'square' | 'invalid';
   shapeLabel?: string;
@@ -32,6 +33,7 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
   onOpenMathCalc,
   onOpenShapeModal,
   onOpenDailySchedule,
+  onOpenPdfEditor,
   onOpenAiModal,
   shapeType = 'horizontal',
   shapeLabel = 'Horizontal',
@@ -133,6 +135,16 @@ export const MacMenuBar: React.FC<MacMenuBarProps> = ({
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
                 <span>{t.nav.schedule}</span>
+              </button>
+            )}
+            {onOpenPdfEditor && (
+              <button
+                onClick={onOpenPdfEditor}
+                className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 font-medium"
+                title="Halo PDF Editor"
+              >
+                <FileCheck className="w-3.5 h-3.5 text-indigo-500" />
+                <span>{t.nav.pdfEditor || 'Edit PDF'}</span>
               </button>
             )}
             {onOpenAiModal && (

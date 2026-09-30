@@ -12,6 +12,7 @@ import {
   Square,
   Globe,
   FileSpreadsheet,
+  FileCheck,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -28,6 +29,7 @@ interface MacDockProps {
   onOpenMathCalc: () => void;
   onOpenShapeModal?: () => void;
   onOpenDailySchedule?: () => void;
+  onOpenPdfEditor?: () => void;
   shapeType?: 'horizontal' | 'vertical' | 'square' | 'invalid';
   shapeLabel?: string;
 }
@@ -45,6 +47,7 @@ export const MacDock: React.FC<MacDockProps> = ({
   onOpenMathCalc,
   onOpenShapeModal,
   onOpenDailySchedule,
+  onOpenPdfEditor,
   shapeType = 'horizontal',
   shapeLabel = 'Horizontal',
 }) => {
@@ -118,6 +121,22 @@ export const MacDock: React.FC<MacDockProps> = ({
             </div>
             <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
               {t.dock.schedule}
+            </span>
+          </button>
+        )}
+
+        {/* PDF Editor Tab */}
+        {onOpenPdfEditor && (
+          <button
+            onClick={onOpenPdfEditor}
+            className="group relative flex flex-col items-center p-1 sm:p-1.5 transition-transform duration-150 hover:-translate-y-1.5 hover:scale-105 active:scale-95"
+            title={t.nav.pdfEditor || 'Edit PDF'}
+          >
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md shadow-purple-500/30 border border-white/30 relative">
+              <FileCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <span className="text-[10px] text-slate-800 dark:text-white font-semibold mt-1 hidden sm:block">
+              {t.dock.pdfEditor || 'Edit PDF'}
             </span>
           </button>
         )}

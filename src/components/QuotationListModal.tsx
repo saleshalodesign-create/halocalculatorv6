@@ -76,6 +76,7 @@ interface QuotationListModalProps {
   auth: AuthContextType;
   onLoadQuoteRecord: (record: QuoteRecord) => void;
   onOpenDailySchedule?: (customerName?: string, customerAddress?: string) => void;
+  onOpenPdfEditor?: (items?: QuoteItem[], data?: Partial<QuoteRecord>, docType?: DocumentType) => void;
 }
 
 export const QuotationListModal: React.FC<QuotationListModalProps> = ({
@@ -90,6 +91,7 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
   auth,
   onLoadQuoteRecord,
   onOpenDailySchedule,
+  onOpenPdfEditor,
 }) => {
   const { language, t } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<'active' | 'cloudRecords'>('active');
@@ -1214,6 +1216,33 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                     <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                     <span className="truncate">{language === 'zh' ? '发票 PDF' : 'Invoice PDF'}</span>
                   </button>
+                  {onOpenPdfEditor && (
+                    <button
+                      onClick={() => {
+                        onOpenPdfEditor(
+                          items,
+                          {
+                            docNo,
+                            customerName,
+                            customerAddress,
+                            contact,
+                            customerPhone,
+                            customerEmail,
+                            deposit: parseFloat(deposit) || 0,
+                            paymentMethod,
+                            paymentTerms,
+                            showSizes,
+                          },
+                          'quote'
+                        );
+                      }}
+                      className="py-1.5 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-[10px] sm:text-xs hover:brightness-110 transition-all flex items-center justify-center gap-1 shadow-md shadow-emerald-500/25 active:scale-95 cursor-pointer"
+                      title="Open in Visual PDF Editor & Annotator"
+                    >
+                      <FileCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                      <span className="truncate">{language === 'zh' ? '编辑 PDF' : 'Edit PDF'}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1740,6 +1769,36 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                       <span className="truncate">{language === 'zh' ? '排程表' : 'Schedule'}</span>
                     </button>
                   )}
+
+                  {onOpenPdfEditor && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenPdfEditor(
+                          items,
+                          {
+                            docNo,
+                            customerName,
+                            customerAddress,
+                            contact,
+                            customerPhone,
+                            customerEmail,
+                            deposit: parseFloat(deposit) || 0,
+                            paymentMethod,
+                            paymentTerms,
+                            showSizes,
+                            docType: formMode === 'invoice' ? 'invoice' : formMode === 'receipt' ? 'receipt' : 'quote',
+                          },
+                          formMode === 'invoice' ? 'invoice' : formMode === 'receipt' ? 'receipt' : 'quote'
+                        );
+                      }}
+                      className="py-2.5 px-2.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-purple-500/30 transition-all active:scale-95"
+                      title={language === 'zh' ? '在高级 PDF 编辑器中打开、盖印章、签名或修改' : 'Open in PDF Editor to sign, stamp or whiteout'}
+                    >
+                      <FileCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                      <span className="truncate">{language === 'zh' ? '编辑 PDF' : 'Edit PDF'}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1839,6 +1898,20 @@ export const QuotationListModal: React.FC<QuotationListModalProps> = ({
                               <FolderOpen className="w-3.5 h-3.5" />
                               <span>{language === 'zh' ? '载入报价' : 'Open Record'}</span>
                             </button>
+
+                            {/* Edit in PDF Editor */}
+                            {onOpenPdfEditor && (
+                              <button
+                                onClick={() => {
+                                  onOpenPdfEditor(record.items || [], record, record.docType || 'quote');
+                                }}
+                                className="px-2.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs active:scale-95"
+                                title={language === 'zh' ? '在 PDF 编辑器中打开修改此单据' : 'Edit this document in PDF Editor'}
+                              >
+                                <FileCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                                <span>{language === 'zh' ? '编辑 PDF' : 'Edit PDF'}</span>
+                              </button>
+                            )}
 
                             {/* Copy Text */}
                             <button

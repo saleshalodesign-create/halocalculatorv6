@@ -15,6 +15,7 @@ export const translations = {
       signInGoogle: '谷歌账号登录',
       signedIn: '已登录',
       schedule: '每日安装排程',
+      pdfEditor: 'PDF 编辑器',
       themeTitle: '主题切换',
       light: '浅色',
       dark: '深色',
@@ -24,6 +25,7 @@ export const translations = {
     dock: {
       quotes: '报价单',
       schedule: '排程单',
+      pdfEditor: '编辑 PDF',
       cloud: '云端同步',
       login: '登录',
       calc: '计算器',
@@ -355,6 +357,7 @@ export const translations = {
       shapeLabel: 'View',
       signInGoogle: 'Sign in with Google',
       signedIn: 'Signed in',
+      pdfEditor: 'PDF Editor',
       themeTitle: 'Theme Toggle',
       light: 'Light',
       dark: 'Dark',
@@ -364,6 +367,7 @@ export const translations = {
     dock: {
       quotes: 'Quotes',
       schedule: 'Schedule',
+      pdfEditor: 'Edit PDF',
       cloud: 'Cloud',
       login: 'Login',
       calc: 'Calc',

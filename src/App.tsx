@@ -17,7 +17,8 @@ import { MathCalculatorModal } from './components/MathCalculatorModal';
 import { HaloLogo } from './components/HaloLogo';
 import { LightboxShapeModal } from './components/LightboxShapeModal';
 import { DailyOutsideScheduleModal } from './components/DailyOutsideScheduleModal';
-import { RotateCcw, RectangleHorizontal, RectangleVertical, Square } from 'lucide-react';
+import { PdfEditorModal } from './components/PdfEditorModal';
+import { RotateCcw, RectangleHorizontal, RectangleVertical, Square, FileCheck } from 'lucide-react';
 
 export default function App() {
   const { language, t } = useLanguage();
@@ -75,7 +76,22 @@ export default function App() {
   const [mobileModalOpen, setMobileModalOpen] = useState(false);
   const [mathCalcOpen, setMathCalcOpen] = useState(false);
   const [shapeModalOpen, setShapeModalOpen] = useState(false);
+  const [pdfEditorOpen, setPdfEditorOpen] = useState(false);
+  const [pdfEditorItems, setPdfEditorItems] = useState<QuoteItem[]>([]);
+  const [pdfEditorData, setPdfEditorData] = useState<Partial<QuoteRecord>>({});
+  const [pdfEditorDocType, setPdfEditorDocType] = useState<any>('quote');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  const handleOpenPdfEditor = (
+    itemsToEdit?: QuoteItem[],
+    dataToEdit?: Partial<QuoteRecord>,
+    typeToEdit?: any
+  ) => {
+    setPdfEditorItems(itemsToEdit && itemsToEdit.length > 0 ? itemsToEdit : quoteItems);
+    setPdfEditorData(dataToEdit || {});
+    setPdfEditorDocType(typeToEdit || 'quote');
+    setPdfEditorOpen(true);
+  };
 
   const handleOpenDailySchedule = (customerName?: string, customerAddress?: string) => {
     if (customerName !== undefined) setScheduleCustomerName(customerName);
@@ -277,6 +293,7 @@ export default function App() {
         onOpenMathCalc={() => setMathCalcOpen(true)}
         onOpenShapeModal={() => setShapeModalOpen(true)}
         onOpenDailySchedule={() => handleOpenDailySchedule()}
+        onOpenPdfEditor={() => handleOpenPdfEditor()}
         shapeType={shapeInfo.type}
         shapeLabel={shapeInfo.label}
       />
@@ -369,6 +386,16 @@ export default function App() {
                   <Square className="w-3 h-3 text-amber-500" />
                 )}
                 <span>View</span>
+              </button>
+
+              {/* Edit PDF Button */}
+              <button
+                onClick={() => handleOpenPdfEditor()}
+                className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-500/15 to-indigo-500/15 hover:from-purple-500/25 hover:to-indigo-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/35 font-bold text-[10px] transition-all active:scale-95 shadow-xs cursor-pointer"
+                title={language === 'zh' ? 'Halo PDF 编辑器: 自由编辑单据、上传外部 PDF、加印章、签名、涂白修改与批注' : 'Halo PDF Editor: Edit quotes/invoices, upload external PDFs, stamps, signatures & whiteout'}
+              >
+                <FileCheck className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                <span>{language === 'zh' ? '编辑 PDF' : 'Edit PDF'}</span>
               </button>
             </div>
           </div>
@@ -621,6 +648,7 @@ export default function App() {
         onOpenMathCalc={() => setMathCalcOpen(true)}
         onOpenShapeModal={() => setShapeModalOpen(true)}
         onOpenDailySchedule={() => handleOpenDailySchedule()}
+        onOpenPdfEditor={() => handleOpenPdfEditor()}
         shapeType={shapeInfo.type}
         shapeLabel={shapeInfo.label}
       />
@@ -654,6 +682,9 @@ export default function App() {
         auth={auth}
         onLoadQuoteRecord={handleLoadQuoteRecord}
         onOpenDailySchedule={handleOpenDailySchedule}
+        onOpenPdfEditor={(itemsToEdit, dataToEdit, typeToEdit) =>
+          handleOpenPdfEditor(itemsToEdit, dataToEdit, typeToEdit)
+        }
       />
 
       {/* Google Account Modal */}
@@ -704,6 +735,18 @@ export default function App() {
         quoteItems={quoteItems}
         currentCustomerName={scheduleCustomerName}
         currentCustomerAddress={scheduleCustomerAddress}
+      />
+
+      {/* Halo PDF Editor Modal */}
+      <PdfEditorModal
+        isOpen={pdfEditorOpen}
+        onClose={() => setPdfEditorOpen(false)}
+        initialItems={pdfEditorItems}
+        initialRecordData={pdfEditorData}
+        initialDocType={pdfEditorDocType}
+        onSaveToQuoteSheet={(updatedItems) => {
+          setQuoteItems(updatedItems);
+        }}
       />
     </div>
   );
