@@ -41,6 +41,7 @@ import {
   Edit3,
   MousePointer,
   Undo2,
+  ShieldAlert,
 } from 'lucide-react';
 import { QuoteItem, QuoteRecord } from '../types';
 import { DocumentType } from '../utils/messaging';
@@ -64,6 +65,13 @@ import {
 } from '../utils/pdfRenderer';
 import { useLanguage } from '../context/LanguageContext';
 import { openWhatsApp } from '../utils/messaging';
+import {
+  PdfescapePropertyBar,
+  ActiveTextProps,
+  STANDARD_FONTS,
+} from './pdf/PdfescapePropertyBar';
+import { PdfescapeToolPanel, PdfescapeTab } from './pdf/PdfescapeToolPanel';
+import { PdfescapeCanvasOverlay } from './pdf/PdfescapeCanvasOverlay';
 
 interface PdfEditorModalProps {
   isOpen: boolean;
@@ -74,29 +82,7 @@ interface PdfEditorModalProps {
   onSaveToQuoteSheet?: (items: QuoteItem[], data: Partial<QuoteRecord>) => void;
 }
 
-type EditorTab = 'document' | 'annotate' | 'upload' | 'pages';
 type DocumentSource = 'currentQuote' | 'upload' | 'blankA4';
-type ActiveToolType = 'text' | 'whiteout' | 'stamp' | 'signature' | 'highlight';
-
-interface InlineEditorState {
-  isOpen: boolean;
-  mode: 'editText' | 'addText' | 'editAnnotation';
-  originalText?: string;
-  text: string;
-  fontSize: number;
-  textColor: string;
-  isBold: boolean;
-  isItalic: boolean;
-  fontFamily: string;
-  fontDisplayName: string;
-  whiteoutBackground: boolean;
-  xPercent: number;
-  yPercent: number;
-  widthPercent: number;
-  heightPercent: number;
-  annotationId?: string;
-  extractedItemId?: string;
-}
 
 export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   isOpen,
@@ -109,8 +95,8 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   const { language } = useLanguage();
   const isZh = language === 'zh';
 
-  // Active Editor Tab & Document Source
-  const [activeTab, setActiveTab] = useState<EditorTab>('annotate');
+  // Active Editor Tab & Document Source (PDFescape style tabs: insert | annotate | page | document | upload)
+  const [activeTab, setActiveTab] = useState<PdfescapeTab>('insert');
   const [activeSource, setActiveSource] = useState<DocumentSource>('currentQuote');
 
   // Multi-page & Page Transformations
@@ -118,11 +104,18 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [rotations, setRotations] = useState<Record<number, number>>({});
   const [watermarkText, setWatermarkText] = useState<string>('');
+  const [watermarkColor, setWatermarkColor] = useState<string>('#94a3b8');
+  const [watermarkOpacity, setWatermarkOpacity] = useState<number>(0.25);
+  const [watermarkRotation, setWatermarkRotation] = useState<number>(45);
+  const [watermarkFontSize, setWatermarkFontSize] = useState<number>(48);
+  const [watermarkLayout, setWatermarkLayout] = useState<'center' | 'tiled'>('center');
   const [deletePageIndices, setDeletePageIndices] = useState<number[]>([]);
+  const [pageOrder, setPageOrder] = useState<number[]>([]);
 
   // Canvas PDF Viewer & Zoom
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [zoomScale, setZoomScale] = useState<number>(1.2);
   const [pageCanvasDimensions, setPageCanvasDimensions] = useState<{ width: number; height: number }>({
     width: 595,
@@ -134,34 +127,41 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   const [showTextInspector, setShowTextInspector] = useState<boolean>(false);
   const [textSearchFilter, setTextSearchFilter] = useState<string>('');
 
-  // Interactive Click-to-Position on Live Preview
-  const [isInteractiveMode, setIsInteractiveMode] = useState<boolean>(true);
+  // Active Tool Mode (Default to 'text' for instant text editing)
+  const [activeTool, setActiveTool] = useState<string>('text');
 
-  // Active Tool Mode (Default to 'text' for instant text editing!)
-  const [activeTool, setActiveTool] = useState<ActiveToolType>('text');
+  // Selected annotation on canvas
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+
+  // Active in-place text editing box (Auto Follows Detected Font)
+  const [activeEditingText, setActiveEditingText] = useState<
+    | (ActiveTextProps & {
+        id: string;
+        xPercent: number;
+        yPercent: number;
+        widthPercent: number;
+        heightPercent: number;
+        annotationId?: string;
+      })
+    | null
+  >(null);
+
+  // Undo history stack
+  const [undoStack, setUndoStack] = useState<PdfAnnotation[][]>([]);
+
+  // Tool specific options
+  const [freehandColor, setFreehandColor] = useState<string>('#000000');
+  const [freehandWidth, setFreehandWidth] = useState<number>(2);
+  const [checkmarkColor, setCheckmarkColor] = useState<string>('#16a34a');
+  const [checkmarkSize, setCheckmarkSize] = useState<number>(22);
+  const [shapeStrokeColor, setShapeStrokeColor] = useState<string>('#000000');
+  const [shapeStrokeWidth, setShapeStrokeWidth] = useState<number>(2);
+  const [shapeFillColor, setShapeFillColor] = useState<string>('transparent');
 
   // Find & Replace State
   const [showFindReplace, setShowFindReplace] = useState<boolean>(false);
   const [findText, setFindText] = useState<string>('');
   const [replaceText, setReplaceText] = useState<string>('');
-
-  // Direct Inline Floating Text Editor State
-  const [inlineEditor, setInlineEditor] = useState<InlineEditorState>({
-    isOpen: false,
-    mode: 'editText',
-    text: '',
-    fontSize: 12,
-    textColor: '#000000',
-    isBold: false,
-    isItalic: false,
-    fontFamily: 'Arial, "Segoe UI", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif',
-    fontDisplayName: 'Arial / Sans-Serif',
-    whiteoutBackground: true,
-    xPercent: 0.5,
-    yPercent: 0.5,
-    widthPercent: 0.2,
-    heightPercent: 0.035,
-  });
 
   // Drag-to-Select Box on PDF canvas (for Whiteout & Highlight)
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -245,6 +245,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   const [hasSignature, setHasSignature] = useState<boolean>(false);
 
   // Generated PDF Output State
+  const [basePdfBytes, setBasePdfBytes] = useState<ArrayBuffer | null>(null);
   const [currentPdfBytes, setCurrentPdfBytes] = useState<Uint8Array | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string>('');
@@ -290,18 +291,18 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   const depositNum = parseFloat(deposit) || 0;
   const balanceDue = Math.max(0, finalTotal - depositNum);
 
-  // Generate or update PDF preview
-  const refreshPdf = useCallback(async () => {
+  // Generate or update Base PDF preview (Independent of visual annotations for 60fps performance)
+  const refreshBasePdf = useCallback(async () => {
     setIsProcessing(true);
     try {
-      let baseBytes: ArrayBuffer;
+      let rawBytes: ArrayBuffer;
 
       if (activeSource === 'blankA4') {
-        baseBytes = uploadedPdfBytes || (await createBlankA4PdfBytes());
+        rawBytes = uploadedPdfBytes || (await createBlankA4PdfBytes());
       } else if (activeSource === 'upload' && uploadedPdfBytes) {
-        baseBytes = uploadedPdfBytes;
+        rawBytes = uploadedPdfBytes;
       } else {
-        // Generate from structured data
+        // Generate from structured quote form data
         const data: Partial<QuoteRecord> = {
           docNo,
           dateFormatted: dateStr,
@@ -316,7 +317,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
           showSizes,
           docType,
         };
-        baseBytes = await generateHaloPdfBytes(
+        rawBytes = await generateHaloPdfBytes(
           items,
           data,
           docType,
@@ -326,20 +327,26 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         );
       }
 
-      // Check total page count
-      const pCount = await getPdfPageCount(baseBytes);
-      setTotalPages(Math.max(1, pCount - deletePageIndices.length));
+      // Apply structural page operations (rotations, page deletions, page order) to base PDF
+      const hasPageOps =
+        Object.keys(rotations).length > 0 ||
+        deletePageIndices.length > 0 ||
+        pageOrder.length > 0;
 
-      // Apply annotations, rotations, watermarks, page deletions
-      const finalBytes = await applyPdfAnnotations(baseBytes, annotations, {
-        rotations,
-        watermarkText,
-        deletePages: deletePageIndices,
-      });
+      let processedBase: ArrayBuffer = rawBytes;
+      if (hasPageOps) {
+        processedBase = await applyPdfAnnotations(rawBytes, [], {
+          rotations,
+          deletePages: deletePageIndices,
+          pageOrder: pageOrder.length > 0 ? pageOrder : undefined,
+        });
+      }
 
-      setCurrentPdfBytes(finalBytes);
+      const pCount = await getPdfPageCount(processedBase);
+      setTotalPages(Math.max(1, pCount));
+      setBasePdfBytes(processedBase);
     } catch (err) {
-      console.error('Error compiling PDF preview:', err);
+      console.error('Error generating base PDF preview:', err);
       showToast(isZh ? 'PDF 生成出错，请检查输入' : 'Error updating PDF');
     } finally {
       setIsProcessing(false);
@@ -363,31 +370,30 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     grandTotal,
     discountAmount,
     finalTotal,
-    annotations,
     rotations,
-    watermarkText,
     deletePageIndices,
+    pageOrder,
     isZh,
   ]);
 
-  // Auto-regenerate on dependencies change
+  // Auto-regenerate base PDF only when document data changes
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(refreshPdf, 100);
+      const timer = setTimeout(refreshBasePdf, 120);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, refreshPdf]);
+  }, [isOpen, refreshBasePdf]);
 
   // Render current PDF page to HTML5 Canvas using pdfjs-dist
   useEffect(() => {
-    if (!isOpen || !currentPdfBytes || !pdfCanvasRef.current) return;
+    if (!isOpen || !basePdfBytes || !pdfCanvasRef.current) return;
 
     let isCancelled = false;
     setIsRenderingPage(true);
 
     const renderPage = async () => {
       try {
-        const pdfDoc = await loadPdfDocument(currentPdfBytes);
+        const pdfDoc = await loadPdfDocument(basePdfBytes);
         const actualPageCount = pdfDoc.numPages;
         setTotalPages(actualPageCount);
 
@@ -425,7 +431,34 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [isOpen, currentPdfBytes, currentPageIndex, zoomScale]);
+  }, [isOpen, basePdfBytes, currentPageIndex, zoomScale]);
+
+  // Compile final PDF with all visual annotations, watermarks, stamps, text edits
+  const compileFinalPdf = useCallback(async (): Promise<Uint8Array | null> => {
+    if (!basePdfBytes) return null;
+    return await applyPdfAnnotations(basePdfBytes, annotations, {
+      watermarkText,
+      watermarkColor,
+      watermarkOpacity,
+      watermarkRotation,
+      watermarkFontSize,
+      watermarkLayout,
+    });
+  }, [
+    basePdfBytes,
+    annotations,
+    watermarkText,
+    watermarkColor,
+    watermarkOpacity,
+    watermarkRotation,
+    watermarkFontSize,
+    watermarkLayout,
+  ]);
+
+  const handleClearWatermark = () => {
+    setWatermarkText('');
+    showToast(isZh ? '水印已清除' : 'Watermark cleared');
+  };
 
   // Handle external PDF file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -504,6 +537,65 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     showToast(isZh ? `第 ${currentPageIndex + 1} 页已旋转 90°` : `Rotated Page ${currentPageIndex + 1} by 90°`);
   };
 
+  // Push snapshot to undo stack
+  const pushUndoSnapshot = () => {
+    setUndoStack(prev => [...prev.slice(-25), annotations]);
+  };
+
+  const handleUndo = () => {
+    if (undoStack.length === 0) {
+      showToast(isZh ? '没有可撤销的动作' : 'Nothing to undo');
+      return;
+    }
+    const previous = undoStack[undoStack.length - 1];
+    setUndoStack(prev => prev.slice(0, -1));
+    setAnnotations(previous);
+    setSelectedAnnotationId(null);
+    setActiveEditingText(null);
+    showToast(isZh ? '已撤销上一步操作' : 'Undone');
+  };
+
+  // Rotate counter-clockwise
+  const handleRotateCounterClockwise = () => {
+    setRotations(prev => {
+      const cur = prev[currentPageIndex] || 0;
+      const next = (cur + 270) % 360;
+      return { ...prev, [currentPageIndex]: next };
+    });
+    showToast(isZh ? `第 ${currentPageIndex + 1} 页已逆时针旋转 90°` : `Rotated Page ${currentPageIndex + 1} CCW`);
+  };
+
+  // Move page up
+  const handleMovePageUp = () => {
+    if (currentPageIndex <= 0) return;
+    const prevOrder = pageOrder.length === totalPages ? [...pageOrder] : Array.from({ length: totalPages }, (_, i) => i);
+    const temp = prevOrder[currentPageIndex];
+    prevOrder[currentPageIndex] = prevOrder[currentPageIndex - 1];
+    prevOrder[currentPageIndex - 1] = temp;
+    setPageOrder(prevOrder);
+    setCurrentPageIndex(currentPageIndex - 1);
+    showToast(isZh ? `已将第 ${currentPageIndex + 1} 页上移` : `Moved Page ${currentPageIndex + 1} up`);
+  };
+
+  // Move page down
+  const handleMovePageDown = () => {
+    if (currentPageIndex >= totalPages - 1) return;
+    const prevOrder = pageOrder.length === totalPages ? [...pageOrder] : Array.from({ length: totalPages }, (_, i) => i);
+    const temp = prevOrder[currentPageIndex];
+    prevOrder[currentPageIndex] = prevOrder[currentPageIndex + 1];
+    prevOrder[currentPageIndex + 1] = temp;
+    setPageOrder(prevOrder);
+    setCurrentPageIndex(currentPageIndex + 1);
+    showToast(isZh ? `已将第 ${currentPageIndex + 1} 页下移` : `Moved Page ${currentPageIndex + 1} down`);
+  };
+
+  // Add blank page
+  const handleAddBlankPage = () => {
+    setTotalPages(prev => prev + 1);
+    setCurrentPageIndex(totalPages);
+    showToast(isZh ? '已追加空白页面' : 'Added blank page');
+  };
+
   // Delete current page
   const handleDeleteCurrentPage = () => {
     if (totalPages <= 1) {
@@ -516,44 +608,51 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   };
 
   // ==========================================
-  // DIRECT INLINE TEXT EDITING METHODS
+  // DIRECT IN-PLACE TEXT EDITING (PDFescape Style)
   // ==========================================
 
   // 1. Click on existing detected text on PDF (Auto Follows Font Family, Size, Weight, Italic, Color)
   const handleStartEditText = (item: ExtractedTextItem) => {
-    setInlineEditor({
-      isOpen: true,
-      mode: 'editText',
-      originalText: item.text,
+    if (activeEditingText) {
+      handleCommitEditing();
+    }
+    setActiveTool('text');
+    setSelectedAnnotationId(null);
+    setActiveEditingText({
+      id: item.id,
       text: item.text,
       fontSize: item.fontSizePt || 11,
       textColor: item.textColor || '#000000',
       isBold: !!item.isBold,
       isItalic: !!item.isItalic,
-      fontFamily: item.fontFamily || 'Arial, "Segoe UI", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif',
-      fontDisplayName: item.fontDisplayName || 'Arial / Sans-Serif',
+      isUnderline: false,
+      fontFamily: item.fontFamily,
+      fontDisplayName: item.fontDisplayName,
       whiteoutBackground: true,
       xPercent: item.xPercent,
       yPercent: item.yPercent,
       widthPercent: Math.max(item.widthPercent, 0.05),
       heightPercent: Math.max(item.heightPercent, 0.025),
-      extractedItemId: item.id,
     });
   };
 
   // 2. Click on empty space to type new text
   const handleStartAddText = (x: number, y: number) => {
-    setInlineEditor({
-      isOpen: true,
-      mode: 'addText',
-      originalText: '',
-      text: '',
+    if (activeEditingText) {
+      handleCommitEditing();
+    }
+    setActiveTool('text');
+    setSelectedAnnotationId(null);
+    setActiveEditingText({
+      id: `new-${Date.now()}`,
+      text: isZh ? '输入文字...' : 'Type text...',
       fontSize: 12,
       textColor: '#000000',
       isBold: false,
       isItalic: false,
-      fontFamily: 'Arial, "Segoe UI", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif',
-      fontDisplayName: 'Arial / Sans-Serif',
+      isUnderline: false,
+      fontFamily: STANDARD_FONTS[0].value,
+      fontDisplayName: STANDARD_FONTS[0].label,
       whiteoutBackground: false,
       xPercent: x,
       yPercent: y,
@@ -562,39 +661,44 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     });
   };
 
-  // 3. Click on existing annotation to edit it
+  // 3. Double click on existing annotation to edit it
   const handleStartEditAnnotation = (ann: PdfAnnotation) => {
-    setInlineEditor({
-      isOpen: true,
-      mode: 'editAnnotation',
-      originalText: ann.text || '',
-      text: ann.text || '',
-      fontSize: ann.fontSize || 12,
-      textColor: ann.textColor || '#000000',
-      isBold: !!ann.isBold,
-      isItalic: !!ann.isItalic,
-      fontFamily: ann.fontFamily || 'Arial, "Segoe UI", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif',
-      fontDisplayName: ann.fontDisplayName || 'Arial / Sans-Serif',
-      whiteoutBackground: ann.type === 'whiteout',
-      xPercent: ann.xPercent,
-      yPercent: ann.yPercent,
-      widthPercent: ann.widthPercent || 0.2,
-      heightPercent: ann.heightPercent || 0.04,
-      annotationId: ann.id,
-    });
+    if (ann.type === 'text' || ann.type === 'whiteout') {
+      setActiveTool('text');
+      setSelectedAnnotationId(ann.id);
+      setActiveEditingText({
+        id: ann.id,
+        annotationId: ann.id,
+        text: ann.text || '',
+        fontSize: ann.fontSize || 12,
+        textColor: ann.textColor || '#000000',
+        isBold: !!ann.isBold,
+        isItalic: !!ann.isItalic,
+        isUnderline: !!ann.isUnderline,
+        fontFamily: ann.fontFamily || STANDARD_FONTS[0].value,
+        fontDisplayName: ann.fontDisplayName,
+        whiteoutBackground: ann.type === 'whiteout',
+        xPercent: ann.xPercent,
+        yPercent: ann.yPercent,
+        widthPercent: ann.widthPercent || 0.2,
+        heightPercent: ann.heightPercent || 0.04,
+      });
+    } else {
+      setSelectedAnnotationId(ann.id);
+      setActiveEditingText(null);
+    }
   };
 
-  // 4. Save and apply inline text modification
-  const handleSaveInlineEdit = () => {
-    if (!inlineEditor.isOpen) return;
-
+  // 4. Commit inline edit
+  const handleCommitEditing = () => {
+    if (!activeEditingText) return;
     const {
-      mode,
       text,
       fontSize,
       textColor,
       isBold,
       isItalic,
+      isUnderline,
       fontFamily,
       fontDisplayName,
       whiteoutBackground,
@@ -603,99 +707,95 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       widthPercent,
       heightPercent,
       annotationId,
-    } = inlineEditor;
+    } = activeEditingText;
 
-    if (mode === 'editAnnotation' && annotationId) {
+    pushUndoSnapshot();
+
+    if (annotationId) {
+      // Update existing
       setAnnotations(prev =>
-        prev.map(ann =>
-          ann.id === annotationId
+        prev.map(a =>
+          a.id === annotationId
             ? {
-                ...ann,
+                ...a,
                 text,
                 fontSize,
                 textColor,
                 isBold,
                 isItalic,
+                isUnderline,
                 fontFamily,
                 fontDisplayName,
                 type: whiteoutBackground ? 'whiteout' : 'text',
               }
-            : ann
+            : a
         )
       );
-      showToast(isZh ? '已保存文字修改！' : 'Saved text changes!');
     } else {
-      // mode: 'editText' or 'addText'
-      if (whiteoutBackground) {
-        // Erase old text underneath with white rectangle and render replacement text with matching font
-        const newAnn: PdfAnnotation = {
-          id: `ann-${Date.now()}`,
-          pageIndex: currentPageIndex,
-          type: 'whiteout',
-          xPercent,
-          yPercent,
-          widthPercent,
-          heightPercent,
-          text,
-          fontSize,
-          textColor,
-          isBold,
-          isItalic,
-          fontFamily,
-          fontDisplayName,
-        };
-        setAnnotations(prev => [...prev, newAnn]);
-      } else {
-        if (!text.trim()) {
-          setInlineEditor(prev => ({ ...prev, isOpen: false }));
-          return;
-        }
-        const newAnn: PdfAnnotation = {
-          id: `ann-${Date.now()}`,
-          pageIndex: currentPageIndex,
-          type: 'text',
-          xPercent,
-          yPercent,
-          text,
-          fontSize,
-          textColor,
-          isBold,
-          isItalic,
-          fontFamily,
-          fontDisplayName,
-        };
-        setAnnotations(prev => [...prev, newAnn]);
-      }
-      showToast(isZh ? `已修改文字: "${text || '(已涂白擦除)'}"` : `Applied text changes!`);
-    }
-
-    setInlineEditor(prev => ({ ...prev, isOpen: false }));
-  };
-
-  // 5. Erase / Wipe text out with white patch
-  const handleEraseInlineText = () => {
-    if (!inlineEditor.isOpen) return;
-    const { xPercent, yPercent, widthPercent, heightPercent, annotationId } = inlineEditor;
-
-    if (annotationId) {
-      setAnnotations(prev => prev.filter(a => a.id !== annotationId));
-      showToast(isZh ? '已删除该文字图层' : 'Deleted text layer');
-    } else {
-      // Create blank whiteout patch over the area
+      // Create new annotation
       const newAnn: PdfAnnotation = {
         id: `ann-${Date.now()}`,
         pageIndex: currentPageIndex,
-        type: 'whiteout',
+        type: whiteoutBackground ? 'whiteout' : 'text',
         xPercent,
         yPercent,
         widthPercent,
         heightPercent,
-        text: '',
+        text,
+        fontSize,
+        textColor,
+        isBold,
+        isItalic,
+        isUnderline,
+        fontFamily,
+        fontDisplayName,
+        coveredTextId: activeEditingText.id.startsWith('txt-') ? activeEditingText.id : undefined,
       };
       setAnnotations(prev => [...prev, newAnn]);
-      showToast(isZh ? '已涂白擦除原文字！' : 'Erased text with whiteout patch!');
+      setSelectedAnnotationId(newAnn.id);
     }
-    setInlineEditor(prev => ({ ...prev, isOpen: false }));
+
+    setActiveEditingText(null);
+  };
+
+  // 5. Delete selected annotation or cancel editing text
+  const handleDeleteSelected = () => {
+    if (activeEditingText) {
+      setActiveEditingText(null);
+      return;
+    }
+    if (selectedAnnotationId) {
+      pushUndoSnapshot();
+      setAnnotations(prev => prev.filter(a => a.id !== selectedAnnotationId));
+      setSelectedAnnotationId(null);
+      showToast(isZh ? '已删除选定元素' : 'Deleted selected element');
+    }
+  };
+
+  // Image upload handler
+  const handleImageFilePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      pushUndoSnapshot();
+      const newAnn: PdfAnnotation = {
+        id: `ann-${Date.now()}`,
+        pageIndex: currentPageIndex,
+        type: 'image',
+        xPercent: 0.35,
+        yPercent: 0.35,
+        widthPercent: 0.25,
+        heightPercent: 0.18,
+        imageDataUrl: dataUrl,
+      };
+      setAnnotations(prev => [...prev, newAnn]);
+      setSelectedAnnotationId(newAnn.id);
+      showToast(isZh ? '已插入图片，可拖拽调整位置与大小' : 'Image inserted! Drag to move or resize.');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   // ==========================================
@@ -754,88 +854,6 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
 
     setAnnotations(prev => [...prev, ...newAnns]);
     showToast(isZh ? `已全部替换本页 ${matches.length} 处匹配文字！` : `Replaced all ${matches.length} matches!`);
-  };
-
-  // Direct Interactive Placement & Drag-to-Select Box on PDF Canvas
-  const handleMouseDownOverlay = (e: React.MouseEvent<HTMLDivElement>) => {
-    // If click was on an existing interactive element, don't drag
-    if ((e.target as HTMLElement).closest('.annotation-interactive') || (e.target as HTMLElement).closest('.text-item-interactive')) {
-      return;
-    }
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.max(0.005, Math.min(0.995, (e.clientX - rect.left) / rect.width));
-    const y = Math.max(0.005, Math.min(0.995, (e.clientY - rect.top) / rect.height));
-
-    setIsDragging(true);
-    setDragStart({ x, y });
-    setDragCurrent({ x, y });
-    setClickX(Number(x.toFixed(3)));
-    setClickY(Number(y.toFixed(3)));
-  };
-
-  const handleMouseMoveOverlay = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.max(0.005, Math.min(0.995, (e.clientX - rect.left) / rect.width));
-    const y = Math.max(0.005, Math.min(0.995, (e.clientY - rect.top) / rect.height));
-    setDragCurrent({ x, y });
-  };
-
-  const handleMouseUpOverlay = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    setIsDragging(false);
-
-    if (dragStart && dragCurrent) {
-      const dx = Math.abs(dragCurrent.x - dragStart.x);
-      const dy = Math.abs(dragCurrent.y - dragStart.y);
-
-      // If user dragged a significant box (> 1% width/height), create Whiteout or Highlight box
-      if (dx > 0.015 && dy > 0.012) {
-        const left = Math.min(dragStart.x, dragCurrent.x);
-        const top = Math.min(dragStart.y, dragCurrent.y);
-
-        if (activeTool === 'whiteout' || activeTool === 'text') {
-          // Open the inline editor right over this drawn box so user can type replacement or just whiteout!
-          setInlineEditor({
-            isOpen: true,
-            mode: 'addText',
-            originalText: '',
-            text: '',
-            fontSize: 11,
-            textColor: '#000000',
-            isBold: false,
-            whiteoutBackground: true,
-            xPercent: Number(left.toFixed(3)),
-            yPercent: Number(top.toFixed(3)),
-            widthPercent: Number(dx.toFixed(3)),
-            heightPercent: Number(dy.toFixed(3)),
-          });
-        } else if (activeTool === 'highlight') {
-          const newAnn: PdfAnnotation = {
-            id: `ann-${Date.now()}`,
-            pageIndex: currentPageIndex,
-            type: 'highlight',
-            xPercent: Number(left.toFixed(3)),
-            yPercent: Number(top.toFixed(3)),
-            widthPercent: Number(dx.toFixed(3)),
-            heightPercent: Number(dy.toFixed(3)),
-            backgroundColor: highlightColor,
-          };
-          setAnnotations(prev => [...prev, newAnn]);
-          showToast(isZh ? '已在拖选区域应用荧光高亮！' : 'Highlight applied to selected area!');
-        }
-      } else {
-        // Just a simple click without dragging!
-        if (activeTool === 'text') {
-          // Open inline editor to type text right at clicked spot!
-          handleStartAddText(clickX, clickY);
-        }
-      }
-    }
-
-    setDragStart(null);
-    setDragCurrent(null);
   };
 
   // Precision Nudge Controls
@@ -1011,26 +1029,47 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   };
 
   // Download Action
-  const handleDownload = () => {
-    if (!currentPdfBytes) return;
-    const baseName = uploadedFileName
-      ? uploadedFileName.replace(/\.pdf$/i, '') + '_edited.pdf'
-      : `${docType === 'invoice' ? 'Invoice' : docType === 'receipt' ? 'Receipt' : 'Quotation'}_${docNo || 'Document'}.pdf`;
-    downloadPdfBytes(currentPdfBytes, baseName);
-    showToast(isZh ? '正在下载修改后的 PDF 文件...' : 'Downloading edited PDF...');
+  const handleDownload = async () => {
+    try {
+      setIsProcessing(true);
+      const finalBytes = await compileFinalPdf();
+      if (!finalBytes) {
+        showToast(isZh ? '正在载入文档，请稍候...' : 'Please wait, document loading...');
+        return;
+      }
+      const baseName = uploadedFileName
+        ? uploadedFileName.replace(/\.pdf$/i, '') + '_edited.pdf'
+        : `${docType === 'invoice' ? 'Invoice' : docType === 'receipt' ? 'Receipt' : 'Quotation'}_${docNo || 'Document'}.pdf`;
+      downloadPdfBytes(finalBytes, baseName);
+      showToast(isZh ? '已成功导出修改后的 PDF 文件！' : 'Downloaded edited PDF successfully!');
+    } catch (err) {
+      console.error('Download error:', err);
+      showToast(isZh ? '导出 PDF 失败，请重试' : 'Failed to export PDF');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Print Action
-  const handlePrint = () => {
-    if (!currentPdfBytes) return;
-    const blob = new Blob([currentPdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const printWindow = window.open(url);
-    if (printWindow) {
-      printWindow.focus();
-      printWindow.print();
-    } else {
-      showToast(isZh ? '请允许弹出窗口以打印文档' : 'Please allow popups to print');
+  const handlePrint = async () => {
+    try {
+      setIsProcessing(true);
+      const finalBytes = await compileFinalPdf();
+      if (!finalBytes) return;
+      const blob = new Blob([finalBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url);
+      if (printWindow) {
+        printWindow.focus();
+        printWindow.print();
+      } else {
+        showToast(isZh ? '请允许弹出窗口以打印文档' : 'Please allow popups to print');
+      }
+    } catch (err) {
+      console.error('Print error:', err);
+      showToast(isZh ? '打印出错' : 'Print failed');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -1269,6 +1308,17 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
             <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 type="button"
+                onClick={handleUndo}
+                disabled={undoStack.length === 0}
+                className="px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1 text-[11px] transition-all cursor-pointer disabled:opacity-30 bg-slate-200/80 dark:bg-white/10 text-slate-700 dark:text-neutral-300 border-transparent hover:bg-slate-300 dark:hover:bg-white/15"
+                title="Undo last change (Ctrl+Z)"
+              >
+                <Undo2 className="w-3.5 h-3.5 text-amber-400" />
+                <span>{isZh ? '撤销' : 'Undo'}</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setShowFindReplace(!showFindReplace)}
                 className={`px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1 text-[11px] transition-all cursor-pointer ${
                   showFindReplace
@@ -1279,6 +1329,29 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
               >
                 <Search className="w-3 h-3 text-cyan-400" />
                 <span>{isZh ? '查找与替换' : 'Find & Replace'}</span>
+              </button>
+
+              {/* Watermark Quick Access Button */}
+              <button
+                type="button"
+                onClick={() => setActiveTab(activeTab === 'watermark' ? 'annotate' : 'watermark')}
+                className={`px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1 text-[11px] transition-all cursor-pointer ${
+                  activeTab === 'watermark'
+                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-xs'
+                    : watermarkText
+                    ? 'bg-amber-950/40 text-amber-300 border-amber-500/30 hover:bg-amber-900/40'
+                    : 'bg-slate-200/80 dark:bg-white/10 text-slate-700 dark:text-neutral-300 border-transparent hover:bg-slate-300 dark:hover:bg-white/15'
+                }`}
+                title={isZh ? '添加或设置文档水印（实时预览与嵌入导出）' : 'Document watermark settings & live preview'}
+              >
+                <ShieldAlert className="w-3 h-3 text-amber-400" />
+                <span>{isZh ? '水印' : 'Watermark'}</span>
+                {watermarkText && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse ml-0.5"
+                    title={isZh ? `已启用: ${watermarkText}` : `Active: ${watermarkText}`}
+                  />
+                )}
               </button>
 
               <label
@@ -1397,26 +1470,53 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
           {/* Main Workspace: Split View */}
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
             {/* Left Column: Side Tools, Detected Text List & Layers */}
-            <div className="w-full md:w-5/12 lg:w-4/12 border-r border-slate-200 dark:border-white/10 flex flex-col overflow-y-auto mac-scrollbar p-3 sm:p-4 space-y-3.5 bg-white dark:bg-[#070b1a]">
-              {/* Top Mode Banner */}
-              <div className="p-2.5 rounded-xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-cyan-500/10 border border-blue-500/25 flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-500 dark:text-cyan-400 shrink-0">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="font-bold text-xs text-slate-900 dark:text-white">
-                    {isZh ? '直接在 PDF 上点击即可编辑文字' : 'Click Any Text on PDF to Edit Directly'}
-                  </h4>
-                  <p className="text-[10px] text-slate-500 dark:text-neutral-400 leading-snug">
-                    {isZh
-                      ? '在右侧画面中，移到任何文字上点击即可快速修改或擦除！点击空白处可输入新文字。'
-                      : 'Hover & click any text on the preview to modify or erase! Click blank areas to type new text.'}
-                  </p>
-                </div>
-              </div>
+            <div className="w-full md:w-5/12 lg:w-4/12 border-r border-slate-200 dark:border-white/10 flex flex-col overflow-y-auto mac-scrollbar p-2 sm:p-3 space-y-3 bg-white dark:bg-[#070b1a]">
+              {/* Hidden image input for Image tool */}
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageFilePicked}
+                className="hidden"
+              />
 
-              {/* TAB: STRUCTURED QUOTE FORM (when activeTab === 'document' && activeSource === 'currentQuote') */}
-              {activeTab === 'document' && activeSource === 'currentQuote' && (
+              {/* PDFescape Main Tools Panel (Insert / Annotate / Page / Document / Upload) */}
+              <PdfescapeToolPanel
+                activeTab={activeTab}
+                onChangeTab={setActiveTab}
+                activeTool={activeTool}
+                onSelectTool={setActiveTool}
+                isZh={isZh}
+                activeSource={activeSource}
+                onTriggerImageUpload={() => imageInputRef.current?.click()}
+                currentPageIndex={currentPageIndex}
+                totalPages={totalPages}
+                onRotateClockwise={handleRotateCurrentPage}
+                onRotateCounterClockwise={handleRotateCounterClockwise}
+                onDeleteCurrentPage={handleDeleteCurrentPage}
+                onAddBlankPage={handleAddBlankPage}
+                onMovePageUp={handleMovePageUp}
+                onMovePageDown={handleMovePageDown}
+                onUploadPdf={handleFileUpload}
+                onCreateBlankA4={handleCreateBlankA4}
+                onSelectCurrentQuote={handleSelectCurrentQuote}
+                watermarkText={watermarkText}
+                onChangeWatermarkText={setWatermarkText}
+                watermarkColor={watermarkColor}
+                onChangeWatermarkColor={setWatermarkColor}
+                watermarkOpacity={watermarkOpacity}
+                onChangeWatermarkOpacity={setWatermarkOpacity}
+                watermarkRotation={watermarkRotation}
+                onChangeWatermarkRotation={setWatermarkRotation}
+                watermarkFontSize={watermarkFontSize}
+                onChangeWatermarkFontSize={setWatermarkFontSize}
+                watermarkLayout={watermarkLayout}
+                onChangeWatermarkLayout={setWatermarkLayout}
+                onClearWatermark={handleClearWatermark}
+              />
+
+              {/* TAB: STRUCTURED QUOTE FORM (when activeTab === 'document') */}
+              {activeTab === 'document' && (
                 <div className="space-y-3">
                   <div className="p-2.5 rounded-xl bg-slate-100/80 dark:bg-[#0c122c] border border-slate-200 dark:border-indigo-500/20 space-y-2.5">
                     <span className="text-[11px] font-black uppercase text-slate-500 dark:text-neutral-400 tracking-wider block">
@@ -1920,30 +2020,48 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
                 </div>
               </div>
 
-              {/* Status Hint Bar */}
-              <div className="px-3 py-1 bg-slate-900 border-b border-white/5 flex items-center justify-between text-[11px] shrink-0">
-                <div className="flex items-center gap-2 text-cyan-300 font-medium">
-                  <Edit3 className="w-3 h-3 text-cyan-400" />
-                  <span>
-                    {isZh
-                      ? '💡 点击画面上的任意文字即可立即修改；按住拖动可框选涂白'
-                      : '💡 Click any text on the page to edit; drag to box-whiteout'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {activeTool !== 'text' && (
-                    <button
-                      type="button"
-                      onClick={handleAddAnnotation}
-                      className="px-2.5 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 active:scale-95 shadow-xs cursor-pointer"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>{isZh ? '在选定位置应用' : 'Place Here'}</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+              {/* PDFescape Sticky Contextual Property Bar */}
+              <PdfescapePropertyBar
+                activeTool={activeTool}
+                selectedAnnotation={annotations.find(a => a.id === selectedAnnotationId) || null}
+                activeEditingText={activeEditingText}
+                isZh={isZh}
+                onUpdateActiveText={updates =>
+                  setActiveEditingText(prev => (prev ? { ...prev, ...updates } : null))
+                }
+                onUpdateSelectedAnnotation={updates => {
+                  if (selectedAnnotationId) {
+                    pushUndoSnapshot();
+                    setAnnotations(prev =>
+                      prev.map(a => (a.id === selectedAnnotationId ? { ...a, ...updates } : a))
+                    );
+                  }
+                }}
+                onDeleteSelected={handleDeleteSelected}
+                onCommitEditing={handleCommitEditing}
+                freehandColor={freehandColor}
+                onChangeFreehandColor={setFreehandColor}
+                freehandWidth={freehandWidth}
+                onChangeFreehandWidth={setFreehandWidth}
+                checkmarkColor={checkmarkColor}
+                onChangeCheckmarkColor={setCheckmarkColor}
+                checkmarkSize={checkmarkSize}
+                onChangeCheckmarkSize={setCheckmarkSize}
+                selectedStampId={selectedStampId}
+                onChangeStampId={setSelectedStampId}
+                customStampText={customStampText}
+                onChangeCustomStampText={setCustomStampText}
+                customStampColor={customStampColor}
+                onChangeCustomStampColor={setCustomStampColor}
+                highlightColor={highlightColor}
+                onChangeHighlightColor={setHighlightColor}
+                shapeStrokeColor={shapeStrokeColor}
+                onChangeShapeStrokeColor={setShapeStrokeColor}
+                shapeStrokeWidth={shapeStrokeWidth}
+                onChangeShapeStrokeWidth={setShapeStrokeWidth}
+                shapeFillColor={shapeFillColor}
+                onChangeShapeFillColor={setShapeFillColor}
+              />
 
               {/* Main Canvas Scroll Viewport */}
               <div
@@ -1961,452 +2079,56 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
                   {/* HTML5 Canvas rendering PDF with pdfjs-dist */}
                   <canvas ref={pdfCanvasRef} className="block w-full h-full" />
 
-                  {/* Interactive Placement & Annotation Overlay */}
-                  {isInteractiveMode && (
-                    <div
-                      className="absolute inset-0 z-20 cursor-text"
-                      onMouseDown={handleMouseDownOverlay}
-                      onMouseMove={handleMouseMoveOverlay}
-                      onMouseUp={handleMouseUpOverlay}
-                    >
-                      {/* Drag selection rectangle preview */}
-                      {dragBox && (
-                        <div
-                          className="absolute border-2 border-dashed border-cyan-400 bg-cyan-400/20 pointer-events-none transition-none"
-                          style={{
-                            left: `${dragBox.left}%`,
-                            top: `${dragBox.top}%`,
-                            width: `${dragBox.width}%`,
-                            height: `${dragBox.height}%`,
-                          }}
-                        />
-                      )}
-
-                      {/* 1. INTERACTIVE DETECTED TEXT LAYER (Click any text on PDF to edit it!) */}
-                      {extractedTextItems.map(item => {
-                        const left = item.xPercent * 100;
-                        const top = item.yPercent * 100;
-                        const width = item.widthPercent * 100;
-                        const height = item.heightPercent * 100;
-                        const isHovered = hoveredTextId === item.id;
-
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleStartEditText(item);
-                            }}
-                            onMouseEnter={() => setHoveredTextId(item.id)}
-                            onMouseLeave={() => setHoveredTextId(null)}
-                            className={`text-item-interactive absolute cursor-pointer rounded-xs transition-colors duration-75 group ${
-                              isHovered
-                                ? 'bg-cyan-500/25 outline outline-1.5 outline-cyan-400 shadow-xs'
-                                : 'hover:bg-cyan-500/15'
-                            }`}
-                            style={{
-                              left: `${left}%`,
-                              top: `${top}%`,
-                              width: `${width}%`,
-                              height: `${height}%`,
-                            }}
-                            title={`${isZh ? '点击直接编辑此文字' : 'Click to edit'}: "${item.text}"`}
-                          >
-                            {/* Hover Edit Tag */}
-                            <span className="absolute -top-4 -left-1 hidden group-hover:flex items-center gap-0.5 px-1 py-0.2 bg-cyan-600 text-white text-[8px] font-bold rounded shadow pointer-events-none z-30 whitespace-nowrap">
-                              <Edit3 className="w-2.5 h-2.5" />
-                              <span>{isZh ? '编辑' : 'Edit'}</span>
-                            </span>
-                          </div>
-                        );
-                      })}
-
-                      {/* 2. RENDER ACTIVE ANNOTATIONS / WHITEOUTS ON THIS PAGE */}
-                      {currentPageAnnotations.map(ann => {
-                        const left = ann.xPercent * 100;
-                        const top = ann.yPercent * 100;
-                        const width = (ann.widthPercent || 0.2) * 100;
-                        const height = (ann.heightPercent || 0.04) * 100;
-
-                        if (ann.type === 'whiteout') {
-                          return (
-                            <div
-                              key={ann.id}
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleStartEditAnnotation(ann);
-                              }}
-                              className="annotation-interactive absolute bg-white border border-slate-300 shadow-xs flex items-center justify-between px-1 text-[10px] overflow-hidden pointer-events-auto group cursor-pointer hover:border-cyan-500"
-                              style={{
-                                left: `${left}%`,
-                                top: `${top}%`,
-                                width: `${width}%`,
-                                height: `${height}%`,
-                              }}
-                              title={isZh ? '点击修改此涂白文本' : 'Click to edit whiteout text'}
-                            >
-                              <span className="truncate text-slate-800 font-sans font-medium text-[9px]">
-                                {ann.text || ''}
-                              </span>
-                              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                  type="button"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    handleStartEditAnnotation(ann);
-                                  }}
-                                  className="text-blue-500 p-0.5 hover:text-blue-700 cursor-pointer"
-                                  title="Edit"
-                                >
-                                  <Edit3 className="w-2.5 h-2.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    handleRemoveAnnotation(ann.id);
-                                  }}
-                                  className="text-red-500 p-0.5 hover:text-red-700 cursor-pointer"
-                                  title="Remove whiteout"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        if (ann.type === 'highlight') {
-                          return (
-                            <div
-                              key={ann.id}
-                              className="annotation-interactive absolute opacity-45 pointer-events-auto group"
-                              style={{
-                                left: `${left}%`,
-                                top: `${top}%`,
-                                width: `${width}%`,
-                                height: `${height}%`,
-                                backgroundColor: ann.backgroundColor || '#fef08a',
-                              }}
-                            >
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  handleRemoveAnnotation(ann.id);
-                                }}
-                                className="absolute right-0 top-0 text-red-600 font-bold text-xs opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          );
-                        }
-
-                        if (ann.type === 'stamp') {
-                          return (
-                            <div
-                              key={ann.id}
-                              className="annotation-interactive absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto group"
-                              style={{ left: `${left}%`, top: `${top}%` }}
-                            >
-                              <div
-                                className="px-2 py-0.5 rounded border-2 font-mono font-bold text-[10px] shadow-md flex items-center gap-1"
-                                style={{
-                                  color: ann.stampColor || '#b91c1c',
-                                  borderColor: ann.stampColor || '#b91c1c',
-                                  backgroundColor: '#fff1f2',
-                                }}
-                              >
-                                <span>{ann.stampText}</span>
-                                <button
-                                  type="button"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    handleRemoveAnnotation(ann.id);
-                                  }}
-                                  className="text-red-500 opacity-0 group-hover:opacity-100 ml-1 cursor-pointer"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        if (ann.type === 'text') {
-                          return (
-                            <div
-                              key={ann.id}
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleStartEditAnnotation(ann);
-                              }}
-                              className="annotation-interactive absolute pointer-events-auto group whitespace-nowrap cursor-pointer hover:ring-1 hover:ring-cyan-400 rounded"
-                              style={{ left: `${left}%`, top: `${top}%` }}
-                            >
-                              <span
-                                className={`px-1 rounded text-xs ${ann.isBold ? 'font-bold' : ''}`}
-                                style={{
-                                  color: ann.textColor || '#000000',
-                                  backgroundColor: ann.backgroundColor || 'transparent',
-                                }}
-                              >
-                                {ann.text}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  handleRemoveAnnotation(ann.id);
-                                }}
-                                className="text-red-500 opacity-0 group-hover:opacity-100 ml-1 cursor-pointer"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          );
-                        }
-
-                        if (ann.type === 'signature' && ann.imageDataUrl) {
-                          return (
-                            <div
-                              key={ann.id}
-                              className="annotation-interactive absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto group"
-                              style={{
-                                left: `${left}%`,
-                                top: `${top}%`,
-                                width: `${width}%`,
-                              }}
-                            >
-                              <img
-                                src={ann.imageDataUrl}
-                                alt="Signature"
-                                className="w-full h-auto object-contain"
-                              />
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  handleRemoveAnnotation(ann.id);
-                                }}
-                                className="absolute right-0 top-0 text-red-500 opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer font-bold"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          );
-                        }
-
-                        return null;
-                      })}
-
-                      {/* Target Pin in Non-Text Modes */}
-                      {activeTool !== 'text' && (
-                        <div
-                          className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-all duration-75"
-                          style={{ left: `${clickX * 100}%`, top: `${clickY * 100}%` }}
-                        >
-                          <div className="w-5 h-5 rounded-full border-2 border-red-500 bg-red-500/25 flex items-center justify-center shadow-lg animate-pulse">
-                            <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 3. DIRECT INLINE FLOATING TEXT EDITOR MODAL */}
-                  <AnimatePresence>
-                    {inlineEditor.isOpen && (
-                      <div
-                        className="absolute inset-0 z-40 bg-black/40 backdrop-blur-[1px] flex items-center justify-center p-3"
-                        onClick={() => setInlineEditor(prev => ({ ...prev, isOpen: false }))}
-                      >
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                          onClick={e => e.stopPropagation()}
-                          className="w-full max-w-md bg-white dark:bg-[#0c122c] border border-cyan-500/40 rounded-2xl p-4 shadow-2xl space-y-3"
-                        >
-                          <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-2">
-                            <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800 dark:text-cyan-300">
-                              <Edit3 className="w-4 h-4 text-cyan-400" />
-                              <span>
-                                {inlineEditor.mode === 'editText'
-                                  ? isZh
-                                    ? '直接修改文字'
-                                    : 'Edit Text'
-                                  : inlineEditor.mode === 'editAnnotation'
-                                  ? isZh
-                                    ? '修改图层文字'
-                                    : 'Edit Layer Text'
-                                  : isZh
-                                  ? '添加新文字'
-                                  : 'Add Text'}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setInlineEditor(prev => ({ ...prev, isOpen: false }))}
-                              className="text-slate-400 hover:text-white cursor-pointer"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-
-                          {/* Reference to original text if editing */}
-                          {inlineEditor.originalText && (
-                            <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] space-y-0.5">
-                              <span className="text-[10px] text-slate-400 font-bold block">
-                                {isZh ? '原文字内容:' : 'Original Text:'}
-                              </span>
-                              <p className="font-mono text-slate-600 dark:text-neutral-300 break-all select-text">
-                                {inlineEditor.originalText}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Text input area */}
-                          <div>
-                            <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 block mb-1">
-                              {isZh ? '修改后的文字:' : 'New Text:'}
-                            </label>
-                            <textarea
-                              rows={2}
-                              autoFocus
-                              value={inlineEditor.text}
-                              onChange={e =>
-                                setInlineEditor(prev => ({ ...prev, text: e.target.value }))
-                              }
-                              onKeyDown={e => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleSaveInlineEdit();
-                                }
-                              }}
-                              placeholder={isZh ? '输入替换文字...' : 'Type text...'}
-                              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-[#050817] text-xs font-semibold outline-none resize-none focus:border-cyan-400"
-                            />
-                          </div>
-
-                          {/* Font styling controls */}
-                          <div className="grid grid-cols-3 gap-2 text-xs">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-500 block">
-                                {isZh ? '字号' : 'Size'}: {inlineEditor.fontSize}pt
-                              </label>
-                              <input
-                                type="range"
-                                min="8"
-                                max="32"
-                                value={inlineEditor.fontSize}
-                                onChange={e =>
-                                  setInlineEditor(prev => ({
-                                    ...prev,
-                                    fontSize: parseInt(e.target.value, 10),
-                                  }))
-                                }
-                                className="w-full mt-1 cursor-pointer"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-500 block">
-                                {isZh ? '颜色' : 'Color'}:
-                              </label>
-                              <div className="flex items-center gap-1 mt-1">
-                                <input
-                                  type="color"
-                                  value={inlineEditor.textColor}
-                                  onChange={e =>
-                                    setInlineEditor(prev => ({ ...prev, textColor: e.target.value }))
-                                  }
-                                  className="w-7 h-7 rounded border border-slate-300 dark:border-white/20 cursor-pointer"
-                                />
-                                <span className="font-mono text-[10px] text-slate-400">
-                                  {inlineEditor.textColor}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-end">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setInlineEditor(prev => ({ ...prev, isBold: !prev.isBold }))
-                                }
-                                className={`w-full py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
-                                  inlineEditor.isBold
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-white dark:bg-white/5 border-slate-300 dark:border-white/15'
-                                }`}
-                              >
-                                {isZh ? '加粗 Bold' : 'Bold'}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Whiteout background toggle */}
-                          <label className="flex items-center gap-2 text-xs cursor-pointer select-none pt-1">
-                            <input
-                              type="checkbox"
-                              checked={inlineEditor.whiteoutBackground}
-                              onChange={e =>
-                                setInlineEditor(prev => ({
-                                  ...prev,
-                                  whiteoutBackground: e.target.checked,
-                                }))
-                              }
-                              className="rounded cursor-pointer"
-                            />
-                            <span className="text-slate-700 dark:text-neutral-300 text-[11px]">
-                              {isZh
-                                ? '涂白遮盖原文字 (在文字下方垫上白色遮罩，确保不重叠)'
-                                : 'Whiteout background (cleans underlying text to prevent overlap)'}
-                            </span>
-                          </label>
-
-                          {/* Action Buttons */}
-                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-white/10">
-                            {inlineEditor.originalText ? (
-                              <button
-                                type="button"
-                                onClick={handleEraseInlineText}
-                                className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/25 font-bold text-xs flex items-center gap-1 cursor-pointer transition-all active:scale-95"
-                                title="Wipe out this text with whiteout patch"
-                              >
-                                <Eraser className="w-3.5 h-3.5" />
-                                <span>{isZh ? '擦除此文字' : 'Erase Text'}</span>
-                              </button>
-                            ) : (
-                              <div></div>
-                            )}
-
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setInlineEditor(prev => ({ ...prev, isOpen: false }))
-                                }
-                                className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-700 dark:text-neutral-300 font-bold text-xs cursor-pointer"
-                              >
-                                {isZh ? '取消' : 'Cancel'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleSaveInlineEdit}
-                                className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center gap-1 shadow-md shadow-blue-500/25 active:scale-95 cursor-pointer"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                                <span>{isZh ? '确定应用 (Enter)' : 'Apply (Enter)'}</span>
-                              </button>
-                            </div>
-                          </div>
-                        </motion.div>
-                      </div>
-                    )}
-                  </AnimatePresence>
+                  {/* PDFescape Interactive Overlay (Direct On-Canvas Editing) */}
+                  <PdfescapeCanvasOverlay
+                    canvasWidth={pageCanvasDimensions.width}
+                    canvasHeight={pageCanvasDimensions.height}
+                    zoomScale={zoomScale}
+                    isZh={isZh}
+                    activeTool={activeTool}
+                    extractedTextItems={extractedTextItems}
+                    annotations={currentPageAnnotations}
+                    selectedAnnotationId={selectedAnnotationId}
+                    activeEditingText={activeEditingText}
+                    onSelectAnnotation={setSelectedAnnotationId}
+                    onStartEditTextItem={handleStartEditText}
+                    onStartEditAnnotation={handleStartEditAnnotation}
+                    onStartAddTextAt={handleStartAddText}
+                    onUpdateActiveText={updates =>
+                      setActiveEditingText(prev => (prev ? { ...prev, ...updates } : null))
+                    }
+                    onCommitEditing={handleCommitEditing}
+                    onDeleteSelected={handleDeleteSelected}
+                    onAddAnnotation={newAnn => {
+                      pushUndoSnapshot();
+                      setAnnotations(prev => [
+                        ...prev,
+                        { ...newAnn, pageIndex: currentPageIndex },
+                      ]);
+                    }}
+                    onUpdateAnnotation={(id, updates) => {
+                      setAnnotations(prev =>
+                        prev.map(a => (a.id === id ? { ...a, ...updates } : a))
+                      );
+                    }}
+                    freehandColor={freehandColor}
+                    freehandWidth={freehandWidth}
+                    highlightColor={highlightColor}
+                    checkmarkColor={checkmarkColor}
+                    checkmarkSize={checkmarkSize}
+                    shapeStrokeColor={shapeStrokeColor}
+                    shapeStrokeWidth={shapeStrokeWidth}
+                    shapeFillColor={shapeFillColor}
+                    selectedStampId={selectedStampId}
+                    customStampText={customStampText}
+                    customStampColor={customStampColor}
+                    watermarkText={watermarkText}
+                    watermarkColor={watermarkColor}
+                    watermarkOpacity={watermarkOpacity}
+                    watermarkRotation={watermarkRotation}
+                    watermarkFontSize={watermarkFontSize}
+                    watermarkLayout={watermarkLayout}
+                  />
                 </div>
               </div>
             </div>

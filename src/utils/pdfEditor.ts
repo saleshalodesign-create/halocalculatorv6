@@ -6,7 +6,19 @@ import { DocumentType } from './messaging';
 export interface PdfAnnotation {
   id: string;
   pageIndex: number; // 0-based
-  type: 'text' | 'whiteout' | 'stamp' | 'signature' | 'image' | 'highlight';
+  type:
+    | 'text'
+    | 'whiteout'
+    | 'stamp'
+    | 'signature'
+    | 'image'
+    | 'highlight'
+    | 'line'
+    | 'rectangle'
+    | 'freehand'
+    | 'checkmark'
+    | 'sticky'
+    | 'link';
   // Position in normalized coordinates [0..1] relative to page width and height
   xPercent: number; // 0 to 1 (left to right)
   yPercent: number; // 0 to 1 (top to bottom)
@@ -20,15 +32,27 @@ export interface PdfAnnotation {
   backgroundColor?: string;
   isBold?: boolean;
   isItalic?: boolean;
+  isUnderline?: boolean;
   fontFamily?: string;
   fontDisplayName?: string;
+
+  // Track original text item covered by this annotation
+  coveredTextId?: string;
+
+  // Shapes & borders
+  strokeColor?: string;
+  strokeWidth?: number;
+  fillColor?: string;
+
+  // Link tool URL
+  linkUrl?: string;
 
   // Stamp types: PAID, APPROVED, REVISED, VOID, TAX_INVOICE, HALO_SEAL
   stampType?: 'PAID' | 'APPROVED' | 'REVISED' | 'VOID' | 'TAX_INVOICE' | 'HALO_SEAL' | 'CUSTOM';
   stampText?: string;
   stampColor?: string;
 
-  // Image / Signature data URL
+  // Image / Signature / Freehand data URL
   imageDataUrl?: string;
 }
 
@@ -205,7 +229,8 @@ export const renderTextToDataUrl = (
   isBold: boolean = false,
   isItalic: boolean = false,
   fontFamily: string = 'Arial, "Segoe UI", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif',
-  backgroundColor?: string
+  backgroundColor?: string,
+  isUnderline: boolean = false
 ): { dataUrl: string; width: number; height: number } => {
   if (typeof document === 'undefined') return { dataUrl: '', width: 0, height: 0 };
   const canvas = document.createElement('canvas');
@@ -235,6 +260,12 @@ export const renderTextToDataUrl = (
   ctx.fillStyle = color;
   ctx.fillText(text, 4 * scale, height / 2);
 
+  if (isUnderline) {
+    ctx.fillStyle = color;
+    const lineY = Math.min(height - 2 * scale, Math.floor(height / 2 + (fontSize * scale) / 2.2));
+    ctx.fillRect(4 * scale, lineY, textWidth, Math.max(2, Math.floor(1.5 * scale)));
+  }
+
   return {
     dataUrl: canvas.toDataURL('image/png'),
     width: width / scale,
@@ -257,8 +288,14 @@ export const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
 export interface PdfEditOptions {
   rotations?: Record<number, number>; // pageIndex -> rotation degrees (0, 90, 180, 270)
   watermarkText?: string;
+  watermarkColor?: string;
+  watermarkOpacity?: number;
+  watermarkRotation?: number;
+  watermarkFontSize?: number;
+  watermarkLayout?: 'center' | 'tiled';
   deletePages?: number[]; // list of 0-based page indices to remove
   addBlankPage?: boolean;
+  pageOrder?: number[]; // list of page indices in new sequence
 }
 
 /**
@@ -336,7 +373,18 @@ export const applyPdfAnnotations = async (
     }
   }
 
-  const pages = pdfDoc.getPages();
+  let finalPdfDoc = pdfDoc;
+  if (options.pageOrder && options.pageOrder.length > 0) {
+    const validIndices = options.pageOrder.filter(idx => idx >= 0 && idx < pdfDoc.getPageCount());
+    if (validIndices.length === pdfDoc.getPageCount()) {
+      const reorderedDoc = await PDFDocument.create();
+      const copied = await reorderedDoc.copyPages(pdfDoc, validIndices);
+      copied.forEach(p => reorderedDoc.addPage(p));
+      finalPdfDoc = reorderedDoc;
+    }
+  }
+
+  const pages = finalPdfDoc.getPages();
   const totalPages = pages.length;
 
   // Apply page rotations if requested
@@ -350,44 +398,83 @@ export const applyPdfAnnotations = async (
   }
 
   // Load standard fonts as fallback for pure ASCII text
-  const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const helveticaFont = await finalPdfDoc.embedFont(StandardFonts.Helvetica);
+  const helveticaBold = await finalPdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   // Apply global watermark if requested
   if (options.watermarkText && options.watermarkText.trim()) {
     const wmText = options.watermarkText.trim();
-    for (const page of pages) {
-      const pw = page.getWidth();
-      const ph = page.getHeight();
-      if (hasNonAscii(wmText)) {
-        // Embed via Canvas
-        const { dataUrl, width, height } = renderTextToDataUrl(wmText, '#94a3b8', 36, true);
-        if (dataUrl) {
-          try {
-            const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
-            const embedded = await pdfDoc.embedPng(imgBytes);
+    const wmColor = options.watermarkColor || '#94a3b8';
+    const wmOpacity = options.watermarkOpacity ?? 0.25;
+    const wmRotation = options.watermarkRotation ?? 45;
+    const wmFontSize = options.watermarkFontSize || 48;
+    const wmLayout = options.watermarkLayout || 'center';
+
+    // Render watermark via high-resolution PNG dataUrl for full Unicode/Chinese support and crisp rotation
+    const { dataUrl, width, height } = renderTextToDataUrl(
+      wmText,
+      wmColor,
+      wmFontSize,
+      true,
+      false,
+      'Arial, "Segoe UI", sans-serif'
+    );
+
+    if (dataUrl) {
+      try {
+        const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
+        const embedded = await finalPdfDoc.embedPng(imgBytes);
+        const rad = (wmRotation * Math.PI) / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+
+        for (const page of pages) {
+          const pw = page.getWidth();
+          const ph = page.getHeight();
+
+          if (wmLayout === 'tiled') {
+            // Draw a repeating grid of watermarks (4 rows x 3 columns)
+            const rows = 4;
+            const cols = 3;
+            const tileW = width * 0.55;
+            const tileH = height * 0.55;
+
+            for (let r = 0; r < rows; r++) {
+              for (let c = 0; c < cols; c++) {
+                const cx = (pw * (c + 0.5)) / cols;
+                const cy = (ph * (r + 0.5)) / rows;
+                const x = cx - ((tileW / 2) * cos - (tileH / 2) * sin);
+                const y = cy - ((tileW / 2) * sin + (tileH / 2) * cos);
+
+                page.drawImage(embedded, {
+                  x,
+                  y,
+                  width: tileW,
+                  height: tileH,
+                  opacity: Math.min(1, wmOpacity * 0.85),
+                  rotate: degrees(wmRotation),
+                });
+              }
+            }
+          } else {
+            // Center single large watermark with accurate rotation around center
+            const cx = pw / 2;
+            const cy = ph / 2;
+            const x = cx - ((width / 2) * cos - (height / 2) * sin);
+            const y = cy - ((width / 2) * sin + (height / 2) * cos);
+
             page.drawImage(embedded, {
-              x: pw * 0.15,
-              y: ph * 0.45,
-              width: width,
-              height: height,
-              opacity: 0.3,
-              rotate: degrees(35),
+              x,
+              y,
+              width,
+              height,
+              opacity: wmOpacity,
+              rotate: degrees(wmRotation),
             });
-          } catch {
-            // ignore
           }
         }
-      } else {
-        page.drawText(wmText, {
-          x: pw * 0.15,
-          y: ph * 0.45,
-          size: 42,
-          font: helveticaBold,
-          color: rgb(0.8, 0.8, 0.8),
-          opacity: 0.25,
-          rotate: degrees(35),
-        });
+      } catch (e) {
+        console.warn('Could not draw watermark image', e);
       }
     }
   }
@@ -432,7 +519,7 @@ export const applyPdfAnnotations = async (
           if (dataUrl) {
             try {
               const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
-              const img = await pdfDoc.embedPng(imgBytes);
+              const img = await finalPdfDoc.embedPng(imgBytes);
               page.drawImage(img, {
                 x: pdfX + 2,
                 y: pdfY - boxH + Math.max(0, (boxH - height) / 2),
@@ -456,6 +543,52 @@ export const applyPdfAnnotations = async (
           color: rgb(bgRgb.r, bgRgb.g, bgRgb.b),
           opacity: 0.45,
         });
+      } else if (ann.type === 'rectangle') {
+        const boxW = (ann.widthPercent || 0.15) * pageWidth;
+        const boxH = (ann.heightPercent || 0.08) * pageHeight;
+        const strokeRgb = hexToRgb(ann.strokeColor || ann.textColor || '#000000');
+        const hasFill = ann.fillColor && ann.fillColor !== 'transparent';
+        const fillRgb = hasFill ? hexToRgb(ann.fillColor!) : undefined;
+        page.drawRectangle({
+          x: pdfX,
+          y: pdfY - boxH,
+          width: boxW,
+          height: boxH,
+          borderColor: rgb(strokeRgb.r, strokeRgb.g, strokeRgb.b),
+          borderWidth: ann.strokeWidth || 2,
+          color: fillRgb ? rgb(fillRgb.r, fillRgb.g, fillRgb.b) : undefined,
+        });
+      } else if (ann.type === 'line') {
+        const lineW = (ann.widthPercent || 0.2) * pageWidth;
+        const strokeRgb = hexToRgb(ann.strokeColor || ann.textColor || '#000000');
+        page.drawLine({
+          start: { x: pdfX, y: pdfY },
+          end: { x: pdfX + lineW, y: pdfY },
+          thickness: ann.strokeWidth || 2,
+          color: rgb(strokeRgb.r, strokeRgb.g, strokeRgb.b),
+        });
+      } else if (ann.type === 'checkmark') {
+        const size = ann.fontSize || 20;
+        const { dataUrl, width, height } = renderTextToDataUrl(
+          '✓',
+          ann.textColor || '#16a34a',
+          size,
+          true
+        );
+        if (dataUrl) {
+          try {
+            const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
+            const img = await finalPdfDoc.embedPng(imgBytes);
+            page.drawImage(img, {
+              x: pdfX,
+              y: pdfY - height,
+              width: width,
+              height: height,
+            });
+          } catch (e) {
+            console.warn('Could not embed checkmark in PDF', e);
+          }
+        }
       } else if (ann.type === 'text' && ann.text) {
         const size = ann.fontSize || 12;
         const { dataUrl, width, height } = renderTextToDataUrl(
@@ -465,12 +598,13 @@ export const applyPdfAnnotations = async (
           ann.isBold,
           ann.isItalic,
           ann.fontFamily,
-          ann.backgroundColor
+          ann.backgroundColor,
+          ann.isUnderline
         );
         if (dataUrl) {
           try {
             const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
-            const img = await pdfDoc.embedPng(imgBytes);
+            const img = await finalPdfDoc.embedPng(imgBytes);
             page.drawImage(img, {
               x: pdfX,
               y: pdfY - height,
@@ -502,7 +636,7 @@ export const applyPdfAnnotations = async (
         if (dataUrl) {
           try {
             const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
-            const img = await pdfDoc.embedPng(imgBytes);
+            const img = await finalPdfDoc.embedPng(imgBytes);
             page.drawImage(img, {
               x: pdfX,
               y: pdfY - height,
@@ -514,14 +648,14 @@ export const applyPdfAnnotations = async (
             console.warn('Could not embed stamp in PDF', e);
           }
         }
-      } else if ((ann.type === 'signature' || ann.type === 'image') && ann.imageDataUrl) {
+      } else if ((ann.type === 'signature' || ann.type === 'image' || ann.type === 'freehand') && ann.imageDataUrl) {
         try {
           const imageBytes = await fetch(ann.imageDataUrl).then(res => res.arrayBuffer());
           let embeddedImage;
           if (ann.imageDataUrl.includes('image/png') || ann.imageDataUrl.startsWith('data:image/png')) {
-            embeddedImage = await pdfDoc.embedPng(imageBytes);
+            embeddedImage = await finalPdfDoc.embedPng(imageBytes);
           } else {
-            embeddedImage = await pdfDoc.embedJpg(imageBytes);
+            embeddedImage = await finalPdfDoc.embedJpg(imageBytes);
           }
 
           const imgW = (ann.widthPercent || 0.22) * pageWidth;
@@ -538,11 +672,62 @@ export const applyPdfAnnotations = async (
         } catch (err) {
           console.warn('Could not embed signature/image in PDF:', err);
         }
+      } else if (ann.type === 'sticky') {
+        const noteW = (ann.widthPercent || 0.16) * pageWidth;
+        const noteH = (ann.heightPercent || 0.08) * pageHeight;
+        const bgRgb = hexToRgb(ann.backgroundColor || '#fef08a');
+        page.drawRectangle({
+          x: pdfX,
+          y: pdfY - noteH,
+          width: noteW,
+          height: noteH,
+          color: rgb(bgRgb.r, bgRgb.g, bgRgb.b),
+          borderColor: rgb(0.85, 0.75, 0.2),
+          borderWidth: 1,
+        });
+        if (ann.text) {
+          const { dataUrl, width, height } = renderTextToDataUrl(
+            ann.text,
+            '#422006',
+            9,
+            false,
+            false,
+            'Arial, sans-serif'
+          );
+          if (dataUrl) {
+            try {
+              const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
+              const img = await finalPdfDoc.embedPng(imgBytes);
+              page.drawImage(img, {
+                x: pdfX + 4,
+                y: pdfY - noteH + Math.max(0, (noteH - height) / 2),
+                width: Math.min(width, noteW - 8),
+                height: Math.min(height, noteH - 4),
+              });
+            } catch (e) {
+              console.warn('Could not draw sticky note text', e);
+            }
+          }
+        }
+      } else if (ann.type === 'link') {
+        const boxW = (ann.widthPercent || 0.15) * pageWidth;
+        const boxH = (ann.heightPercent || 0.04) * pageHeight;
+        // Subtle blue indicator box for link
+        page.drawRectangle({
+          x: pdfX,
+          y: pdfY - boxH,
+          width: boxW,
+          height: boxH,
+          borderColor: rgb(0.15, 0.45, 0.95),
+          borderWidth: 1,
+          color: rgb(0.85, 0.92, 1.0),
+          opacity: 0.2,
+        });
       }
     }
   }
 
-  return await pdfDoc.save();
+  return await finalPdfDoc.save();
 };
 
 /**
