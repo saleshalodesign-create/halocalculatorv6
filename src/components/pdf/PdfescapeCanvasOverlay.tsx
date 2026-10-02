@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Edit3, Check, Trash2, Move, StickyNote, Link2, ExternalLink } from 'lucide-react';
 import { ExtractedTextItem } from '../../utils/pdfRenderer';
-import { PdfAnnotation, STAMP_PRESETS } from '../../utils/pdfEditor';
+import { PdfAnnotation, STAMP_PRESETS, generateUniqueAnnotationId } from '../../utils/pdfEditor';
 import { ActiveTextProps } from './PdfescapePropertyBar';
 
 interface PdfescapeCanvasOverlayProps {
@@ -53,6 +53,8 @@ interface PdfescapeCanvasOverlayProps {
   watermarkRotation?: number;
   watermarkFontSize?: number;
   watermarkLayout?: 'center' | 'tiled';
+  // Signature placement
+  onPlaceSignatureAt?: (x: number, y: number) => void;
 }
 
 export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
@@ -91,6 +93,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
   watermarkRotation = 45,
   watermarkFontSize = 48,
   watermarkLayout = 'center',
+  onPlaceSignatureAt,
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -197,7 +200,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
     // If Checkmark tool is active, place checkmark directly
     if (activeTool === 'checkmark') {
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: 0,
         type: 'checkmark',
         xPercent: x,
@@ -221,7 +224,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
       const stampText = selectedStampId === 'CUSTOM' ? customStampText : preset.text;
       const stampColor = selectedStampId === 'CUSTOM' ? customStampColor : preset.color;
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: 0,
         type: 'stamp',
         stampType: (selectedStampId as any) || 'APPROVED',
@@ -240,7 +243,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
     // If Sticky Note tool is active, place sticky note
     if (activeTool === 'sticky') {
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: 0,
         type: 'sticky',
         text: isZh ? '在此输入便签备注...' : 'Add sticky note comment here...',
@@ -255,13 +258,17 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
       return;
     }
 
+    // If Signature tool is active, place signature directly
+    if (activeTool === 'signature') {
+      if (onPlaceSignatureAt) {
+        onPlaceSignatureAt(x, y);
+      }
+      return;
+    }
+
     // If Text tool is active and clicked outside:
     if (activeTool === 'text') {
-      // If was editing, commit first
-      if (activeEditingText) {
-        onCommitEditing();
-      }
-      // Start adding new text at clicked spot
+      // Start adding new text at clicked spot (handleStartAddText will cleanly commit any active text)
       onStartAddTextAt(x, y);
       return;
     }
@@ -402,7 +409,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
 
             const dataUrl = offCanvas.toDataURL('image/png');
             const newAnn: PdfAnnotation = {
-              id: `ann-${Date.now()}`,
+              id: generateUniqueAnnotationId(),
               pageIndex: 0,
               type: 'freehand',
               xPercent: minX / rect.width,
@@ -444,7 +451,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
       if (w > 0.01 && h > 0.008) {
         if (activeTool === 'whiteout') {
           const newAnn: PdfAnnotation = {
-            id: `ann-${Date.now()}`,
+            id: generateUniqueAnnotationId(),
             pageIndex: 0,
             type: 'whiteout',
             xPercent: left,
@@ -457,7 +464,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
           onSelectAnnotation(newAnn.id);
         } else if (activeTool === 'highlight') {
           const newAnn: PdfAnnotation = {
-            id: `ann-${Date.now()}`,
+            id: generateUniqueAnnotationId(),
             pageIndex: 0,
             type: 'highlight',
             xPercent: left,
@@ -470,7 +477,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
           onSelectAnnotation(newAnn.id);
         } else if (activeTool === 'rectangle') {
           const newAnn: PdfAnnotation = {
-            id: `ann-${Date.now()}`,
+            id: generateUniqueAnnotationId(),
             pageIndex: 0,
             type: 'rectangle',
             xPercent: left,
@@ -485,7 +492,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
           onSelectAnnotation(newAnn.id);
         } else if (activeTool === 'line') {
           const newAnn: PdfAnnotation = {
-            id: `ann-${Date.now()}`,
+            id: generateUniqueAnnotationId(),
             pageIndex: 0,
             type: 'line',
             xPercent: left,
@@ -501,7 +508,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
           const url = window.prompt(isZh ? '请输入跳转网址 (URL):' : 'Enter Destination Link URL:', 'https://');
           if (url) {
             const newAnn: PdfAnnotation = {
-              id: `ann-${Date.now()}`,
+              id: generateUniqueAnnotationId(),
               pageIndex: 0,
               type: 'link',
               xPercent: left,
@@ -531,7 +538,7 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
         activeTool === 'freehand' ||
         activeTool === 'link'
       ? 'cursor-crosshair'
-      : activeTool === 'checkmark' || activeTool === 'stamp' || activeTool === 'sticky'
+      : activeTool === 'checkmark' || activeTool === 'stamp' || activeTool === 'sticky' || activeTool === 'signature'
       ? 'cursor-pointer'
       : 'cursor-default';
 
@@ -622,14 +629,16 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
       )}
 
       {/* 1. EXTRACTED TEXT LAYER (Auto Detect Font & Click to Edit) */}
-      {extractedTextItems.map(item => {
+      {extractedTextItems.map((item, idx) => {
         // If this item is covered by an active annotation or currently being edited, hide ghost box
         if (coveredTextIds.has(item.id)) return null;
         if (activeEditingText && activeEditingText.id === item.id) return null;
 
+        const uniqueTextKey = `extracted-txt-${item.id || 'box'}-${idx}`;
+
         return (
           <div
-            key={item.id}
+            key={uniqueTextKey}
             onMouseDown={e => {
               e.stopPropagation();
               onStartEditTextItem(item);
@@ -655,73 +664,94 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
       })}
 
       {/* 2. ACTIVE IN-PLACE TEXT EDITING BOX (Auto Follows Exact Font!) */}
-      {activeEditingText && (
-        <div
-          className="absolute z-50 inline-text-input flex items-center"
-          style={{
-            left: `${activeEditingText.xPercent * 100}%`,
-            top: `${activeEditingText.yPercent * 100}%`,
-            minWidth: `${Math.max(
-              activeEditingText.widthPercent * 100,
-              Math.min(90, Math.max(12, (activeEditingText.text.length * activeEditingText.fontSize * 0.65 * 100) / canvasWidth))
-            )}%`,
-            minHeight: `${Math.max(activeEditingText.heightPercent * 100, 2.5)}%`,
-          }}
-          onMouseDown={e => e.stopPropagation()}
-        >
-          <div className="relative w-full flex items-center shadow-2xl ring-2 ring-cyan-400 rounded bg-white">
-            <input
-              ref={inputRef}
-              type="text"
-              value={activeEditingText.text}
-              onChange={e => onUpdateActiveText({ text: e.target.value })}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  onCommitEditing();
-                } else if (e.key === 'Escape') {
-                  e.preventDefault();
-                  onCommitEditing();
-                }
-              }}
-              className="w-full px-1.5 py-0.5 outline-none rounded text-left"
-              style={{
-                fontFamily: activeEditingText.fontFamily,
-                fontSize: `${Math.max(8, activeEditingText.fontSize * zoomScale)}px`,
-                fontWeight: activeEditingText.isBold ? 'bold' : 'normal',
-                fontStyle: activeEditingText.isItalic ? 'italic' : 'normal',
-                textDecoration: activeEditingText.isUnderline ? 'underline' : 'none',
-                color: activeEditingText.textColor || '#000000',
-                backgroundColor: activeEditingText.whiteoutBackground ? '#ffffff' : 'rgba(255,255,255,0.92)',
-              }}
-            />
-            {/* Quick check button */}
-            <button
-              type="button"
-              onMouseDown={e => {
-                e.stopPropagation();
-                onCommitEditing();
-              }}
-              className="absolute -right-7 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-500 shadow-md cursor-pointer transition-transform active:scale-90"
-              title="Apply (Enter)"
-            >
-              <Check className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 3. EXISTING ANNOTATIONS & SELECTION HANDLES */}
-      {annotations.map(ann => {
-        const isSelected = selectedAnnotationId === ann.id;
-        const left = `${ann.xPercent * 100}%`;
-        const top = `${ann.yPercent * 100}%`;
-        const width = `${(ann.widthPercent || 0.15) * 100}%`;
-        const height = `${(ann.heightPercent || 0.04) * 100}%`;
+      {activeEditingText && (() => {
+        // Ultra-tight pixel-accurate height: strictly fits single-line font size without overflowing into next sentence
+        const exactHeightPx = Math.max(
+          10,
+          Math.round((activeEditingText.fontSize || 11) * zoomScale * 1.02)
+        );
+        const dynamicWidthPercent = Math.max(
+          activeEditingText.widthPercent * 100,
+          Math.min(
+            96,
+            Math.max(
+              2.5,
+              ((activeEditingText.text.length + 1) * (activeEditingText.fontSize || 11) * 0.58 * 100) /
+                (canvasWidth / zoomScale)
+            )
+          )
+        );
 
         return (
           <div
-            key={ann.id}
+            className="absolute z-50 inline-text-input flex items-center"
+            style={{
+              left: `${activeEditingText.xPercent * 100}%`,
+              top: `${activeEditingText.yPercent * 100}%`,
+              width: `${dynamicWidthPercent}%`,
+              height: `${exactHeightPx}px`,
+              maxHeight: `${exactHeightPx}px`,
+            }}
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <div className="relative w-full h-full flex items-center bg-white border border-cyan-400 rounded-xs shadow-xs box-border overflow-hidden">
+              <input
+                ref={inputRef}
+                type="text"
+                value={activeEditingText.text}
+                onChange={e => onUpdateActiveText({ text: e.target.value })}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === 'Escape') {
+                    e.preventDefault();
+                    onCommitEditing();
+                  }
+                }}
+                className="w-full h-full px-1 py-0 outline-none text-left box-border m-0 leading-none"
+                style={{
+                  fontFamily: activeEditingText.fontFamily,
+                  fontSize: `${Math.max(8, activeEditingText.fontSize * zoomScale)}px`,
+                  lineHeight: `${exactHeightPx}px`,
+                  fontWeight: activeEditingText.isBold ? 'bold' : 'normal',
+                  fontStyle: activeEditingText.isItalic ? 'italic' : 'normal',
+                  textDecoration: activeEditingText.isUnderline ? 'underline' : 'none',
+                  color: activeEditingText.textColor || '#000000',
+                  backgroundColor: '#ffffff',
+                }}
+              />
+              {/* Compact quick apply check button */}
+              <button
+                type="button"
+                onMouseDown={e => {
+                  e.stopPropagation();
+                  onCommitEditing();
+                }}
+                className="absolute -right-6 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-emerald-600 text-white hover:bg-emerald-500 shadow-xs cursor-pointer transition-transform active:scale-90"
+                title="Apply (Enter)"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 3. EXISTING ANNOTATIONS & SELECTION HANDLES */}
+      {annotations.map((ann, idx) => {
+        const isSelected = selectedAnnotationId === ann.id;
+        const left = `${ann.xPercent * 100}%`;
+        const top = `${ann.yPercent * 100}%`;
+        const isTextLayer = ann.type === 'text' || (ann.type === 'whiteout' && !!ann.text);
+        const tightTextHeight = ((ann.fontSize || 11) * 1.05) / (canvasHeight / zoomScale);
+        const defaultHeight = Math.max(0.008, tightTextHeight);
+        const width = `${(ann.widthPercent || 0.1) * 100}%`;
+        const height = isTextLayer
+          ? `${Math.min(ann.heightPercent || defaultHeight, tightTextHeight * 1.08) * 100}%`
+          : `${(ann.heightPercent || defaultHeight) * 100}%`;
+        const uniqueAnnKey = `ann-canvas-${ann.id || 'box'}-${idx}`;
+
+        return (
+          <div
+            key={uniqueAnnKey}
             onMouseDown={e => {
               e.stopPropagation();
               onSelectAnnotation(ann.id);
@@ -743,10 +773,11 @@ export const PdfescapeCanvasOverlay: React.FC<PdfescapeCanvasOverlayProps> = ({
             {/* Annotation Content Rendering */}
             {ann.type === 'whiteout' && (
               <div
-                className="w-full h-full bg-white flex items-center px-1 overflow-hidden"
+                className="w-full h-full bg-white flex items-center px-0.5 overflow-hidden leading-none box-border"
                 style={{
                   fontFamily: ann.fontFamily,
                   fontSize: `${(ann.fontSize || 12) * zoomScale}px`,
+                  lineHeight: 1,
                   fontWeight: ann.isBold ? 'bold' : 'normal',
                   fontStyle: ann.isItalic ? 'italic' : 'normal',
                   textDecoration: ann.isUnderline ? 'underline' : 'none',

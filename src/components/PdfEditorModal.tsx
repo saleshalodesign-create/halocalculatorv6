@@ -56,6 +56,8 @@ import {
   getPdfPageCount,
   createBlankA4PdfBytes,
   PdfEditOptions,
+  generateSignatureDataUrl,
+  generateUniqueAnnotationId,
 } from '../utils/pdfEditor';
 import {
   loadPdfDocument,
@@ -97,7 +99,8 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
 
   // Active Editor Tab & Document Source (PDFescape style tabs: insert | annotate | page | document | upload)
   const [activeTab, setActiveTab] = useState<PdfescapeTab>('insert');
-  const [activeSource, setActiveSource] = useState<DocumentSource>('currentQuote');
+  // Default to clean blank A4 file as requested
+  const [activeSource, setActiveSource] = useState<DocumentSource>('blankA4');
 
   // Multi-page & Page Transformations
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -134,17 +137,20 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
 
   // Active in-place text editing box (Auto Follows Detected Font)
-  const [activeEditingText, setActiveEditingText] = useState<
-    | (ActiveTextProps & {
-        id: string;
-        xPercent: number;
-        yPercent: number;
-        widthPercent: number;
-        heightPercent: number;
-        annotationId?: string;
-      })
-    | null
-  >(null);
+  type ActiveEditingStateType = (ActiveTextProps & {
+    id: string;
+    xPercent: number;
+    yPercent: number;
+    widthPercent: number;
+    heightPercent: number;
+    annotationId?: string;
+  }) | null;
+
+  const [activeEditingText, setActiveEditingText] = useState<ActiveEditingStateType>(null);
+  const activeEditingTextRef = useRef<ActiveEditingStateType>(null);
+  useEffect(() => {
+    activeEditingTextRef.current = activeEditingText;
+  }, [activeEditingText]);
 
   // Undo history stack
   const [undoStack, setUndoStack] = useState<PdfAnnotation[][]>([]);
@@ -216,6 +222,19 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
 
   // --- Visual Annotations State (Stamps, Text, Whiteouts, Signatures, Highlights) ---
   const [annotations, setAnnotations] = useState<PdfAnnotation[]>([]);
+
+  // Safe helper to append annotation with collision-proof unique ID
+  const appendAnnotationSafe = (ann: PdfAnnotation) => {
+    setAnnotations(prev => {
+      const existingIds = new Set(prev.map(a => a.id));
+      let id = ann.id;
+      while (!id || existingIds.has(id)) {
+        id = generateUniqueAnnotationId();
+      }
+      return [...prev, { ...ann, id }];
+    });
+  };
+
   const [selectedStampId, setSelectedStampId] = useState<string>('HALO_SEAL');
   const [customStampText, setCustomStampText] = useState<string>('HALO DESIGN HUB (UEN: 53142015M)');
   const [customStampColor, setCustomStampColor] = useState<string>('#b91c1c');
@@ -239,10 +258,18 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
   const [clickX, setClickX] = useState<number>(0.5);
   const [clickY, setClickY] = useState<number>(0.5);
 
-  // Signature Pad State
+  // Signature Studio & Placement State
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const modalSignatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [hasSignature, setHasSignature] = useState<boolean>(false);
+  const [signatureModalOpen, setSignatureModalOpen] = useState<boolean>(false);
+  const [signatureMode, setSignatureMode] = useState<'draw' | 'type' | 'upload'>('draw');
+  const [signaturePenColor, setSignaturePenColor] = useState<string>('#0f172a');
+  const [typedSignatureName, setTypedSignatureName] = useState<string>('');
+  const [typedSignatureStyle, setTypedSignatureStyle] = useState<'script' | 'cursive' | 'formal'>('script');
+  const [currentSignatureDataUrl, setCurrentSignatureDataUrl] = useState<string | null>(null);
+  const [pendingPlacementCoords, setPendingPlacementCoords] = useState<{ x: number; y: number } | null>(null);
 
   // Generated PDF Output State
   const [basePdfBytes, setBasePdfBytes] = useState<ArrayBuffer | null>(null);
@@ -260,12 +287,19 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     if (isOpen) {
       if (initialItems.length > 0) setItems(initialItems);
       if (initialRecordData.docNo) setDocNo(initialRecordData.docNo);
-      if (initialRecordData.customerName) setCustomerName(initialRecordData.customerName);
+      if (initialRecordData.customerName) {
+        setCustomerName(initialRecordData.customerName);
+        setTypedSignatureName(initialRecordData.customerName);
+      }
       if (initialRecordData.customerPhone) setCustomerPhone(initialRecordData.customerPhone);
       if (initialRecordData.customerEmail) setCustomerEmail(initialRecordData.customerEmail);
       if (initialRecordData.customerAddress) setCustomerAddress(initialRecordData.customerAddress);
       if (initialRecordData.contact) setContact(initialRecordData.contact);
       if (initialDocType) setDocType(initialDocType);
+
+      // User requested: PDF editor defaults to a clean blank A4 file
+      setActiveSource('blankA4');
+      setUploadedFileName('Blank_A4_Canvas.pdf');
     }
   }, [isOpen, initialItems, initialRecordData, initialDocType]);
 
@@ -613,15 +647,18 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
 
   // 1. Click on existing detected text on PDF (Auto Follows Font Family, Size, Weight, Italic, Color)
   const handleStartEditText = (item: ExtractedTextItem) => {
-    if (activeEditingText) {
+    if (activeEditingTextRef.current) {
       handleCommitEditing();
     }
     setActiveTool('text');
     setSelectedAnnotationId(null);
-    setActiveEditingText({
+    const tightFontSize = item.fontSizePt || 11;
+    // Ultra-tight single-line height based on A4 height (842pt) to never cover the sentence below
+    const tightHeightPercent = Math.max(0.008, Math.min(0.018, (tightFontSize * 1.05) / 842));
+    const newEdit = {
       id: item.id,
       text: item.text,
-      fontSize: item.fontSizePt || 11,
+      fontSize: tightFontSize,
       textColor: item.textColor || '#000000',
       isBold: !!item.isBold,
       isItalic: !!item.isItalic,
@@ -631,20 +668,22 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       whiteoutBackground: true,
       xPercent: item.xPercent,
       yPercent: item.yPercent,
-      widthPercent: Math.max(item.widthPercent, 0.05),
-      heightPercent: Math.max(item.heightPercent, 0.025),
-    });
+      widthPercent: Math.max(item.widthPercent, 0.02),
+      heightPercent: tightHeightPercent,
+    };
+    activeEditingTextRef.current = newEdit;
+    setActiveEditingText(newEdit);
   };
 
   // 2. Click on empty space to type new text
   const handleStartAddText = (x: number, y: number) => {
-    if (activeEditingText) {
+    if (activeEditingTextRef.current) {
       handleCommitEditing();
     }
     setActiveTool('text');
     setSelectedAnnotationId(null);
-    setActiveEditingText({
-      id: `new-${Date.now()}`,
+    const newEdit = {
+      id: generateUniqueAnnotationId(),
       text: isZh ? '输入文字...' : 'Type text...',
       fontSize: 12,
       textColor: '#000000',
@@ -656,8 +695,37 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       whiteoutBackground: false,
       xPercent: x,
       yPercent: y,
-      widthPercent: 0.22,
-      heightPercent: 0.035,
+      widthPercent: 0.16,
+      heightPercent: (12 * 1.05) / 842,
+    };
+    activeEditingTextRef.current = newEdit;
+    setActiveEditingText(newEdit);
+  };
+
+  // Safe font / text property update handler that keeps height strictly bounded to text
+  const handleUpdateActiveText = (updates: Partial<ActiveTextProps>) => {
+    setActiveEditingText(prev => {
+      if (!prev) return null;
+      const targetFontSize = updates.fontSize || prev.fontSize || 11;
+      // Strictly compute tight single-line height in proportion to font size
+      // 842pt is standard A4 height. 12pt font is 12*1.05/842 = 0.0149 (1.49% of page height).
+      const nextHeight = Math.max(0.008, Math.min(0.02, (targetFontSize * 1.05) / 842));
+
+      const currentText = updates.text !== undefined ? updates.text : prev.text;
+      const estWidthPercent = Math.max(
+        0.02,
+        Math.min(0.98, ((currentText.length + 1) * targetFontSize * 0.58) / 595)
+      );
+      const nextWidth = Math.max(prev.widthPercent, estWidthPercent);
+
+      const nextObj = {
+        ...prev,
+        ...updates,
+        heightPercent: nextHeight,
+        widthPercent: nextWidth,
+      };
+      activeEditingTextRef.current = nextObj;
+      return nextObj;
     });
   };
 
@@ -666,11 +734,13 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     if (ann.type === 'text' || ann.type === 'whiteout') {
       setActiveTool('text');
       setSelectedAnnotationId(ann.id);
-      setActiveEditingText({
+      const tightFontSize = ann.fontSize || 12;
+      const tightHeightPercent = Math.max(0.008, Math.min(0.02, (tightFontSize * 1.05) / 842));
+      const newEdit = {
         id: ann.id,
         annotationId: ann.id,
         text: ann.text || '',
-        fontSize: ann.fontSize || 12,
+        fontSize: tightFontSize,
         textColor: ann.textColor || '#000000',
         isBold: !!ann.isBold,
         isItalic: !!ann.isItalic,
@@ -681,17 +751,25 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         xPercent: ann.xPercent,
         yPercent: ann.yPercent,
         widthPercent: ann.widthPercent || 0.2,
-        heightPercent: ann.heightPercent || 0.04,
-      });
+        heightPercent: tightHeightPercent,
+      };
+      activeEditingTextRef.current = newEdit;
+      setActiveEditingText(newEdit);
     } else {
       setSelectedAnnotationId(ann.id);
+      activeEditingTextRef.current = null;
       setActiveEditingText(null);
     }
   };
 
   // 4. Commit inline edit
   const handleCommitEditing = () => {
-    if (!activeEditingText) return;
+    const current = activeEditingTextRef.current || activeEditingText;
+    if (!current) return;
+    // Clear immediately to prevent any re-entrant or duplicate commit calls
+    activeEditingTextRef.current = null;
+    setActiveEditingText(null);
+
     const {
       text,
       fontSize,
@@ -705,11 +783,16 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       xPercent,
       yPercent,
       widthPercent,
-      heightPercent,
       annotationId,
-    } = activeEditingText;
+    } = current;
+
+    // Do not create empty annotation if text is empty or untyped placeholder
+    if (!annotationId && (!text || !text.trim() || text === (isZh ? '输入文字...' : 'Type text...'))) {
+      return;
+    }
 
     pushUndoSnapshot();
+    const tightHeightPercent = Math.max(0.008, Math.min(0.02, ((fontSize || 11) * 1.05) / 842));
 
     if (annotationId) {
       // Update existing
@@ -726,21 +809,23 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
                 isUnderline,
                 fontFamily,
                 fontDisplayName,
+                heightPercent: tightHeightPercent,
+                widthPercent,
                 type: whiteoutBackground ? 'whiteout' : 'text',
               }
             : a
         )
       );
     } else {
-      // Create new annotation
+      // Create new annotation with guaranteed unique ID
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: currentPageIndex,
         type: whiteoutBackground ? 'whiteout' : 'text',
         xPercent,
         yPercent,
         widthPercent,
-        heightPercent,
+        heightPercent: tightHeightPercent,
         text,
         fontSize,
         textColor,
@@ -749,17 +834,16 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         isUnderline,
         fontFamily,
         fontDisplayName,
-        coveredTextId: activeEditingText.id.startsWith('txt-') ? activeEditingText.id : undefined,
+        coveredTextId: current.id && current.id.startsWith('txt-') ? current.id : undefined,
       };
-      setAnnotations(prev => [...prev, newAnn]);
+      appendAnnotationSafe(newAnn);
       setSelectedAnnotationId(newAnn.id);
     }
-
-    setActiveEditingText(null);
   };
 
   // 5. Delete selected annotation or cancel editing text
   const handleDeleteSelected = () => {
+    activeEditingTextRef.current = null;
     if (activeEditingText) {
       setActiveEditingText(null);
       return;
@@ -781,7 +865,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       const dataUrl = reader.result as string;
       pushUndoSnapshot();
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: currentPageIndex,
         type: 'image',
         xPercent: 0.35,
@@ -790,7 +874,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         heightPercent: 0.18,
         imageDataUrl: dataUrl,
       };
-      setAnnotations(prev => [...prev, newAnn]);
+      appendAnnotationSafe(newAnn);
       setSelectedAnnotationId(newAnn.id);
       showToast(isZh ? '已插入图片，可拖拽调整位置与大小' : 'Image inserted! Drag to move or resize.');
     };
@@ -812,7 +896,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
 
     const replaced = match.text.replace(new RegExp(findText, 'gi'), replaceText);
     const newAnn: PdfAnnotation = {
-      id: `ann-${Date.now()}`,
+      id: generateUniqueAnnotationId(),
       pageIndex: currentPageIndex,
       type: 'whiteout',
       xPercent: match.xPercent,
@@ -823,7 +907,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       fontSize: match.fontSizePt || 11,
       textColor: '#000000',
     };
-    setAnnotations(prev => [...prev, newAnn]);
+    appendAnnotationSafe(newAnn);
     showToast(isZh ? `已替换: "${match.text}" → "${replaced}"` : `Replaced "${match.text}" with "${replaced}"`);
   };
 
@@ -836,10 +920,10 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       return;
     }
 
-    const newAnns: PdfAnnotation[] = matches.map((match, i) => {
+    const newAnns: PdfAnnotation[] = matches.map(match => {
       const replaced = match.text.replace(new RegExp(findText, 'gi'), replaceText);
       return {
-        id: `ann-${Date.now()}-${i}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: currentPageIndex,
         type: 'whiteout',
         xPercent: match.xPercent,
@@ -886,9 +970,11 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     setItems(prev => prev.filter(it => it.id !== id));
   };
 
-  // --- Signature Pad Methods ---
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    const canvas = signatureCanvasRef.current;
+  // --- Signature Pad & Studio Methods ---
+  const startDrawingOnCanvas = (
+    canvas: HTMLCanvasElement | null,
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -902,10 +988,12 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     ctx.moveTo(clientX - rect.left, clientY - rect.top);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    const canvas = signatureCanvasRef.current;
-    if (!canvas) return;
+  const drawOnCanvas = (
+    canvas: HTMLCanvasElement | null,
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
+    color: string = '#0f172a'
+  ) => {
+    if (!isDrawing || !canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -914,7 +1002,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
 
     ctx.lineTo(clientX - rect.left, clientY - rect.top);
-    ctx.strokeStyle = '#0f172a';
+    ctx.strokeStyle = color;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -926,13 +1014,170 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     setIsDrawing(false);
   };
 
-  const clearSignature = () => {
+  const clearSidebarSignature = () => {
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!modalSignatureCanvasRef.current) {
+      setHasSignature(false);
+      setCurrentSignatureDataUrl(null);
+    }
+  };
+
+  const clearModalSignature = () => {
+    const canvas = modalSignatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasSignature(false);
+    setCurrentSignatureDataUrl(null);
+  };
+
+  // Tool selection handler - automatically opens Signature Studio when signature tool is picked
+  const handleSelectTool = (tool: string) => {
+    setActiveTool(tool);
+    if (tool === 'signature') {
+      setActiveTab('annotate');
+      setSignatureModalOpen(true);
+    }
+  };
+
+  // Place signature directly at clicked coordinates on the PDF canvas
+  const handlePlaceSignatureAt = useCallback(
+    (x: number, y: number) => {
+      let dataUrl = currentSignatureDataUrl;
+      if (!dataUrl) {
+        const canvas = modalSignatureCanvasRef.current || signatureCanvasRef.current;
+        if (canvas && hasSignature) {
+          dataUrl = canvas.toDataURL('image/png');
+          setCurrentSignatureDataUrl(dataUrl);
+        }
+      }
+
+      if (!dataUrl) {
+        setPendingPlacementCoords({ x, y });
+        setSignatureModalOpen(true);
+        showToast(isZh ? '请先在签名设计器中完成手写或输入' : 'Please draw or type your signature first');
+        return;
+      }
+
+      pushUndoSnapshot();
+      const targetPage = currentPageIndex;
+      const newAnn: PdfAnnotation = {
+        id: generateUniqueAnnotationId(),
+        pageIndex: targetPage,
+        type: 'signature',
+        xPercent: Math.max(0, Math.min(0.78, x - 0.1)),
+        yPercent: Math.max(0, Math.min(0.9, y - 0.04)),
+        widthPercent: 0.22,
+        heightPercent: 0.08,
+        imageDataUrl: dataUrl,
+      };
+
+      appendAnnotationSafe(newAnn);
+      setSelectedAnnotationId(newAnn.id);
+      showToast(isZh ? `已将电子签名放入第 ${targetPage + 1} 页，可拖拽调整位置与大小` : `Signature placed on Page ${targetPage + 1}`);
+    },
+    [currentSignatureDataUrl, hasSignature, currentPageIndex, pushUndoSnapshot, isZh]
+  );
+
+  // Confirm and insert signature from the Signature Studio dialog
+  const handleConfirmSignaturePlacement = () => {
+    let dataUrl: string | null = null;
+
+    if (signatureMode === 'draw') {
+      const canvas = modalSignatureCanvasRef.current || signatureCanvasRef.current;
+      if (!canvas || !hasSignature) {
+        showToast(isZh ? '请先在画板中绘制签名' : 'Please draw your signature first');
+        return;
+      }
+      dataUrl = canvas.toDataURL('image/png');
+    } else if (signatureMode === 'type') {
+      const name = typedSignatureName.trim() || customerName || 'Authorized Signature';
+      const sigObj = generateSignatureDataUrl(name, signaturePenColor, typedSignatureStyle);
+      dataUrl = sigObj.dataUrl;
+    } else if (signatureMode === 'upload') {
+      dataUrl = currentSignatureDataUrl;
+      if (!dataUrl) {
+        showToast(isZh ? '请先上传签名图片' : 'Please upload a signature image');
+        return;
+      }
+    }
+
+    if (!dataUrl) return;
+
+    setCurrentSignatureDataUrl(dataUrl);
+    setHasSignature(true);
+    setSignatureModalOpen(false);
+
+    pushUndoSnapshot();
+    const targetPage = currentPageIndex;
+    const targetX = pendingPlacementCoords ? pendingPlacementCoords.x : 0.65;
+    const targetY = pendingPlacementCoords ? pendingPlacementCoords.y : 0.82;
+    setPendingPlacementCoords(null);
+
+    const newAnn: PdfAnnotation = {
+      id: generateUniqueAnnotationId(),
+      pageIndex: targetPage,
+      type: 'signature',
+      xPercent: Math.max(0, Math.min(0.78, targetX - 0.1)),
+      yPercent: Math.max(0, Math.min(0.9, targetY - 0.04)),
+      widthPercent: 0.22,
+      heightPercent: 0.08,
+      imageDataUrl: dataUrl,
+    };
+
+    appendAnnotationSafe(newAnn);
+    setSelectedAnnotationId(newAnn.id);
+    setActiveTool('select');
+    showToast(isZh ? `已将电子签名放入第 ${targetPage + 1} 页，可拖拽调整` : `Signature placed on Page ${targetPage + 1}`);
+  };
+
+  // Place signature from sidebar signature pad
+  const handlePlaceSignatureFromSidebar = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas || !hasSignature) {
+      setSignatureModalOpen(true);
+      showToast(isZh ? '请在签名板手写或点击打开设计器生成' : 'Please draw signature or open studio');
+      return;
+    }
+    const dataUrl = canvas.toDataURL('image/png');
+    setCurrentSignatureDataUrl(dataUrl);
+
+    pushUndoSnapshot();
+    const targetPage = currentPageIndex;
+    const newAnn: PdfAnnotation = {
+      id: generateUniqueAnnotationId(),
+      pageIndex: targetPage,
+      type: 'signature',
+      xPercent: 0.65,
+      yPercent: 0.82,
+      widthPercent: 0.22,
+      heightPercent: 0.08,
+      imageDataUrl: dataUrl,
+    };
+    appendAnnotationSafe(newAnn);
+    setSelectedAnnotationId(newAnn.id);
+    showToast(isZh ? `已将电子签名放入第 ${targetPage + 1} 页` : `Signature placed on Page ${targetPage + 1}`);
+  };
+
+  // Upload external signature image
+  const handleSignatureFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const url = evt.target?.result as string;
+      if (url) {
+        setCurrentSignatureDataUrl(url);
+        setHasSignature(true);
+        showToast(isZh ? '已成功载入签名图片' : 'Signature image loaded');
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Add Annotation Action from Sidebar
@@ -942,7 +1187,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       const isCustom = selectedStampId === 'CUSTOM';
       const preset = STAMP_PRESETS.find(p => p.id === selectedStampId) || STAMP_PRESETS[0];
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: targetPage,
         type: 'stamp',
         xPercent: clickX,
@@ -952,7 +1197,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         stampColor: isCustom ? customStampColor : preset.color,
         fontSize: 15,
       };
-      setAnnotations(prev => [...prev, newAnn]);
+      appendAnnotationSafe(newAnn);
       showToast(
         isZh
           ? `已盖印至第 ${targetPage + 1} 页: ${isCustom ? customStampText : preset.label}`
@@ -961,7 +1206,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
     } else if (activeTool === 'text') {
       if (!annotationText.trim()) return;
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: targetPage,
         type: 'text',
         xPercent: clickX,
@@ -972,11 +1217,11 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         isBold: annotationBold,
         backgroundColor: annotationBgColor,
       };
-      setAnnotations(prev => [...prev, newAnn]);
+      appendAnnotationSafe(newAnn);
       showToast(isZh ? `已添加文字至第 ${targetPage + 1} 页` : `Added Text to Page ${targetPage + 1}`);
     } else if (activeTool === 'whiteout') {
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: targetPage,
         type: 'whiteout',
         xPercent: clickX,
@@ -987,7 +1232,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         fontSize: 11,
         textColor: '#000000',
       };
-      setAnnotations(prev => [...prev, newAnn]);
+      appendAnnotationSafe(newAnn);
       showToast(isZh ? `已添加涂白修正区至第 ${targetPage + 1} 页` : `Added Whiteout Patch to Page ${targetPage + 1}`);
     } else if (activeTool === 'signature') {
       const canvas = signatureCanvasRef.current;
@@ -997,7 +1242,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
       }
       const dataUrl = canvas.toDataURL('image/png');
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: targetPage,
         type: 'signature',
         xPercent: clickX,
@@ -1006,11 +1251,11 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         heightPercent: 0.08,
         imageDataUrl: dataUrl,
       };
-      setAnnotations(prev => [...prev, newAnn]);
+      appendAnnotationSafe(newAnn);
       showToast(isZh ? `已将电子签名放入第 ${targetPage + 1} 页` : `Signature placed on Page ${targetPage + 1}`);
     } else if (activeTool === 'highlight') {
       const newAnn: PdfAnnotation = {
-        id: `ann-${Date.now()}`,
+        id: generateUniqueAnnotationId(),
         pageIndex: targetPage,
         type: 'highlight',
         xPercent: clickX,
@@ -1019,7 +1264,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
         heightPercent: 0.035,
         backgroundColor: highlightColor,
       };
-      setAnnotations(prev => [...prev, newAnn]);
+      appendAnnotationSafe(newAnn);
       showToast(isZh ? `已添加高亮标记至第 ${targetPage + 1} 页` : `Highlight added to Page ${targetPage + 1}`);
     }
   };
@@ -1271,16 +1516,13 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => {
-                  setActiveTool('signature');
-                  setActiveTab('annotate');
-                }}
+                onClick={() => handleSelectTool('signature')}
                 className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
                   activeTool === 'signature'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
-                title="Sign document"
+                title={isZh ? '电子签名 (手写/书法/上传)' : 'Sign document (Draw, type or upload)'}
               >
                 <PenTool className="w-3.5 h-3.5" />
                 <span>{isZh ? '签名' : 'Sign'}</span>
@@ -1485,7 +1727,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
                 activeTab={activeTab}
                 onChangeTab={setActiveTab}
                 activeTool={activeTool}
-                onSelectTool={setActiveTool}
+                onSelectTool={handleSelectTool}
                 isZh={isZh}
                 activeSource={activeSource}
                 onTriggerImageUpload={() => imageInputRef.current?.click()}
@@ -1835,36 +2077,87 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
 
               {/* TOOL: SIGNATURE PAD */}
               {activeTool === 'signature' && (
-                <div className="p-3 rounded-xl bg-slate-100/90 dark:bg-[#0c122c] border border-slate-200 dark:border-indigo-500/20 space-y-2">
+                <div className="p-3 rounded-xl bg-slate-100/90 dark:bg-[#0c122c] border border-slate-200 dark:border-indigo-500/20 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase text-slate-700 dark:text-neutral-200">
-                      {isZh ? '电子签名板' : 'Digital Signature Pad'}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={clearSignature}
-                      className="text-[10px] text-red-500 hover:underline font-bold cursor-pointer"
-                    >
-                      {isZh ? '清除重签' : 'Clear'}
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <PenTool className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-xs font-black uppercase text-slate-700 dark:text-neutral-200">
+                        {isZh ? '电子签名板' : 'Digital Signature Pad'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={clearSidebarSignature}
+                        className="text-[10px] text-red-500 hover:underline font-bold cursor-pointer"
+                      >
+                        {isZh ? '清除重签' : 'Clear'}
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Pen Color Palette */}
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>{isZh ? '画笔颜色:' : 'Pen Color:'}</span>
+                    <div className="flex items-center gap-1.5">
+                      {[
+                        { color: '#0f172a', label: isZh ? '黑墨' : 'Black' },
+                        { color: '#1d4ed8', label: isZh ? '蓝墨' : 'Blue' },
+                        { color: '#b91c1c', label: isZh ? '红墨' : 'Red' },
+                      ].map(c => (
+                        <button
+                          key={c.color}
+                          type="button"
+                          onClick={() => setSignaturePenColor(c.color)}
+                          className={`w-4 h-4 rounded-full border cursor-pointer transition-all ${
+                            signaturePenColor === c.color ? 'ring-2 ring-emerald-400 scale-110' : 'opacity-70 hover:opacity-100'
+                          }`}
+                          style={{ backgroundColor: c.color }}
+                          title={c.label}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="border border-slate-300 dark:border-white/20 rounded-xl overflow-hidden bg-white shadow-inner cursor-crosshair">
                     <canvas
                       ref={signatureCanvasRef}
                       width={320}
                       height={120}
-                      onMouseDown={startDrawing}
-                      onMouseMove={draw}
+                      onMouseDown={e => startDrawingOnCanvas(signatureCanvasRef.current, e)}
+                      onMouseMove={e => drawOnCanvas(signatureCanvasRef.current, e, signaturePenColor)}
                       onMouseUp={stopDrawing}
                       onMouseLeave={stopDrawing}
-                      onTouchStart={startDrawing}
-                      onTouchMove={draw}
+                      onTouchStart={e => startDrawingOnCanvas(signatureCanvasRef.current, e)}
+                      onTouchMove={e => drawOnCanvas(signatureCanvasRef.current, e, signaturePenColor)}
                       onTouchEnd={stopDrawing}
                       className="w-full h-28 block touch-none"
                     />
                   </div>
-                  <span className="text-[10px] text-slate-400 block text-center">
-                    {isZh ? '用鼠标或触摸屏在上方区域签名，随后点击下方放置' : 'Draw signature above, then place on page'}
+
+                  {/* Placement & Studio Buttons */}
+                  <div className="space-y-1.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={handlePlaceSignatureFromSidebar}
+                      className="w-full py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all active:scale-95"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{isZh ? '放置签名到当前页面' : 'Place Signature on Page'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSignatureModalOpen(true)}
+                      className="w-full py-1.5 rounded-xl border border-slate-300 dark:border-white/15 bg-white/70 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-200 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    >
+                      <Sparkles className="w-3 h-3 text-indigo-400" />
+                      <span>{isZh ? '打开签名设计器 (书法生成/上传图片)' : 'Signature Studio (Type/Upload)'}</span>
+                    </button>
+                  </div>
+
+                  <span className="text-[10px] text-slate-400 block text-center leading-tight">
+                    💡 {isZh ? '签名后可直接点击上方绿色按钮，或在右侧 PDF 画面任意位置点击放置' : 'Draw above and place on page, or click anywhere on PDF.'}
                   </span>
                 </div>
               )}
@@ -1886,9 +2179,9 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
                   </div>
 
                   <div className="space-y-1.5 max-h-44 overflow-y-auto mac-scrollbar pr-1">
-                    {annotations.map(ann => (
+                    {annotations.map((ann, idx) => (
                       <div
-                        key={ann.id}
+                        key={ann.id ? `${ann.id}-${idx}` : `ann-item-${idx}`}
                         className="p-1.5 rounded-lg bg-white dark:bg-[#050817] border border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 text-xs hover:border-cyan-500 transition-all"
                       >
                         <span className="font-bold text-slate-400 text-[10px]">
@@ -2026,9 +2319,7 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
                 selectedAnnotation={annotations.find(a => a.id === selectedAnnotationId) || null}
                 activeEditingText={activeEditingText}
                 isZh={isZh}
-                onUpdateActiveText={updates =>
-                  setActiveEditingText(prev => (prev ? { ...prev, ...updates } : null))
-                }
+                onUpdateActiveText={handleUpdateActiveText}
                 onUpdateSelectedAnnotation={updates => {
                   if (selectedAnnotationId) {
                     pushUndoSnapshot();
@@ -2091,20 +2382,16 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
                     selectedAnnotationId={selectedAnnotationId}
                     activeEditingText={activeEditingText}
                     onSelectAnnotation={setSelectedAnnotationId}
+                    onPlaceSignatureAt={handlePlaceSignatureAt}
                     onStartEditTextItem={handleStartEditText}
                     onStartEditAnnotation={handleStartEditAnnotation}
                     onStartAddTextAt={handleStartAddText}
-                    onUpdateActiveText={updates =>
-                      setActiveEditingText(prev => (prev ? { ...prev, ...updates } : null))
-                    }
+                    onUpdateActiveText={handleUpdateActiveText}
                     onCommitEditing={handleCommitEditing}
                     onDeleteSelected={handleDeleteSelected}
                     onAddAnnotation={newAnn => {
                       pushUndoSnapshot();
-                      setAnnotations(prev => [
-                        ...prev,
-                        { ...newAnn, pageIndex: currentPageIndex },
-                      ]);
+                      appendAnnotationSafe({ ...newAnn, pageIndex: currentPageIndex });
                     }}
                     onUpdateAnnotation={(id, updates) => {
                       setAnnotations(prev =>
@@ -2181,6 +2468,258 @@ export const PdfEditorModal: React.FC<PdfEditorModalProps> = ({
           </div>
         </motion.div>
       </div>
+
+      {/* DIGITAL SIGNATURE STUDIO MODAL (Draw, Type Calligraphy, or Upload Signature) */}
+      <AnimatePresence>
+        {signatureModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="w-full max-w-lg bg-white dark:bg-[#0c122c] border border-slate-300 dark:border-indigo-500/30 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="px-5 py-3.5 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-slate-50 dark:bg-white/5">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <PenTool className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-800 dark:text-white">
+                      {isZh ? '电子签名设计器' : 'Digital Signature Studio'}
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-neutral-400">
+                      {isZh
+                        ? '手写绘制、输入生成艺术签名或上传透明图片'
+                        : 'Draw with mouse/touch, type calligraphy, or upload'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSignatureModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Mode Tabs */}
+              <div className="px-5 pt-3.5 pb-2 flex gap-1.5 border-b border-slate-200 dark:border-white/10 bg-slate-100/60 dark:bg-black/20">
+                <button
+                  type="button"
+                  onClick={() => setSignatureMode('draw')}
+                  className={`flex-1 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    signatureMode === 'draw'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-white dark:bg-white/5 text-slate-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  <PenTool className="w-3.5 h-3.5" />
+                  <span>{isZh ? '手写绘制 (Draw)' : 'Draw'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSignatureMode('type')}
+                  className={`flex-1 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    signatureMode === 'type'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-white dark:bg-white/5 text-slate-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  <Type className="w-3.5 h-3.5" />
+                  <span>{isZh ? '输入生成 (Type)' : 'Type'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSignatureMode('upload')}
+                  className={`flex-1 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    signatureMode === 'upload'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-white dark:bg-white/5 text-slate-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isZh ? '上传图片 (Upload)' : 'Upload'}</span>
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-5 space-y-4">
+                {/* 1. DRAW MODE */}
+                {signatureMode === 'draw' && (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400">
+                      <div className="flex items-center gap-2">
+                        <span>{isZh ? '墨水颜色:' : 'Ink Color:'}</span>
+                        <div className="flex items-center gap-1.5">
+                          {[
+                            { color: '#0f172a', label: 'Black' },
+                            { color: '#1d4ed8', label: 'Blue' },
+                            { color: '#b91c1c', label: 'Red' },
+                          ].map(c => (
+                            <button
+                              key={c.color}
+                              type="button"
+                              onClick={() => setSignaturePenColor(c.color)}
+                              className={`w-5 h-5 rounded-full border cursor-pointer transition-all ${
+                                signaturePenColor === c.color
+                                  ? 'ring-2 ring-emerald-500 scale-110 shadow-xs'
+                                  : 'opacity-70 hover:opacity-100'
+                              }`}
+                              style={{ backgroundColor: c.color }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearModalSignature}
+                        className="text-xs text-red-500 hover:underline font-bold cursor-pointer"
+                      >
+                        {isZh ? '清除重写' : 'Clear Canvas'}
+                      </button>
+                    </div>
+
+                    <div className="border-2 border-dashed border-slate-300 dark:border-white/20 rounded-2xl overflow-hidden bg-white shadow-inner cursor-crosshair relative">
+                      <canvas
+                        ref={modalSignatureCanvasRef}
+                        width={460}
+                        height={160}
+                        onMouseDown={e => startDrawingOnCanvas(modalSignatureCanvasRef.current, e)}
+                        onMouseMove={e => drawOnCanvas(modalSignatureCanvasRef.current, e, signaturePenColor)}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={e => startDrawingOnCanvas(modalSignatureCanvasRef.current, e)}
+                        onTouchMove={e => drawOnCanvas(modalSignatureCanvasRef.current, e, signaturePenColor)}
+                        onTouchEnd={stopDrawing}
+                        className="w-full h-40 block touch-none"
+                      />
+                      <div className="absolute bottom-4 left-6 right-6 border-b border-slate-200 dark:border-slate-300/40 pointer-events-none" />
+                      <span className="absolute bottom-1 right-3 text-[10px] text-slate-400 pointer-events-none">
+                        ✕ Sign Above Line
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. TYPE MODE */}
+                {signatureMode === 'type' && (
+                  <div className="space-y-3.5">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 dark:text-neutral-300 block mb-1">
+                        {isZh ? '输入签名者姓名 / 授权代表' : 'Signatory Name'}:
+                      </label>
+                      <input
+                        type="text"
+                        value={typedSignatureName}
+                        onChange={e => setTypedSignatureName(e.target.value)}
+                        placeholder="e.g. Johnathan Tan / Authorized Representative"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#050817] text-sm text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 dark:text-neutral-300 block mb-1.5">
+                        {isZh ? '书法风格' : 'Calligraphy Style'}:
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: 'script', label: isZh ? '流动草书' : 'Expressive Script' },
+                          { id: 'cursive', label: isZh ? '优雅行书' : 'Flowing Cursive' },
+                          { id: 'formal', label: isZh ? '正式公文体' : 'Formal Script' },
+                        ].map(st => (
+                          <button
+                            key={st.id}
+                            type="button"
+                            onClick={() => setTypedSignatureStyle(st.id as any)}
+                            className={`p-2 rounded-xl border text-center font-bold text-xs transition-all cursor-pointer ${
+                              typedSignatureStyle === st.id
+                                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
+                                : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                            }`}
+                          >
+                            {st.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Live Preview */}
+                    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-inner flex flex-col items-center justify-center min-h-[120px]">
+                      <img
+                        src={
+                          generateSignatureDataUrl(
+                            typedSignatureName || 'Authorized Signatory',
+                            signaturePenColor,
+                            typedSignatureStyle
+                          ).dataUrl
+                        }
+                        alt="Signature Preview"
+                        className="max-h-24 object-contain select-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. UPLOAD MODE */}
+                {signatureMode === 'upload' && (
+                  <div className="space-y-3">
+                    <label className="p-6 rounded-2xl border-2 border-dashed border-emerald-500/40 hover:border-emerald-400 bg-emerald-950/20 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center">
+                      <Upload className="w-8 h-8 text-emerald-400" />
+                      <div className="font-bold text-xs text-slate-800 dark:text-white">
+                        {isZh ? '点击上传签名文件 (PNG / JPG)' : 'Upload Signature Image'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-neutral-400">
+                        {isZh ? '建议上传透明背景图片以达最佳视觉效果' : 'Transparent PNG background recommended'}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleSignatureFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {currentSignatureDataUrl && (
+                      <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center">
+                        <img
+                          src={currentSignatureDataUrl}
+                          alt="Loaded Signature"
+                          className="max-h-20 object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 py-3.5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between bg-slate-50 dark:bg-white/5">
+                <button
+                  type="button"
+                  onClick={() => setSignatureModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 cursor-pointer transition-colors"
+                >
+                  {isZh ? '取消' : 'Cancel'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmSignaturePlacement}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/30 cursor-pointer active:scale-95 transition-all"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{isZh ? '确定并放置到文档' : 'Insert Signature on Document'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   );
 };

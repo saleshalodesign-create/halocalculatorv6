@@ -458,6 +458,16 @@ export const PdfescapePropertyBar: React.FC<PdfescapePropertyBarProps> = ({
               />
             )}
           </div>
+        ) : activeTool === 'signature' ? (
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+              <PenTool className="w-3.5 h-3.5" />
+              <span>{isZh ? '电子签名 (Signature)' : 'Signature Mode'}</span>
+            </span>
+            <span className="text-[11px] text-slate-300">
+              {isZh ? '可在签名板手写、输入姓名或上传，点击页面任意位置即可放置' : 'Create signature, then click anywhere on page to place'}
+            </span>
+          </div>
         ) : (
           <span className="text-[11px] text-slate-400">
             {isZh ? '点击左侧工具添加元素，或点击画面文字直接修改' : 'Select a tool from left panel or click text to edit'}

@@ -56,6 +56,19 @@ export interface PdfAnnotation {
   imageDataUrl?: string;
 }
 
+let annotationIdCounter = 0;
+/**
+ * Generates a globally unique, collision-proof annotation ID.
+ * Incorporates timestamp, high-resolution performance timer, incrementing counter, and random hash.
+ */
+export const generateUniqueAnnotationId = (): string => {
+  annotationIdCounter += 1;
+  const time = Date.now();
+  const perf = typeof performance !== 'undefined' ? Math.round(performance.now() * 100) : 0;
+  const rand = Math.random().toString(36).substring(2, 8);
+  return `ann-${time}-${perf}-${annotationIdCounter}-${rand}`;
+};
+
 export interface StampPreset {
   id: string;
   label: string;
@@ -270,6 +283,63 @@ export const renderTextToDataUrl = (
     dataUrl: canvas.toDataURL('image/png'),
     width: width / scale,
     height: height / scale,
+  };
+};
+
+/**
+ * Renders an authentic cursive calligraphy signature to PNG Data URL
+ */
+export const generateSignatureDataUrl = (
+  name: string,
+  color: string = '#0f172a',
+  style: 'script' | 'cursive' | 'formal' = 'script'
+): { dataUrl: string; width: number; height: number } => {
+  if (typeof document === 'undefined') return { dataUrl: '', width: 0, height: 0 };
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return { dataUrl: '', width: 0, height: 0 };
+
+  const scale = 3;
+  const rawW = 320;
+  const rawH = 110;
+  canvas.width = rawW * scale;
+  canvas.height = rawH * scale;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let font = `italic ${38 * scale}px "Brush Script MT", "Segoe Script", "Caveat", "Dancing Script", cursive`;
+  if (style === 'script') {
+    font = `italic ${42 * scale}px "Caveat", "Great Vibes", "Brush Script MT", "Segoe Script", cursive`;
+  } else if (style === 'formal') {
+    font = `italic bold ${34 * scale}px "Snell Roundhand", "Apple Chancery", "Bickham Script Pro", "Brush Script MT", cursive`;
+  }
+
+  ctx.font = font;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const text = name.trim() || 'Authorized Signature';
+  ctx.fillText(text, (rawW * scale) / 2, (rawH * scale) / 2 - 8 * scale);
+
+  // Handwritten ink flourish underline
+  const metrics = ctx.measureText(text);
+  const textWidth = metrics.width;
+  const startX = Math.max(20 * scale, ((rawW * scale) - textWidth) / 2);
+  const endX = Math.min((rawW * scale) - 20 * scale, startX + textWidth + 24 * scale);
+  const lineY = (rawH * scale) / 2 + 18 * scale;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2 * scale;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(startX, lineY);
+  ctx.quadraticCurveTo((rawW * scale) / 2, lineY - 6 * scale, endX, lineY + 3 * scale);
+  ctx.stroke();
+
+  return {
+    dataUrl: canvas.toDataURL('image/png'),
+    width: rawW,
+    height: rawH,
   };
 };
 
@@ -494,7 +564,8 @@ export const applyPdfAnnotations = async (
 
       if (ann.type === 'whiteout') {
         const boxW = (ann.widthPercent || 0.15) * pageWidth;
-        const boxH = (ann.heightPercent || 0.04) * pageHeight;
+        const defaultBoxH = Math.max(8, (ann.fontSize || 12) * 1.05);
+        const boxH = Math.max(8, ann.heightPercent ? ann.heightPercent * pageHeight : defaultBoxH);
 
         // Draw white rectangle to cover old text / typo
         page.drawRectangle({
@@ -507,7 +578,7 @@ export const applyPdfAnnotations = async (
 
         // Optional replacement text inside whiteout box
         if (ann.text) {
-          const size = ann.fontSize || Math.max(8, Math.round(boxH * 0.7));
+          const size = ann.fontSize || Math.max(8, Math.round(boxH * 0.9));
           const { dataUrl, width, height } = renderTextToDataUrl(
             ann.text,
             ann.textColor || '#000000',
@@ -521,7 +592,7 @@ export const applyPdfAnnotations = async (
               const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
               const img = await finalPdfDoc.embedPng(imgBytes);
               page.drawImage(img, {
-                x: pdfX + 2,
+                x: pdfX + 0.5,
                 y: pdfY - boxH + Math.max(0, (boxH - height) / 2),
                 width: width,
                 height: height,

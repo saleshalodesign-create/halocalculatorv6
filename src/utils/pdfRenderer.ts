@@ -386,11 +386,14 @@ export const extractTextFromPage = async (
       const textWidth = Math.max(8, item.width || 30);
 
       // Top edge in screen coordinates (0 is top of page)
-      const topPx = viewport.height - (ty + fontHeight * 0.9);
-      const xPercent = Math.max(0, Math.min(0.99, tx / viewport.width));
+      // ty is the baseline. Text ascenders reach ~0.76-0.78 * fontHeight above baseline.
+      // Descenders reach ~0.16 * fontHeight below baseline.
+      const topPx = viewport.height - (ty + fontHeight * 0.78);
+      const heightPx = fontHeight * 0.94;
+      const xPercent = Math.max(0, Math.min(0.99, (tx - 0.5) / viewport.width));
       const yPercent = Math.max(0, Math.min(0.99, topPx / viewport.height));
-      const widthPercent = Math.max(0.012, Math.min(0.99, (textWidth * 1.05) / viewport.width));
-      const heightPercent = Math.max(0.012, Math.min(0.2, (fontHeight * 1.25) / viewport.height));
+      const widthPercent = Math.max(0.01, Math.min(0.99, (textWidth + 1) / viewport.width));
+      const heightPercent = Math.max(0.008, Math.min(0.12, heightPx / viewport.height));
 
       // Resolve exact original font information
       const style = textContent.styles ? textContent.styles[item.fontName] : null;
